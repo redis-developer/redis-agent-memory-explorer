@@ -1,71 +1,93 @@
+import type { MongoState, MongoTransportOptions } from "../types";
+
 import build from "pino-abstract-transport";
 
-import type { MongoTransportOptions } from "../types";
+const MAX_FLUSH_ATTEMPTS = 2;
 
-const mongoTransport = (opts: MongoTransportOptions) => {
-  const { uri, database, collection, batchSize, flushInterval } = opts;
+const createState = (): MongoState => ({
+  client: null,
+  collection: null,
+  batch: [],
+  connected: false,
+});
 
-  let client: any;
-  let col: any;
-  let batch: Record<string, unknown>[] = [];
-  let timer: ReturnType<typeof setInterval>;
-  let connected = false;
+const connect = async (
+  state: MongoState,
+  opts: MongoTransportOptions,
+): Promise<void> => {
+  const mongodb = await import("mongodb");
+  const MongoClient = mongodb.MongoClient;
+  state.client = new MongoClient(opts.uri);
+  await state.client.connect();
+  state.collection = state.client.db(opts.database).collection(opts.collection);
+  state.connected = true;
+};
 
-  const connect = async () => {
-    const mongodb = await import("mongodb");
-    const MongoClient = mongodb.MongoClient;
-    client = new MongoClient(uri);
-    await client.connect();
-    col = client.db(database).collection(collection);
-    connected = true;
-  };
-
-  const flush = async (): Promise<void> => {
-    const shouldFlush = batch.length > 0 && connected;
-    if (shouldFlush) {
-      const items = batch.splice(0);
+const flush = async (state: MongoState): Promise<void> => {
+  if (state.batch.length > 0 && state.connected) {
+    const items = state.batch.splice(0);
+    for (let attempt = 0; attempt < MAX_FLUSH_ATTEMPTS; attempt++) {
       try {
-        await col.insertMany(items, { ordered: false });
+        await state.collection.insertMany(items, { ordered: false });
+        break;
       } catch (err) {
-        try {
-          await col.insertMany(items, { ordered: false });
-        } catch (retryErr) {
+        const isLastAttempt = attempt === MAX_FLUSH_ATTEMPTS - 1;
+        if (isLastAttempt) {
           process.stderr.write(
-            `cau-logger [mongo]: flush failed, dropping ${items.length} records: ${retryErr}\n`,
+            `cau-logger [mongo]: flush failed, dropping ${items.length} records: ${err}\n`,
           );
         }
       }
     }
-  };
+  }
+};
 
-  const connectPromise = connect().catch((err: unknown) => {
+const processSource = async (
+  state: MongoState,
+  batchSize: number,
+  connectPromise: Promise<unknown>,
+  timer: ReturnType<typeof setInterval>,
+  source: AsyncIterable<Record<string, unknown>>,
+): Promise<void> => {
+  await connectPromise;
+
+  for await (const obj of source) {
+    state.batch.push(obj as Record<string, unknown>);
+    if (state.batch.length >= batchSize) {
+      await flush(state);
+    }
+  }
+
+  clearInterval(timer);
+  await flush(state);
+};
+
+const closeTransport = (
+  state: MongoState,
+  timer: ReturnType<typeof setInterval>,
+  cb: Function,
+): void => {
+  clearInterval(timer);
+  flush(state)
+    .then(() => (state.client ? state.client.close() : undefined))
+    .then(() => cb())
+    .catch(() => cb());
+};
+
+const mongoTransport = (opts: MongoTransportOptions) => {
+  const state = createState();
+
+  const connectPromise = connect(state, opts).catch((err: unknown) => {
     process.stderr.write(`cau-logger [mongo]: connection failed: ${err}\n`);
   });
 
-  timer = setInterval(flush, flushInterval);
+  const timer = setInterval(() => flush(state), opts.flushInterval);
 
   return build(
-    async (source: any) => {
-      await connectPromise;
-
-      for await (const obj of source) {
-        batch.push(obj as Record<string, unknown>);
-        if (batch.length >= batchSize) {
-          await flush();
-        }
-      }
-
-      clearInterval(timer);
-      await flush();
-    },
+    (source: any) =>
+      processSource(state, opts.batchSize, connectPromise, timer, source),
     {
-      close: (err: Error, cb: Function) => {
-        clearInterval(timer);
-        flush()
-          .then(() => (client ? client.close() : undefined))
-          .then(() => cb())
-          .catch(() => cb());
-      },
+      close: (_err: Error, cb: Function) => closeTransport(state, timer, cb),
     },
   );
 };

@@ -1,14 +1,14 @@
+import type { LogRow, SqlState, SqlTransportOptions } from "../types";
+
 import build from "pino-abstract-transport";
 
-import type { SqlTransportOptions } from "../types";
+const MAX_FLUSH_ATTEMPTS = 2;
 
-type LogRow = {
-  level: number;
-  timestamp: Date;
-  message: string;
-  context: string | null;
-  data: string;
-};
+const createState = (): SqlState => ({
+  knex: null,
+  batch: [],
+  connected: false,
+});
 
 const formatRecord = (record: Record<string, unknown>): LogRow => ({
   level: record.level as number,
@@ -18,68 +18,83 @@ const formatRecord = (record: Record<string, unknown>): LogRow => ({
   data: JSON.stringify(record),
 });
 
-const sqlTransport = (opts: SqlTransportOptions) => {
-  const { knexConfig, table, batchSize, flushInterval } = opts;
+const connect = async (
+  state: SqlState,
+  opts: SqlTransportOptions,
+): Promise<void> => {
+  const knexModule = await import("knex");
+  const knexFactory = (knexModule as any).default ?? knexModule;
+  state.knex = knexFactory(opts.knexConfig);
+  state.connected = true;
+};
 
-  let knex: any;
-  let batch: Record<string, unknown>[] = [];
-  let timer: ReturnType<typeof setInterval>;
-  let connected = false;
-
-  const connect = async () => {
-    const knexModule = await import("knex");
-    const knexFactory = (knexModule as any).default ?? knexModule;
-    knex = knexFactory(knexConfig);
-    connected = true;
-  };
-
-  const flush = async (): Promise<void> => {
-    const shouldFlush = batch.length > 0 && connected;
-    if (shouldFlush) {
-      const items = batch.splice(0);
-      const rows = items.map(formatRecord);
+const flush = async (state: SqlState, table: string): Promise<void> => {
+  if (state.batch.length > 0 && state.connected) {
+    const items = state.batch.splice(0);
+    const rows = items.map(formatRecord);
+    for (let attempt = 0; attempt < MAX_FLUSH_ATTEMPTS; attempt++) {
       try {
-        await knex(table).insert(rows);
+        await state.knex(table).insert(rows);
+        break;
       } catch (err) {
-        try {
-          await knex(table).insert(rows);
-        } catch (retryErr) {
+        const isLastAttempt = attempt === MAX_FLUSH_ATTEMPTS - 1;
+        if (isLastAttempt) {
           process.stderr.write(
-            `cau-logger [sql]: flush failed, dropping ${items.length} records: ${retryErr}\n`,
+            `cau-logger [sql]: flush failed, dropping ${items.length} records: ${err}\n`,
           );
         }
       }
     }
-  };
+  }
+};
 
-  const connectPromise = connect().catch((err: unknown) => {
+const processSource = async (
+  state: SqlState,
+  opts: SqlTransportOptions,
+  connectPromise: Promise<unknown>,
+  timer: ReturnType<typeof setInterval>,
+  source: AsyncIterable<Record<string, unknown>>,
+): Promise<void> => {
+  await connectPromise;
+
+  for await (const obj of source) {
+    state.batch.push(obj as Record<string, unknown>);
+    if (state.batch.length >= opts.batchSize) {
+      await flush(state, opts.table);
+    }
+  }
+
+  clearInterval(timer);
+  await flush(state, opts.table);
+};
+
+const closeTransport = (
+  state: SqlState,
+  table: string,
+  timer: ReturnType<typeof setInterval>,
+  cb: Function,
+): void => {
+  clearInterval(timer);
+  flush(state, table)
+    .then(() => (state.knex ? state.knex.destroy() : undefined))
+    .then(() => cb())
+    .catch(() => cb());
+};
+
+const sqlTransport = (opts: SqlTransportOptions) => {
+  const state = createState();
+
+  const connectPromise = connect(state, opts).catch((err: unknown) => {
     process.stderr.write(`cau-logger [sql]: connection failed: ${err}\n`);
   });
 
-  timer = setInterval(flush, flushInterval);
+  const timer = setInterval(() => flush(state, opts.table), opts.flushInterval);
 
   return build(
-    async (source: any) => {
-      await connectPromise;
-
-      for await (const obj of source) {
-        batch.push(obj as Record<string, unknown>);
-        if (batch.length >= batchSize) {
-          await flush();
-        }
-      }
-
-      clearInterval(timer);
-      await flush();
-    },
+    (source: any) => processSource(state, opts, connectPromise, timer, source),
     {
-      close: (err: Error, cb: Function) => {
-        clearInterval(timer);
-        flush()
-          .then(() => (knex ? knex.destroy() : undefined))
-          .then(() => cb())
-          .catch(() => cb());
-      },
+      close: (_err: Error, cb: Function) =>
+        closeTransport(state, opts.table, timer, cb),
     },
   );
 };

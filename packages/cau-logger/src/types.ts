@@ -68,11 +68,32 @@ type MongoTransportOptions = {
   flushInterval: number;
 };
 
+type MongoState = {
+  client: any;
+  collection: any;
+  batch: Record<string, unknown>[];
+  connected: boolean;
+};
+
 type SqlTransportOptions = {
   knexConfig: Record<string, unknown>;
   table: string;
   batchSize: number;
   flushInterval: number;
+};
+
+type SqlState = {
+  knex: any;
+  batch: Record<string, unknown>[];
+  connected: boolean;
+};
+
+type LogRow = {
+  level: number;
+  timestamp: Date;
+  message: string;
+  context: string | null;
+  data: string;
 };
 
 export type {
@@ -84,5 +105,8 @@ export type {
   TransportConfig,
   LoggerConfig,
   MongoTransportOptions,
+  MongoState,
   SqlTransportOptions,
+  SqlState,
+  LogRow,
 };
