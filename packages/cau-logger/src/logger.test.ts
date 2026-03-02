@@ -1,4 +1,9 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, beforeAll, afterAll } from "vitest";
+import { MongoClient } from "mongodb";
+import knex from "knex";
+
+import type { Knex } from "knex";
+
 import { createLogger } from "./logger";
 import {
   readFileSync,
@@ -203,5 +208,217 @@ describe("createLogger", () => {
     for (const key of keys) {
       expect(allowedKeys).toContain(key);
     }
+  });
+});
+
+describe("createLogger with mongo transport", () => {
+  let logger: CauLogger;
+  let verifyClient: MongoClient;
+
+  const MONGO_URI = ENV.MONGO_URI;
+  const TEST_DB = ENV.TEST.CAU_LOGGER_MONGO_DB_NAME;
+  const TEST_COLLECTION = ENV.TEST.CAU_LOGGER_MONGO_COLLECTION;
+
+  const wait = (ms: number): Promise<void> =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+
+  beforeAll(async () => {
+    verifyClient = new MongoClient(MONGO_URI);
+    await verifyClient.connect();
+    await verifyClient.db(TEST_DB).collection(TEST_COLLECTION).deleteMany({});
+  });
+
+  afterEach(async () => {
+    if (logger) {
+      try {
+        await logger.close();
+      } catch {
+        // transport may already be closed
+      }
+    }
+    await verifyClient.db(TEST_DB).collection(TEST_COLLECTION).deleteMany({});
+  });
+
+  afterAll(async () => {
+    await verifyClient.close();
+  });
+
+  it("should write logs to MongoDB via mongo transport", async () => {
+    logger = createLogger({
+      level: "info",
+      transports: [
+        {
+          type: "mongo",
+          uri: MONGO_URI,
+          database: TEST_DB,
+          collection: TEST_COLLECTION,
+          batchSize: 2,
+          flushInterval: 60000,
+        },
+      ],
+    });
+
+    logger.info("logger mongo test message");
+    logger.warn({ extra: "data" }, "logger mongo warning");
+
+    await logger.flush();
+    await wait(2000);
+
+    const docs = await verifyClient
+      .db(TEST_DB)
+      .collection(TEST_COLLECTION)
+      .find({})
+      .toArray();
+
+    expect(docs.length).toBeGreaterThanOrEqual(1);
+    const msgDoc = docs.find((d) => d.msg === "logger mongo test message");
+    expect(msgDoc).toBeDefined();
+    expect(msgDoc?.level).toBe(30);
+    expect(msgDoc?.time).toBeTypeOf("number");
+  });
+
+  it("should preserve context and bindings when writing to MongoDB", async () => {
+    logger = createLogger({
+      level: "info",
+      context: "LoggerMongoTest",
+      transports: [
+        {
+          type: "mongo",
+          uri: MONGO_URI,
+          database: TEST_DB,
+          collection: TEST_COLLECTION,
+          batchSize: 1,
+          flushInterval: 60000,
+        },
+      ],
+    });
+
+    const child = logger.child({ requestId: "req-mongo-123" });
+    child.info("child logger mongo message");
+
+    await logger.flush();
+    await wait(2000);
+
+    const docs = await verifyClient
+      .db(TEST_DB)
+      .collection(TEST_COLLECTION)
+      .find({})
+      .toArray();
+
+    expect(docs.length).toBe(1);
+    expect(docs[0].msg).toBe("child logger mongo message");
+    expect(docs[0].context).toBe("LoggerMongoTest");
+    expect(docs[0].requestId).toBe("req-mongo-123");
+  });
+});
+
+describe("createLogger with sql transport", () => {
+  let logger: CauLogger;
+  let verifyDb: Knex;
+
+  const PG_CONNECTION = ENV.PG_CONNECTION_URL;
+  const TEST_TABLE = ENV.TEST.CAU_LOGGER_SQL_TABLE;
+
+  const KNEX_CONFIG: Knex.Config = {
+    client: "pg",
+    connection: PG_CONNECTION,
+  };
+
+  const wait = (ms: number): Promise<void> =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+
+  beforeAll(async () => {
+    verifyDb = knex(KNEX_CONFIG);
+
+    await verifyDb.schema.dropTableIfExists(TEST_TABLE);
+    await verifyDb.schema.createTable(TEST_TABLE, (t) => {
+      t.increments("id").primary();
+      t.integer("level").notNullable();
+      t.timestamp("timestamp").notNullable();
+      t.text("message").notNullable();
+      t.text("context").nullable();
+      t.jsonb("data").notNullable();
+    });
+  });
+
+  afterEach(async () => {
+    if (logger) {
+      try {
+        await logger.close();
+      } catch {
+        // transport may already be closed
+      }
+    }
+    await verifyDb(TEST_TABLE).truncate();
+  });
+
+  afterAll(async () => {
+    await verifyDb.schema.dropTableIfExists(TEST_TABLE);
+    await verifyDb.destroy();
+  });
+
+  it("should write logs to PostgreSQL via sql transport", async () => {
+    logger = createLogger({
+      level: "info",
+      transports: [
+        {
+          type: "sql",
+          knexConfig: KNEX_CONFIG as Record<string, unknown>,
+          table: TEST_TABLE,
+          batchSize: 2,
+          flushInterval: 60000,
+        },
+      ],
+    });
+
+    logger.info("logger sql test message");
+    logger.warn({ extra: "data" }, "logger sql warning");
+
+    await logger.flush();
+    await wait(2000);
+
+    const rows = await verifyDb(TEST_TABLE).select("*");
+
+    expect(rows.length).toBeGreaterThanOrEqual(1);
+    const msgRow = rows.find(
+      (r: { message: string }) => r.message === "logger sql test message",
+    );
+    expect(msgRow).toBeDefined();
+    expect(msgRow?.level).toBe(30);
+    expect(msgRow?.timestamp).toBeDefined();
+  });
+
+  it("should preserve context and bindings when writing to PostgreSQL", async () => {
+    logger = createLogger({
+      level: "info",
+      context: "LoggerSqlTest",
+      transports: [
+        {
+          type: "sql",
+          knexConfig: KNEX_CONFIG as Record<string, unknown>,
+          table: TEST_TABLE,
+          batchSize: 1,
+          flushInterval: 60000,
+        },
+      ],
+    });
+
+    const child = logger.child({ requestId: "req-sql-456" });
+    child.info("child logger sql message");
+
+    await logger.flush();
+    await wait(2000);
+
+    const rows = await verifyDb(TEST_TABLE).select("*");
+
+    expect(rows.length).toBe(1);
+    expect(rows[0].message).toBe("child logger sql message");
+    expect(rows[0].context).toBe("LoggerSqlTest");
+
+    const data =
+      typeof rows[0].data === "string"
+        ? JSON.parse(rows[0].data)
+        : rows[0].data;
+    expect(data.requestId).toBe("req-sql-456");
   });
 });

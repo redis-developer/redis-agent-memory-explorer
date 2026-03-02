@@ -1,11 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { join } from "node:path";
 
 import { buildTargets, buildTarget } from "./build-targets.util";
 
 import type { TransportConfig } from "../types";
-
-const TRANSPORT_DIR = join(__dirname, "..", "transports");
 
 describe("buildTarget", () => {
   describe("console transport", () => {
@@ -105,7 +102,7 @@ describe("buildTarget", () => {
       };
       const target = buildTarget(config);
 
-      expect(target.target).toBe(join(TRANSPORT_DIR, "mongo.transport.js"));
+      expect(target.target).toMatch(/[/\\]transports[/\\]mongo\.transport\.js$/);
       expect(target.options.uri).toBe("mongodb://localhost:27017");
       expect(target.options.database).toBe("testdb");
       expect(target.options.collection).toBe("logs");
@@ -138,7 +135,7 @@ describe("buildTarget", () => {
       };
       const target = buildTarget(config);
 
-      expect(target.target).toBe(join(TRANSPORT_DIR, "sql.transport.js"));
+      expect(target.target).toMatch(/[/\\]transports[/\\]sql\.transport\.js$/);
       expect(target.options.knexConfig).toEqual({
         client: "pg",
         connection: "postgres://localhost/test",

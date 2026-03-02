@@ -73,8 +73,6 @@ reqLogger.info("Processing order");
 ## Graceful Shutdown
 
 ```typescript
-import { flushAsync } from "cau-logger";
-
 process.on("SIGTERM", async () => {
   await logger.close();
   process.exit(0);

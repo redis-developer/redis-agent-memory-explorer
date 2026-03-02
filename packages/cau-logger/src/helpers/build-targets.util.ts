@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { existsSync } from "node:fs";
 
 import { ENV } from "../config";
 
@@ -22,7 +23,21 @@ type PinoTarget = {
   options: Record<string, unknown>;
 };
 
-const TRANSPORT_DIR = join(__dirname, "..", "transports");
+const getTransportDir = (): string => {
+  const dirnameTransports = join(__dirname, "..", "transports");
+  const mongoInDirname = join(dirnameTransports, "mongo.transport.js");
+  if (existsSync(mongoInDirname)) {
+    return dirnameTransports;
+  }
+  const distTransports = join(process.cwd(), "dist", "transports");
+  const mongoInDist = join(distTransports, "mongo.transport.js");
+  if (existsSync(mongoInDist)) {
+    return distTransports;
+  }
+  return dirnameTransports;
+};
+
+const TRANSPORT_DIR = getTransportDir();
 
 const buildConsoleTarget = (config: ConsoleTransportConfig): PinoTarget => {
   const isPretty = config.pretty ?? ENV.NODE_ENV !== "production";
