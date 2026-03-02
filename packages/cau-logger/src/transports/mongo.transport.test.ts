@@ -31,6 +31,9 @@ describe("MongoTransport", () => {
   });
 
   it("should insert log records into MongoDB after reaching batchSize", async () => {
+    const msg1 = "batch msg 1";
+    const msg2 = "batch msg 2";
+
     const stream = mongoTransport({
       uri: MONGO_URI,
       database: TEST_DB,
@@ -42,12 +45,12 @@ describe("MongoTransport", () => {
     const record1 = JSON.stringify({
       level: 30,
       time: Date.now(),
-      msg: "batch msg 1",
+      msg: msg1,
     });
     const record2 = JSON.stringify({
       level: 30,
       time: Date.now(),
-      msg: "batch msg 2",
+      msg: msg2,
     });
 
     stream.write(record1 + "\n");
@@ -61,13 +64,15 @@ describe("MongoTransport", () => {
       .find({})
       .toArray();
 
-    expect(docs.find((d) => d.msg === "batch msg 1")).toBeDefined();
-    expect(docs.find((d) => d.msg === "batch msg 2")).toBeDefined();
+    expect(docs.find((d) => d.msg === msg1)).toBeDefined();
+    expect(docs.find((d) => d.msg === msg2)).toBeDefined();
 
     await new Promise<void>((resolve) => stream.end(() => resolve()));
   });
 
   it("should flush remaining records on interval timer", async () => {
+    const msg = "interval flush msg";
+
     const stream = mongoTransport({
       uri: MONGO_URI,
       database: TEST_DB,
@@ -79,7 +84,7 @@ describe("MongoTransport", () => {
     const record = JSON.stringify({
       level: 40,
       time: Date.now(),
-      msg: "interval flush msg",
+      msg,
     });
     stream.write(record + "\n");
 
@@ -91,7 +96,7 @@ describe("MongoTransport", () => {
       .find({})
       .toArray();
 
-    const msgDoc = docs.find((d) => d.msg === "interval flush msg");
+    const msgDoc = docs.find((d) => d.msg === msg);
     expect(msgDoc).toBeDefined();
     expect(msgDoc?.level).toBe(40);
 
@@ -99,6 +104,8 @@ describe("MongoTransport", () => {
   });
 
   it("should flush remaining records when stream ends", async () => {
+    const msg = "close flush msg";
+
     const stream = mongoTransport({
       uri: MONGO_URI,
       database: TEST_DB,
@@ -110,7 +117,7 @@ describe("MongoTransport", () => {
     const record = JSON.stringify({
       level: 50,
       time: Date.now(),
-      msg: "close flush msg",
+      msg,
     });
     stream.write(record + "\n");
 
@@ -123,11 +130,17 @@ describe("MongoTransport", () => {
       .find({})
       .toArray();
 
-    const msgDoc = docs.find((d) => d.msg === "close flush msg");
+    const msgDoc = docs.find((d) => d.msg === msg);
     expect(msgDoc).toBeDefined();
   });
 
   it("should preserve all fields from the log record", async () => {
+    const msg = "structured log";
+    const context = "OrderService";
+    const requestId = "req-abc-123";
+    const userId = "user-42";
+    const now = Date.now();
+
     const stream = mongoTransport({
       uri: MONGO_URI,
       database: TEST_DB,
@@ -136,14 +149,13 @@ describe("MongoTransport", () => {
       flushInterval: 60000,
     });
 
-    const now = Date.now();
     const record = JSON.stringify({
       level: 30,
       time: now,
-      msg: "structured log",
-      context: "OrderService",
-      requestId: "req-abc-123",
-      userId: "user-42",
+      msg,
+      context,
+      requestId,
+      userId,
     });
 
     stream.write(record + "\n");
@@ -155,11 +167,11 @@ describe("MongoTransport", () => {
       .find({})
       .toArray();
 
-    const msgDoc = docs.find((d) => d.msg === "structured log");
+    const msgDoc = docs.find((d) => d.msg === msg);
     expect(msgDoc).toBeDefined();
-    expect(msgDoc?.context).toBe("OrderService");
-    expect(msgDoc?.requestId).toBe("req-abc-123");
-    expect(msgDoc?.userId).toBe("user-42");
+    expect(msgDoc?.context).toBe(context);
+    expect(msgDoc?.requestId).toBe(requestId);
+    expect(msgDoc?.userId).toBe(userId);
     expect(msgDoc?.time).toBe(now);
 
     await new Promise<void>((resolve) => stream.end(() => resolve()));

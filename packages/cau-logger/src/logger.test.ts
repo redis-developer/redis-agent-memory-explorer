@@ -119,13 +119,14 @@ describe("Logger", () => {
   it("should write logs to a file via file transport", async () => {
     ensureTmpDir();
     const logPath = join(TMP_DIR, "test.log");
+    const msg = "test file message";
 
     logger = Logger.create({
       level: LogLevel.INFO,
       transports: [{ type: TransportType.FILE, path: logPath, mkdir: true }],
     });
 
-    logger.info("test file message");
+    logger.info(msg);
     logger.warn("test warning", { extra: "data" });
 
     await logger.close();
@@ -141,7 +142,7 @@ describe("Logger", () => {
       expect(lines.length).toBeGreaterThanOrEqual(1);
 
       const firstRecord = JSON.parse(lines[0]);
-      expect(firstRecord.msg).toBe("test file message");
+      expect(firstRecord.msg).toBe(msg);
       expect(firstRecord.level).toBe(30);
       expect(firstRecord.time).toBeTypeOf("number");
     }
@@ -245,6 +246,8 @@ describe("Logger with mongo transport", () => {
   });
 
   it("should write logs to MongoDB via mongo transport", async () => {
+    const msg = "logger mongo test message";
+
     logger = Logger.create({
       level: LogLevel.INFO,
       transports: [
@@ -259,7 +262,7 @@ describe("Logger with mongo transport", () => {
       ],
     });
 
-    logger.info("logger mongo test message");
+    logger.info(msg);
     logger.warn("logger mongo warning", { extra: "data" });
 
     await logger.close();
@@ -272,16 +275,20 @@ describe("Logger with mongo transport", () => {
       .toArray();
 
     expect(docs.length).toBeGreaterThanOrEqual(1);
-    const msgDoc = docs.find((d) => d.msg === "logger mongo test message");
+    const msgDoc = docs.find((d) => d.msg === msg);
     expect(msgDoc).toBeDefined();
     expect(msgDoc?.level).toBe(30);
     expect(msgDoc?.time).toBeTypeOf("number");
   });
 
   it("should preserve context and bindings when writing to MongoDB", async () => {
+    const msg = "child logger mongo message";
+    const context = "LoggerMongoTest";
+    const requestId = "req-mongo-123";
+
     logger = Logger.create({
       level: LogLevel.INFO,
-      context: "LoggerMongoTest",
+      context,
       transports: [
         {
           type: TransportType.MONGO,
@@ -294,8 +301,8 @@ describe("Logger with mongo transport", () => {
       ],
     });
 
-    const child = logger.child({ requestId: "req-mongo-123" });
-    child.info("child logger mongo message");
+    const child = logger.child({ requestId });
+    child.info(msg);
 
     await logger.close();
     await wait(2000);
@@ -306,10 +313,10 @@ describe("Logger with mongo transport", () => {
       .find({})
       .toArray();
 
-    const msgDoc = docs.find((d) => d.msg === "child logger mongo message");
+    const msgDoc = docs.find((d) => d.msg === msg);
     expect(msgDoc).toBeDefined();
-    expect(msgDoc?.context).toBe("LoggerMongoTest");
-    expect(msgDoc?.requestId).toBe("req-mongo-123");
+    expect(msgDoc?.context).toBe(context);
+    expect(msgDoc?.requestId).toBe(requestId);
   });
 });
 
@@ -359,6 +366,8 @@ describe("Logger with sql transport", () => {
   });
 
   it("should write logs to PostgreSQL via sql transport", async () => {
+    const msg = "logger sql test message";
+
     logger = Logger.create({
       level: LogLevel.INFO,
       transports: [
@@ -372,7 +381,7 @@ describe("Logger with sql transport", () => {
       ],
     });
 
-    logger.info("logger sql test message");
+    logger.info(msg);
     logger.warn("logger sql warning", { extra: "data" });
 
     await logger.close();
@@ -382,7 +391,7 @@ describe("Logger with sql transport", () => {
 
     expect(rows.length).toBeGreaterThanOrEqual(1);
     const msgRow = rows.find(
-      (r: { message: string }) => r.message === "logger sql test message",
+      (r: { message: string }) => r.message === msg,
     );
     expect(msgRow).toBeDefined();
     expect(msgRow?.level).toBe(30);
@@ -390,9 +399,13 @@ describe("Logger with sql transport", () => {
   });
 
   it("should preserve context and bindings when writing to PostgreSQL", async () => {
+    const msg = "child logger sql message";
+    const context = "LoggerSqlTest";
+    const requestId = "req-sql-456";
+
     logger = Logger.create({
       level: LogLevel.INFO,
-      context: "LoggerSqlTest",
+      context,
       transports: [
         {
           type: TransportType.SQL,
@@ -404,8 +417,8 @@ describe("Logger with sql transport", () => {
       ],
     });
 
-    const child = logger.child({ requestId: "req-sql-456" });
-    child.info("child logger sql message");
+    const child = logger.child({ requestId });
+    child.info(msg);
 
     await logger.close();
     await wait(2000);
@@ -413,13 +426,13 @@ describe("Logger with sql transport", () => {
     const rows = await verifyDb(TEST_TABLE).select("*");
 
     const msgRow = rows.find(
-      (r: { message: string }) => r.message === "child logger sql message",
+      (r: { message: string }) => r.message === msg,
     );
     expect(msgRow).toBeDefined();
-    expect(msgRow?.context).toBe("LoggerSqlTest");
+    expect(msgRow?.context).toBe(context);
 
     const data =
       typeof msgRow?.data === "string" ? JSON.parse(msgRow.data) : msgRow?.data;
-    expect(data.requestId).toBe("req-sql-456");
+    expect(data.requestId).toBe(requestId);
   });
 });
