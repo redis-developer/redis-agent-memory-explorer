@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { MongoClient } from "mongodb";
 
+import { ENV } from "../config";
 import mongoTransport from "./mongo.transport";
 
-const MONGO_URI = process.env.MONGO_URI!;
-const TEST_DB = process.env.CAU_TEST_MONGO_DB!;
-const TEST_COLLECTION = process.env.CAU_TEST_MONGO_COLLECTION!;
+const MONGO_URI = ENV.MONGO_URI;
+const TEST_DB = ENV.TEST.CAU_LOGGER_MONGO_DB_NAME;
+const TEST_COLLECTION = ENV.TEST.CAU_LOGGER_MONGO_COLLECTION;
 
 const wait = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -37,8 +38,16 @@ describe("MongoTransport", () => {
       flushInterval: 60000,
     });
 
-    const record1 = JSON.stringify({ level: 30, time: Date.now(), msg: "batch msg 1" });
-    const record2 = JSON.stringify({ level: 30, time: Date.now(), msg: "batch msg 2" });
+    const record1 = JSON.stringify({
+      level: 30,
+      time: Date.now(),
+      msg: "batch msg 1",
+    });
+    const record2 = JSON.stringify({
+      level: 30,
+      time: Date.now(),
+      msg: "batch msg 2",
+    });
 
     stream.write(record1 + "\n");
     stream.write(record2 + "\n");
@@ -67,7 +76,11 @@ describe("MongoTransport", () => {
       flushInterval: 500,
     });
 
-    const record = JSON.stringify({ level: 40, time: Date.now(), msg: "interval flush msg" });
+    const record = JSON.stringify({
+      level: 40,
+      time: Date.now(),
+      msg: "interval flush msg",
+    });
     stream.write(record + "\n");
 
     await wait(2000);
@@ -94,7 +107,11 @@ describe("MongoTransport", () => {
       flushInterval: 60000,
     });
 
-    const record = JSON.stringify({ level: 50, time: Date.now(), msg: "close flush msg" });
+    const record = JSON.stringify({
+      level: 50,
+      time: Date.now(),
+      msg: "close flush msg",
+    });
     stream.write(record + "\n");
 
     await new Promise<void>((resolve) => stream.end(() => resolve()));

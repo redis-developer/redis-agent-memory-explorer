@@ -1,5 +1,7 @@
 import { join } from "node:path";
 
+import { ENV } from "../config";
+
 import type {
   TransportConfig,
   ConsoleTransportConfig,
@@ -23,7 +25,7 @@ type PinoTarget = {
 const TRANSPORT_DIR = join(__dirname, "..", "transports");
 
 const buildConsoleTarget = (config: ConsoleTransportConfig): PinoTarget => {
-  const isPretty = config.pretty ?? process.env.NODE_ENV !== "production";
+  const isPretty = config.pretty ?? ENV.NODE_ENV !== "production";
   const dest = config.destination === "stderr" ? 2 : 1;
 
   if (isPretty) {

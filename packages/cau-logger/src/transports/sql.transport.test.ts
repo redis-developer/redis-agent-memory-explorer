@@ -3,10 +3,11 @@ import knex from "knex";
 
 import type { Knex } from "knex";
 
+import { ENV } from "../config";
 import sqlTransport from "./sql.transport";
 
-const PG_CONNECTION = process.env.PG_CONNECTION_URL!;
-const TEST_TABLE = process.env.CAU_TEST_SQL_TABLE!;
+const PG_CONNECTION = ENV.PG_CONNECTION_URL;
+const TEST_TABLE = ENV.TEST.CAU_LOGGER_SQL_TABLE;
 
 const KNEX_CONFIG: Knex.Config = {
   client: "pg",

@@ -4,9 +4,10 @@ import { readFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
+import { ENV } from "./config";
 import type { CauLogger } from "./types";
 
-const TMP_DIR = join(tmpdir(), process.env.CAU_TEST_TMP_SUFFIX ?? "cau-logger-test");
+const TMP_DIR = join(tmpdir(), ENV.TEST.CAU_LOGGER_TMP_SUFFIX);
 
 const ensureTmpDir = () => {
   if (!existsSync(TMP_DIR)) {
