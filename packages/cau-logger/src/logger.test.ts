@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 
 import type { CauLogger } from "./types";
 
-const TMP_DIR = join(tmpdir(), "cau-logger-test");
+const TMP_DIR = join(tmpdir(), process.env.CAU_TEST_TMP_SUFFIX ?? "cau-logger-test");
 
 const ensureTmpDir = () => {
   if (!existsSync(TMP_DIR)) {

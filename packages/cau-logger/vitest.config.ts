@@ -5,6 +5,7 @@ const config = defineConfig({
     globals: true,
     include: ["src/**/*.test.ts"],
     testTimeout: 15000,
+    setupFiles: ["./vitest.setup.ts"],
   },
 });
 

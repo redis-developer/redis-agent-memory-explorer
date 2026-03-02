@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.3.3",
+    "dotenv": "^16.4.5",
     "knex": "^3.1.0",
     "mongodb": "^7.1.0",
     "pg": "^8.19.0",

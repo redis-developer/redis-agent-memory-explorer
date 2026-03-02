@@ -3,9 +3,9 @@ import { MongoClient } from "mongodb";
 
 import mongoTransport from "./mongo.transport";
 
-const MONGO_URI = process.env.MONGO_URI ?? "mongodb://localhost:27017";
-const TEST_DB = "cau_logger_test";
-const TEST_COLLECTION = "test_logs";
+const MONGO_URI = process.env.MONGO_URI!;
+const TEST_DB = process.env.CAU_TEST_MONGO_DB!;
+const TEST_COLLECTION = process.env.CAU_TEST_MONGO_COLLECTION!;
 
 const wait = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
