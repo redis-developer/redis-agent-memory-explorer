@@ -16,7 +16,7 @@ import { join } from "node:path";
 
 import { ENV } from "./config";
 
-const TMP_DIR = join(process.cwd(), ENV.TEST.CAU_LOGGER_TMP_SUFFIX);
+const TMP_DIR = join(process.cwd(), ENV.TEST.CAU_LOGGER_FOLDER_NAME);
 
 const ensureTmpDir = (): void => {
   const needsCreate = !existsSync(TMP_DIR);
