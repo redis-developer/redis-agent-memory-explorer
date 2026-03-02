@@ -2,7 +2,7 @@
 
 Fast, multi-transport logger built on [Pino](https://github.com/pinojs/pino) for [custom-agent-utils](https://github.com/maakrupa/custom-agent-utils).
 
-Provides a single `createLogger` call that declaratively wires console, file, MongoDB, and SQL transports. All heavy I/O runs in Pino worker threads -- logging never blocks the main thread.
+`Logger` is a singleton-friendly class that declaratively wires console, file, MongoDB, and SQL transports. All heavy I/O runs in Pino worker threads -- logging never blocks the main thread.
 
 ## Install
 
@@ -20,24 +20,39 @@ npm install knex pg   # for sql transport (pg, mysql2, better-sqlite3, etc.)
 ## Quick Start
 
 ```typescript
-import { createLogger } from "cau-logger";
+import { Logger } from "cau-logger";
 
-const logger = createLogger({
+const logger = Logger.create({
   level: "info",
   context: "AppBootstrap",
   transports: [{ type: "console", format: "pretty" }],
 });
 
 logger.info("Server started on port 3000");
-logger.error({ err }, "Unhandled rejection");
+logger.error("Unhandled rejection", { err });
+```
+
+## Singleton
+
+```typescript
+import { Logger } from "cau-logger";
+
+// First call creates the instance; subsequent calls return the same one.
+const logger = Logger.getInstance({
+  level: "info",
+  transports: [{ type: "console", format: "pretty" }],
+});
+
+// Elsewhere in the app -- same instance, no config needed.
+const logger = Logger.getInstance();
 ```
 
 ## Multi-Transport
 
 ```typescript
-import { createLogger } from "cau-logger";
+import { Logger } from "cau-logger";
 
-const logger = createLogger({
+const logger = Logger.create({
   level: "debug",
   redact: ["password", "req.headers.authorization"],
   transports: [
@@ -67,7 +82,8 @@ const logger = createLogger({
 ```typescript
 const reqLogger = logger.child({ requestId: req.id, userId: req.user?.id });
 reqLogger.info("Processing order");
-// => { ..., requestId: "abc-123", userId: "u-42", msg: "Processing order" }
+reqLogger.warn("Inventory low", { sku: "WIDGET-42", remaining: 3 });
+// => { ..., requestId: "abc-123", userId: "u-42", sku: "WIDGET-42", remaining: 3, msg: "Inventory low" }
 ```
 
 ## Graceful Shutdown
@@ -81,27 +97,29 @@ process.on("SIGTERM", async () => {
 
 ## API
 
-### `createLogger(config: LoggerConfig): CauLogger`
+### `Logger` class
 
-Creates a logger with the given transports.
+| Method / Property | Signature | Description |
+| --- | --- | --- |
+| `Logger.create(config?)` | `(config?: LoggerConfig) => Logger` | Creates a new logger instance |
+| `Logger.getInstance(config?)` | `(config?: LoggerConfig) => Logger` | Returns (or creates) the singleton instance |
+| `Logger.reset()` | `() => void` | Clears the singleton (useful in tests) |
+| `trace`, `debug`, `info`, `warn`, `error`, `fatal` | `(msg: string, data?: Record<string, unknown>) => void` | Standard log-level methods |
+| `child(bindings)` | `(bindings: Record<string, unknown>) => Logger` | Creates a child logger with merged bindings |
+| `level` | `LogLevel` (get/set) | Read or change the minimum log level at runtime |
+| `isLevelEnabled(level)` | `(level: LogLevel) => boolean` | Check if a level would produce output |
+| `flush()` | `() => Promise<void>` | Flushes buffered logs |
+| `close()` | `() => Promise<void>` | Flushes all transports and ends the transport stream |
 
 **LoggerConfig:**
 
-| Field        | Type                | Default  | Description                                 |
-| ------------ | ------------------- | -------- | ------------------------------------------- |
-| `level`      | `LogLevel`          | `"info"` | Minimum log level                           |
-| `context`    | `string`            | --       | Persistent context label added to every log |
-| `redact`     | `string[]`          | --       | Paths to redact (e.g. `["password"]`)       |
-| `transports` | `TransportConfig[]` | --       | Array of transport configurations           |
-| `timestamp`  | `boolean`           | `true`   | Include epoch-ms timestamp                  |
-
-### `CauLogger`
-
-The library-agnostic logger interface:
-
-- `close(): Promise<void>` -- flushes all transports and ends the transport stream.
-
-All standard methods are available: `trace`, `debug`, `info`, `warn`, `error`, `fatal`, `child`, `flush`, `isLevelEnabled`.
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `level` | `LogLevel` | `"info"` | Minimum log level |
+| `context` | `string` | -- | Persistent context label added to every log |
+| `redact` | `string[]` | -- | Paths to redact (e.g. `["password"]`) |
+| `transports` | `TransportConfig[]` | -- | Array of transport configurations |
+| `timestamp` | `boolean` | `true` | Include epoch-ms timestamp |
 
 ## Transport Reference
 
@@ -163,15 +181,15 @@ Adjust column types for your database dialect (e.g. `TEXT` instead of `JSONB` fo
 
 ## Log Levels
 
-| Level    | Numeric | Usage                      |
-| -------- | ------- | -------------------------- |
-| `trace`  | 10      | Fine-grained debugging     |
-| `debug`  | 20      | Debugging information      |
-| `info`   | 30      | Normal operation           |
-| `warn`   | 40      | Potential issues           |
-| `error`  | 50      | Errors that need attention |
-| `fatal`  | 60      | Unrecoverable errors       |
-| `silent` | --      | Disables logging           |
+| Level | Numeric | Usage |
+| --- | --- | --- |
+| `trace` | 10 | Fine-grained debugging |
+| `debug` | 20 | Debugging information |
+| `info` | 30 | Normal operation |
+| `warn` | 40 | Potential issues |
+| `error` | 50 | Errors that need attention |
+| `fatal` | 60 | Unrecoverable errors |
+| `silent` | -- | Disables logging |
 
 ## Test Dockers
 

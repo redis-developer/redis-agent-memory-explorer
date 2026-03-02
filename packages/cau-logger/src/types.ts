@@ -1,26 +1,6 @@
 type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "silent";
 
-type LogMethod = {
-  (msg: string, ...args: unknown[]): void;
-  (obj: Record<string, unknown>, msg?: string, ...args: unknown[]): void;
-};
-
-type CauLogger = {
-  trace: LogMethod;
-  debug: LogMethod;
-  info: LogMethod;
-  warn: LogMethod;
-  error: LogMethod;
-  fatal: LogMethod;
-
-  child: (bindings: Record<string, unknown>) => CauLogger;
-
-  level: LogLevel;
-  isLevelEnabled: (level: LogLevel) => boolean;
-
-  flush: () => Promise<void>;
-  close: () => Promise<void>;
-};
+type LogMethod = (msg: string, data?: Record<string, unknown>) => void;
 
 type ConsoleTransportConfig = {
   type: "console";
@@ -91,7 +71,6 @@ type SqlTransportOptions = {
 export type {
   LogLevel,
   LogMethod,
-  CauLogger,
   ConsoleTransportConfig,
   FileTransportConfig,
   MongoTransportConfig,

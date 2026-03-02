@@ -1,9 +1,9 @@
 ---
 name: cau-logger
-description: Fast, multi-transport structured logger (console, file, MongoDB, SQL). Built on Pino with a library-agnostic CauLogger interface. Use when the user needs logging with any combination of console, file, MongoDB, or relational database output.
+description: Fast, multi-transport structured logger (console, file, MongoDB, SQL). Built on Pino with a class-based Logger exposing static factory and singleton methods. Use when the user needs logging with any combination of console, file, MongoDB, or relational database output.
 metadata:
   author: prasan
-  version: "0.1.0"
+  version: "0.2.0"
   repo: git@github.com:PrasanKumar93/custom-agent-utils.git
   path: packages/cau-logger
   dest: utils/cau-logger
@@ -99,10 +99,14 @@ cd utils/cau-logger && npm install && npm run build
 ## Quick usage (vendored path)
 
 ```typescript
-import { createLogger } from "./utils/cau-logger";
+import { Logger } from "./utils/cau-logger";
 
-const logger = createLogger();
+// New instance per use-case
+const logger = Logger.create();
 logger.info("Server started");
+
+// Or use the singleton
+const logger = Logger.getInstance({ level: "info" });
 ```
 
 See [README.md](./README.md) for multi-transport config, child loggers, graceful shutdown, and full API.

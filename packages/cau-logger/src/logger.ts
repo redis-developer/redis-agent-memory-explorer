@@ -5,74 +5,106 @@ import type { Logger as PinoLogger } from "pino";
 import { buildTargets } from "./helpers/build-targets.util";
 import { DEFAULT_LOG_LEVEL } from "./constants";
 
-import type { LoggerConfig, LogLevel, CauLogger } from "./types";
+import type { LoggerConfig, LogLevel, LogMethod } from "./types";
 
 const DEFAULT_TRANSPORTS = [{ type: "console" as const }];
 
-const wrapLogger = (
-  instance: PinoLogger,
-  transport: ReturnType<typeof pino.transport>,
-): CauLogger => ({
-  trace: ((...args: unknown[]) =>
-    (instance.trace as Function).apply(instance, args)) as CauLogger["trace"],
-  debug: ((...args: unknown[]) =>
-    (instance.debug as Function).apply(instance, args)) as CauLogger["debug"],
-  info: ((...args: unknown[]) =>
-    (instance.info as Function).apply(instance, args)) as CauLogger["info"],
-  warn: ((...args: unknown[]) =>
-    (instance.warn as Function).apply(instance, args)) as CauLogger["warn"],
-  error: ((...args: unknown[]) =>
-    (instance.error as Function).apply(instance, args)) as CauLogger["error"],
-  fatal: ((...args: unknown[]) =>
-    (instance.fatal as Function).apply(instance, args)) as CauLogger["fatal"],
+class Logger {
+  static #instance: Logger | null = null;
 
-  child: (bindings: Record<string, unknown>): CauLogger =>
-    wrapLogger(instance.child(bindings), transport),
+  #pino: PinoLogger;
+  #transport: ReturnType<typeof pino.transport>;
 
-  get level(): LogLevel {
-    return instance.level as LogLevel;
-  },
-  set level(value: LogLevel) {
-    instance.level = value;
-  },
+  private constructor(
+    pinoInstance: PinoLogger,
+    transport: ReturnType<typeof pino.transport>,
+  ) {
+    this.#pino = pinoInstance;
+    this.#transport = transport;
+  }
 
-  isLevelEnabled: (level: LogLevel): boolean => instance.isLevelEnabled(level),
+  static create(config?: LoggerConfig): Logger {
+    const {
+      level = DEFAULT_LOG_LEVEL,
+      context,
+      redact,
+      transports = DEFAULT_TRANSPORTS,
+      timestamp = true,
+    } = config ?? {};
 
-  flush: (): Promise<void> =>
-    new Promise<void>((resolve, reject) => {
-      instance.flush((err?: Error) => (err ? reject(err) : resolve()));
-    }),
+    const targets = buildTargets(transports);
+    const transport = pino.transport({ targets });
 
-  close: async (): Promise<void> => {
-    await new Promise<void>((resolve, reject) => {
-      instance.flush((err?: Error) => (err ? reject(err) : resolve()));
-    });
-    transport.end();
-  },
-});
+    const options: pino.LoggerOptions = {
+      level,
+      timestamp: timestamp ? () => `,"time":${Date.now()}` : false,
+      ...(redact ? { redact } : {}),
+      base: context ? { context } : {},
+    };
 
-const createLogger = (config?: LoggerConfig): CauLogger => {
-  const {
-    level = DEFAULT_LOG_LEVEL,
-    context,
-    redact,
-    transports = DEFAULT_TRANSPORTS,
-    timestamp = true,
-  } = config ?? {};
+    const instance = pino(options, transport);
 
-  const targets = buildTargets(transports);
-  const transport = pino.transport({ targets });
+    return new Logger(instance, transport);
+  }
 
-  const options: pino.LoggerOptions = {
-    level,
-    timestamp: timestamp ? () => `,"time":${Date.now()}` : false,
-    ...(redact ? { redact } : {}),
-    base: context ? { context } : {},
+  static getInstance(config?: LoggerConfig): Logger {
+    Logger.#instance ??= Logger.create(config);
+    return Logger.#instance;
+  }
+
+  static reset(): void {
+    Logger.#instance = null;
+  }
+
+  trace: LogMethod = (msg, data) => {
+    data ? this.#pino.trace(data, msg) : this.#pino.trace(msg);
   };
 
-  const instance = pino(options, transport);
+  debug: LogMethod = (msg, data) => {
+    data ? this.#pino.debug(data, msg) : this.#pino.debug(msg);
+  };
 
-  return wrapLogger(instance, transport);
-};
+  info: LogMethod = (msg, data) => {
+    data ? this.#pino.info(data, msg) : this.#pino.info(msg);
+  };
 
-export { createLogger };
+  warn: LogMethod = (msg, data) => {
+    data ? this.#pino.warn(data, msg) : this.#pino.warn(msg);
+  };
+
+  error: LogMethod = (msg, data) => {
+    data ? this.#pino.error(data, msg) : this.#pino.error(msg);
+  };
+
+  fatal: LogMethod = (msg, data) => {
+    data ? this.#pino.fatal(data, msg) : this.#pino.fatal(msg);
+  };
+
+  child = (bindings: Record<string, unknown>): Logger =>
+    new Logger(this.#pino.child(bindings), this.#transport);
+
+  get level(): LogLevel {
+    return this.#pino.level as LogLevel;
+  }
+
+  set level(value: LogLevel) {
+    this.#pino.level = value;
+  }
+
+  isLevelEnabled = (level: LogLevel): boolean =>
+    this.#pino.isLevelEnabled(level);
+
+  flush = (): Promise<void> =>
+    new Promise<void>((resolve, reject) => {
+      this.#pino.flush((err?: Error) => (err ? reject(err) : resolve()));
+    });
+
+  close = async (): Promise<void> => {
+    await new Promise<void>((resolve, reject) => {
+      this.#pino.flush((err?: Error) => (err ? reject(err) : resolve()));
+    });
+    this.#transport.end();
+  };
+}
+
+export { Logger };

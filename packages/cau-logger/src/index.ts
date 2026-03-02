@@ -1,9 +1,8 @@
-import { createLogger } from "./logger";
+import { Logger } from "./logger";
 
 import type {
   LogLevel,
   LogMethod,
-  CauLogger,
   ConsoleTransportConfig,
   FileTransportConfig,
   MongoTransportConfig,
@@ -12,12 +11,11 @@ import type {
   LoggerConfig,
 } from "./types";
 
-export { createLogger };
+export { Logger };
 
 export type {
   LogLevel,
   LogMethod,
-  CauLogger,
   ConsoleTransportConfig,
   FileTransportConfig,
   MongoTransportConfig,

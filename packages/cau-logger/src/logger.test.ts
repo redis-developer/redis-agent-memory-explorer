@@ -4,7 +4,7 @@ import knex from "knex";
 
 import type { Knex } from "knex";
 
-import { createLogger } from "./logger";
+import { Logger } from "./logger";
 import {
   readFileSync,
   readdirSync,
@@ -15,7 +15,6 @@ import {
 import { join } from "node:path";
 
 import { ENV } from "./config";
-import type { CauLogger } from "./types";
 
 const TMP_DIR = join(process.cwd(), ENV.TEST.CAU_LOGGER_TMP_SUFFIX);
 
@@ -36,8 +35,8 @@ const cleanTmpDir = (): void => {
 const wait = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-describe("createLogger", () => {
-  let logger: CauLogger;
+describe("Logger", () => {
+  let logger: Logger;
 
   afterEach(async () => {
     if (logger) {
@@ -54,7 +53,7 @@ describe("createLogger", () => {
   });
 
   it("should create a logger with zero config (sensible defaults)", () => {
-    logger = createLogger();
+    logger = Logger.create();
 
     expect(logger).toBeDefined();
     expect(logger.info).toBeTypeOf("function");
@@ -65,7 +64,7 @@ describe("createLogger", () => {
   });
 
   it("should create a logger with console transport", () => {
-    logger = createLogger({
+    logger = Logger.create({
       level: "info",
       transports: [{ type: "console", format: "json" }],
     });
@@ -78,7 +77,7 @@ describe("createLogger", () => {
   });
 
   it("should support all log level methods", () => {
-    logger = createLogger({
+    logger = Logger.create({
       level: "trace",
       transports: [{ type: "console", format: "json" }],
     });
@@ -92,7 +91,7 @@ describe("createLogger", () => {
   });
 
   it("should create a child logger with merged bindings", () => {
-    logger = createLogger({
+    logger = Logger.create({
       level: "info",
       transports: [{ type: "console", format: "json" }],
     });
@@ -107,7 +106,7 @@ describe("createLogger", () => {
   });
 
   it("should set context in base bindings", () => {
-    logger = createLogger({
+    logger = Logger.create({
       level: "info",
       context: "TestService",
       transports: [{ type: "console", format: "json" }],
@@ -120,13 +119,13 @@ describe("createLogger", () => {
     ensureTmpDir();
     const logPath = join(TMP_DIR, "test.log");
 
-    logger = createLogger({
+    logger = Logger.create({
       level: "info",
       transports: [{ type: "file", path: logPath, mkdir: true }],
     });
 
     logger.info("test file message");
-    logger.warn({ extra: "data" }, "test warning");
+    logger.warn("test warning", { extra: "data" });
 
     await logger.flush();
     await wait(500);
@@ -150,7 +149,7 @@ describe("createLogger", () => {
   it("should support multiple transports simultaneously", () => {
     ensureTmpDir();
 
-    logger = createLogger({
+    logger = Logger.create({
       level: "debug",
       transports: [
         { type: "console", format: "json" },
@@ -163,7 +162,7 @@ describe("createLogger", () => {
   });
 
   it("should respect the global log level", () => {
-    logger = createLogger({
+    logger = Logger.create({
       level: "warn",
       transports: [{ type: "console", format: "json" }],
     });
@@ -175,7 +174,7 @@ describe("createLogger", () => {
   });
 
   it("should allow changing log level at runtime", () => {
-    logger = createLogger({
+    logger = Logger.create({
       level: "info",
       transports: [{ type: "console", format: "json" }],
     });
@@ -190,9 +189,9 @@ describe("createLogger", () => {
   });
 
   it("should not expose underlying library internals", () => {
-    logger = createLogger();
+    logger = Logger.create();
 
-    const keys = Object.keys(logger);
+    const ownKeys = Object.keys(logger);
     const allowedKeys = [
       "trace",
       "debug",
@@ -201,20 +200,22 @@ describe("createLogger", () => {
       "error",
       "fatal",
       "child",
-      "level",
       "isLevelEnabled",
       "flush",
       "close",
     ];
 
-    for (const key of keys) {
+    for (const key of ownKeys) {
       expect(allowedKeys).toContain(key);
     }
+
+    expect(logger.level).toBeTypeOf("string");
+    expect(logger).toBeInstanceOf(Logger);
   });
 });
 
-describe("createLogger with mongo transport", () => {
-  let logger: CauLogger;
+describe("Logger with mongo transport", () => {
+  let logger: Logger;
   let verifyClient: MongoClient;
 
   const MONGO_URI = ENV.MONGO_URI;
@@ -246,7 +247,7 @@ describe("createLogger with mongo transport", () => {
   });
 
   it("should write logs to MongoDB via mongo transport", async () => {
-    logger = createLogger({
+    logger = Logger.create({
       level: "info",
       transports: [
         {
@@ -261,7 +262,7 @@ describe("createLogger with mongo transport", () => {
     });
 
     logger.info("logger mongo test message");
-    logger.warn({ extra: "data" }, "logger mongo warning");
+    logger.warn("logger mongo warning", { extra: "data" });
 
     await logger.flush();
     await wait(2000);
@@ -280,7 +281,7 @@ describe("createLogger with mongo transport", () => {
   });
 
   it("should preserve context and bindings when writing to MongoDB", async () => {
-    logger = createLogger({
+    logger = Logger.create({
       level: "info",
       context: "LoggerMongoTest",
       transports: [
@@ -314,8 +315,8 @@ describe("createLogger with mongo transport", () => {
   });
 });
 
-describe("createLogger with sql transport", () => {
-  let logger: CauLogger;
+describe("Logger with sql transport", () => {
+  let logger: Logger;
   let verifyDb: Knex;
 
   const PG_CONNECTION = ENV.PG_CONNECTION_URL;
@@ -360,7 +361,7 @@ describe("createLogger with sql transport", () => {
   });
 
   it("should write logs to PostgreSQL via sql transport", async () => {
-    logger = createLogger({
+    logger = Logger.create({
       level: "info",
       transports: [
         {
@@ -374,7 +375,7 @@ describe("createLogger with sql transport", () => {
     });
 
     logger.info("logger sql test message");
-    logger.warn({ extra: "data" }, "logger sql warning");
+    logger.warn("logger sql warning", { extra: "data" });
 
     await logger.flush();
     await wait(2000);
@@ -391,7 +392,7 @@ describe("createLogger with sql transport", () => {
   });
 
   it("should preserve context and bindings when writing to PostgreSQL", async () => {
-    logger = createLogger({
+    logger = Logger.create({
       level: "info",
       context: "LoggerSqlTest",
       transports: [
