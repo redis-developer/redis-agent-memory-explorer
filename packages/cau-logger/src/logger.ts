@@ -1,12 +1,13 @@
 import type { Logger as PinoLogger } from "pino";
-import type { LoggerConfig, LogLevel, LogMethod } from "./types";
+import type { LogLevel } from "./constants";
+import type { LoggerConfig, LogMethod } from "./types";
 
 import pino from "pino";
 
 import { buildTargets } from "./helpers/build-targets.util";
-import { DEFAULT_LOG_LEVEL } from "./constants";
+import { DEFAULT_LOG_LEVEL, TransportType } from "./constants";
 
-const DEFAULT_TRANSPORTS = [{ type: "console" as const }];
+const DEFAULT_TRANSPORTS = [{ type: TransportType.CONSOLE }];
 
 class Logger {
   static #instance: Logger | null = null;

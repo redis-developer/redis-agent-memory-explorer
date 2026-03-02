@@ -1,27 +1,34 @@
-type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal" | "silent";
+import type {
+  LogLevel,
+  LogFormat,
+  OutputDestination,
+  RotationInterval,
+} from "./constants";
+
+import { TransportType } from "./constants";
 
 type LogMethod = (msg: string, data?: Record<string, unknown>) => void;
 
 type ConsoleTransportConfig = {
-  type: "console";
+  type: typeof TransportType.CONSOLE;
   level?: LogLevel;
-  format?: "pretty" | "json";
+  format?: LogFormat;
   colorize?: boolean;
-  destination?: "stdout" | "stderr";
+  destination?: OutputDestination;
 };
 
 type FileTransportConfig = {
-  type: "file";
+  type: typeof TransportType.FILE;
   level?: LogLevel;
   path: string;
-  rotation?: "daily" | "hourly" | number;
+  rotation?: RotationInterval | number;
   maxSize?: string | number;
   maxFiles?: number;
   mkdir?: boolean;
 };
 
 type MongoTransportConfig = {
-  type: "mongo";
+  type: typeof TransportType.MONGO;
   level?: LogLevel;
   uri: string;
   database: string;
@@ -31,7 +38,7 @@ type MongoTransportConfig = {
 };
 
 type SqlTransportConfig = {
-  type: "sql";
+  type: typeof TransportType.SQL;
   level?: LogLevel;
   connection: Record<string, unknown>;
   table?: string;
@@ -69,7 +76,6 @@ type SqlTransportOptions = {
 };
 
 export type {
-  LogLevel,
   LogMethod,
   ConsoleTransportConfig,
   FileTransportConfig,

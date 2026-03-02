@@ -1,7 +1,4 @@
-import { Logger } from "./logger";
-
 import type {
-  LogLevel,
   LogMethod,
   ConsoleTransportConfig,
   FileTransportConfig,
@@ -11,10 +8,25 @@ import type {
   LoggerConfig,
 } from "./types";
 
-export { Logger };
+import { Logger } from "./logger";
+import {
+  LogLevel,
+  TransportType,
+  LogFormat,
+  OutputDestination,
+  RotationInterval,
+} from "./constants";
+
+export {
+  Logger,
+  LogLevel,
+  TransportType,
+  LogFormat,
+  OutputDestination,
+  RotationInterval,
+};
 
 export type {
-  LogLevel,
   LogMethod,
   ConsoleTransportConfig,
   FileTransportConfig,

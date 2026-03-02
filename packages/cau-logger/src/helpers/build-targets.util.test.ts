@@ -1,13 +1,23 @@
 import { describe, it, expect } from "vitest";
 
-import { buildTargets, buildTarget } from "./build-targets.util";
-
 import type { TransportConfig } from "../types";
+
+import { buildTargets, buildTarget } from "./build-targets.util";
+import {
+  LogFormat,
+  LogLevel,
+  OutputDestination,
+  RotationInterval,
+  TransportType,
+} from "../constants";
 
 describe("buildTarget", () => {
   describe("console transport", () => {
     it("should build a pino-pretty target when format is pretty", () => {
-      const config: TransportConfig = { type: "console", format: "pretty" };
+      const config: TransportConfig = {
+        type: TransportType.CONSOLE,
+        format: LogFormat.PRETTY,
+      };
       const target = buildTarget(config);
 
       expect(target.target).toBe("pino-pretty");
@@ -16,7 +26,10 @@ describe("buildTarget", () => {
     });
 
     it("should build a pino/file target when format is json", () => {
-      const config: TransportConfig = { type: "console", format: "json" };
+      const config: TransportConfig = {
+        type: TransportType.CONSOLE,
+        format: LogFormat.JSON,
+      };
       const target = buildTarget(config);
 
       expect(target.target).toBe("pino/file");
@@ -25,9 +38,9 @@ describe("buildTarget", () => {
 
     it("should use stderr when destination is stderr", () => {
       const config: TransportConfig = {
-        type: "console",
-        format: "pretty",
-        destination: "stderr",
+        type: TransportType.CONSOLE,
+        format: LogFormat.PRETTY,
+        destination: OutputDestination.STDERR,
       };
       const target = buildTarget(config);
 
@@ -36,19 +49,19 @@ describe("buildTarget", () => {
 
     it("should pass through the level when specified", () => {
       const config: TransportConfig = {
-        type: "console",
-        format: "pretty",
-        level: "warn",
+        type: TransportType.CONSOLE,
+        format: LogFormat.PRETTY,
+        level: LogLevel.WARN,
       };
       const target = buildTarget(config);
 
-      expect(target.level).toBe("warn");
+      expect(target.level).toBe(LogLevel.WARN);
     });
 
     it("should respect colorize override", () => {
       const config: TransportConfig = {
-        type: "console",
-        format: "pretty",
+        type: TransportType.CONSOLE,
+        format: LogFormat.PRETTY,
         colorize: false,
       };
       const target = buildTarget(config);
@@ -59,18 +72,21 @@ describe("buildTarget", () => {
 
   describe("file transport", () => {
     it("should build a pino-roll target with defaults", () => {
-      const config: TransportConfig = { type: "file", path: "./logs/app.log" };
+      const config: TransportConfig = {
+        type: TransportType.FILE,
+        path: "./logs/app.log",
+      };
       const target = buildTarget(config);
 
       expect(target.target).toBe("pino-roll");
       expect(target.options.file).toBe("./logs/app.log");
-      expect(target.options.frequency).toBe("daily");
+      expect(target.options.frequency).toBe(RotationInterval.DAILY);
       expect(target.options.mkdir).toBe(true);
     });
 
     it("should pass maxSize and maxFiles as pino-roll options", () => {
       const config: TransportConfig = {
-        type: "file",
+        type: TransportType.FILE,
         path: "./logs/app.log",
         maxSize: "10m",
         maxFiles: 5,
@@ -83,20 +99,20 @@ describe("buildTarget", () => {
 
     it("should allow hourly rotation", () => {
       const config: TransportConfig = {
-        type: "file",
+        type: TransportType.FILE,
         path: "./logs/app.log",
-        rotation: "hourly",
+        rotation: RotationInterval.HOURLY,
       };
       const target = buildTarget(config);
 
-      expect(target.options.frequency).toBe("hourly");
+      expect(target.options.frequency).toBe(RotationInterval.HOURLY);
     });
   });
 
   describe("mongo transport", () => {
     it("should build a target pointing to the compiled mongo transport", () => {
       const config: TransportConfig = {
-        type: "mongo",
+        type: TransportType.MONGO,
         uri: "mongodb://localhost:27017",
         database: "testdb",
       };
@@ -112,7 +128,7 @@ describe("buildTarget", () => {
 
     it("should allow overriding collection, batchSize, and flushInterval", () => {
       const config: TransportConfig = {
-        type: "mongo",
+        type: TransportType.MONGO,
         uri: "mongodb://localhost:27017",
         database: "testdb",
         collection: "audit_logs",
@@ -130,7 +146,7 @@ describe("buildTarget", () => {
   describe("sql transport", () => {
     it("should build a target pointing to the compiled sql transport", () => {
       const config: TransportConfig = {
-        type: "sql",
+        type: TransportType.SQL,
         connection: { client: "pg", connection: "postgres://localhost/test" },
       };
       const target = buildTarget(config);
@@ -150,8 +166,8 @@ describe("buildTarget", () => {
 describe("buildTargets", () => {
   it("should map an array of transport configs to pino targets", () => {
     const configs: TransportConfig[] = [
-      { type: "console", format: "pretty" },
-      { type: "file", path: "./logs/app.log" },
+      { type: TransportType.CONSOLE, format: LogFormat.PRETTY },
+      { type: TransportType.FILE, path: "./logs/app.log" },
     ];
     const targets = buildTargets(configs);
 

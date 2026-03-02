@@ -1,8 +1,3 @@
-import { join } from "node:path";
-import { existsSync } from "node:fs";
-
-import { ENV } from "../config";
-
 import type {
   TransportConfig,
   ConsoleTransportConfig,
@@ -10,7 +5,16 @@ import type {
   MongoTransportConfig,
   SqlTransportConfig,
 } from "../types";
+
+import { join } from "node:path";
+import { existsSync } from "node:fs";
+
+import { ENV } from "../config";
 import {
+  LogFormat,
+  OutputDestination,
+  RotationInterval,
+  TransportType,
   DEFAULT_BATCH_SIZE,
   DEFAULT_FLUSH_INTERVAL,
   DEFAULT_MONGO_COLLECTION,
@@ -42,9 +46,9 @@ const TRANSPORT_DIR = getTransportDir();
 const buildConsoleTarget = (config: ConsoleTransportConfig): PinoTarget => {
   const isPretty =
     config.format !== undefined
-      ? config.format === "pretty"
+      ? config.format === LogFormat.PRETTY
       : ENV.NODE_ENV !== "production";
-  const dest = config.destination === "stderr" ? 2 : 1;
+  const dest = config.destination === OutputDestination.STDERR ? 2 : 1;
 
   const target: PinoTarget = isPretty
     ? {
@@ -69,7 +73,7 @@ const buildFileTarget = (config: FileTransportConfig): PinoTarget => ({
   level: config.level,
   options: {
     file: config.path,
-    frequency: config.rotation ?? "daily",
+    frequency: config.rotation ?? RotationInterval.DAILY,
     ...(config.maxSize ? { size: config.maxSize } : {}),
     ...(config.maxFiles ? { limit: { count: config.maxFiles } } : {}),
     mkdir: config.mkdir ?? true,
@@ -102,16 +106,16 @@ const buildSqlTarget = (config: SqlTransportConfig): PinoTarget => ({
 const buildTarget = (config: TransportConfig): PinoTarget => {
   let target: PinoTarget;
   switch (config.type) {
-    case "console":
+    case TransportType.CONSOLE:
       target = buildConsoleTarget(config);
       break;
-    case "file":
+    case TransportType.FILE:
       target = buildFileTarget(config);
       break;
-    case "mongo":
+    case TransportType.MONGO:
       target = buildMongoTarget(config);
       break;
-    case "sql":
+    case TransportType.SQL:
       target = buildSqlTarget(config);
       break;
   }

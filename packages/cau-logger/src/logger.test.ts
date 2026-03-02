@@ -5,6 +5,7 @@ import knex from "knex";
 import type { Knex } from "knex";
 
 import { Logger } from "./logger";
+import { LogFormat, LogLevel, TransportType } from "./constants";
 import {
   readFileSync,
   readdirSync,
@@ -64,8 +65,10 @@ describe("Logger", () => {
 
   it("should create a logger with console transport", () => {
     logger = Logger.create({
-      level: "info",
-      transports: [{ type: "console", format: "json" }],
+      level: LogLevel.INFO,
+      transports: [
+        { type: TransportType.CONSOLE, format: LogFormat.JSON },
+      ],
     });
 
     expect(logger).toBeDefined();
@@ -77,8 +80,10 @@ describe("Logger", () => {
 
   it("should support all log level methods", () => {
     logger = Logger.create({
-      level: "trace",
-      transports: [{ type: "console", format: "json" }],
+      level: LogLevel.TRACE,
+      transports: [
+        { type: TransportType.CONSOLE, format: LogFormat.JSON },
+      ],
     });
 
     expect(logger.trace).toBeTypeOf("function");
@@ -91,8 +96,10 @@ describe("Logger", () => {
 
   it("should create a child logger with merged bindings", () => {
     logger = Logger.create({
-      level: "info",
-      transports: [{ type: "console", format: "json" }],
+      level: LogLevel.INFO,
+      transports: [
+        { type: TransportType.CONSOLE, format: LogFormat.JSON },
+      ],
     });
 
     const child = logger.child({ requestId: "req-123" });
@@ -105,9 +112,11 @@ describe("Logger", () => {
 
   it("should set context in base bindings", () => {
     logger = Logger.create({
-      level: "info",
+      level: LogLevel.INFO,
       context: "TestService",
-      transports: [{ type: "console", format: "json" }],
+      transports: [
+        { type: TransportType.CONSOLE, format: LogFormat.JSON },
+      ],
     });
 
     expect(logger).toBeDefined();
@@ -118,8 +127,10 @@ describe("Logger", () => {
     const logPath = join(TMP_DIR, "test.log");
 
     logger = Logger.create({
-      level: "info",
-      transports: [{ type: "file", path: logPath, mkdir: true }],
+      level: LogLevel.INFO,
+      transports: [
+        { type: TransportType.FILE, path: logPath, mkdir: true },
+      ],
     });
 
     logger.info("test file message");
@@ -148,10 +159,14 @@ describe("Logger", () => {
     ensureTmpDir();
 
     logger = Logger.create({
-      level: "debug",
+      level: LogLevel.DEBUG,
       transports: [
-        { type: "console", format: "json" },
-        { type: "file", path: join(TMP_DIR, "multi.log"), mkdir: true },
+        { type: TransportType.CONSOLE, format: LogFormat.JSON },
+        {
+          type: TransportType.FILE,
+          path: join(TMP_DIR, "multi.log"),
+          mkdir: true,
+        },
       ],
     });
 
@@ -161,24 +176,28 @@ describe("Logger", () => {
 
   it("should respect the global log level", () => {
     logger = Logger.create({
-      level: "warn",
-      transports: [{ type: "console", format: "json" }],
+      level: LogLevel.WARN,
+      transports: [
+        { type: TransportType.CONSOLE, format: LogFormat.JSON },
+      ],
     });
 
-    expect(logger.level).toBe("warn");
+    expect(logger.level).toBe(LogLevel.WARN);
   });
 
   it("should allow changing log level at runtime", () => {
     logger = Logger.create({
-      level: "info",
-      transports: [{ type: "console", format: "json" }],
+      level: LogLevel.INFO,
+      transports: [
+        { type: TransportType.CONSOLE, format: LogFormat.JSON },
+      ],
     });
 
-    expect(logger.level).toBe("info");
+    expect(logger.level).toBe(LogLevel.INFO);
 
-    logger.level = "debug";
+    logger.level = LogLevel.DEBUG;
 
-    expect(logger.level).toBe("debug");
+    expect(logger.level).toBe(LogLevel.DEBUG);
   });
 
   it("should not expose underlying library internals", () => {
@@ -239,10 +258,10 @@ describe("Logger with mongo transport", () => {
 
   it("should write logs to MongoDB via mongo transport", async () => {
     logger = Logger.create({
-      level: "info",
+      level: LogLevel.INFO,
       transports: [
         {
-          type: "mongo",
+          type: TransportType.MONGO,
           uri: MONGO_URI,
           database: TEST_DB,
           collection: TEST_COLLECTION,
@@ -273,11 +292,11 @@ describe("Logger with mongo transport", () => {
 
   it("should preserve context and bindings when writing to MongoDB", async () => {
     logger = Logger.create({
-      level: "info",
+      level: LogLevel.INFO,
       context: "LoggerMongoTest",
       transports: [
         {
-          type: "mongo",
+          type: TransportType.MONGO,
           uri: MONGO_URI,
           database: TEST_DB,
           collection: TEST_COLLECTION,
@@ -353,10 +372,10 @@ describe("Logger with sql transport", () => {
 
   it("should write logs to PostgreSQL via sql transport", async () => {
     logger = Logger.create({
-      level: "info",
+      level: LogLevel.INFO,
       transports: [
         {
-          type: "sql",
+          type: TransportType.SQL,
           connection: KNEX_CONFIG as Record<string, unknown>,
           table: TEST_TABLE,
           batchSize: 2,
@@ -384,11 +403,11 @@ describe("Logger with sql transport", () => {
 
   it("should preserve context and bindings when writing to PostgreSQL", async () => {
     logger = Logger.create({
-      level: "info",
+      level: LogLevel.INFO,
       context: "LoggerSqlTest",
       transports: [
         {
-          type: "sql",
+          type: TransportType.SQL,
           connection: KNEX_CONFIG as Record<string, unknown>,
           table: TEST_TABLE,
           batchSize: 1,
