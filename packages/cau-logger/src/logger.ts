@@ -1,11 +1,10 @@
-import pino from "pino";
-
 import type { Logger as PinoLogger } from "pino";
+import type { LoggerConfig, LogLevel, LogMethod } from "./types";
+
+import pino from "pino";
 
 import { buildTargets } from "./helpers/build-targets.util";
 import { DEFAULT_LOG_LEVEL } from "./constants";
-
-import type { LoggerConfig, LogLevel, LogMethod } from "./types";
 
 const DEFAULT_TRANSPORTS = [{ type: "console" as const }];
 
@@ -90,14 +89,6 @@ class Logger {
   set level(value: LogLevel) {
     this.#pino.level = value;
   }
-
-  isLevelEnabled = (level: LogLevel): boolean =>
-    this.#pino.isLevelEnabled(level);
-
-  flush = (): Promise<void> =>
-    new Promise<void>((resolve, reject) => {
-      this.#pino.flush((err?: Error) => (err ? reject(err) : resolve()));
-    });
 
   close = async (): Promise<void> => {
     await new Promise<void>((resolve, reject) => {

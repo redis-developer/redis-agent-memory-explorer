@@ -59,7 +59,6 @@ describe("Logger", () => {
     expect(logger.info).toBeTypeOf("function");
     expect(logger.error).toBeTypeOf("function");
     expect(logger.child).toBeTypeOf("function");
-    expect(logger.flush).toBeTypeOf("function");
     expect(logger.close).toBeTypeOf("function");
   });
 
@@ -101,7 +100,6 @@ describe("Logger", () => {
     expect(child).toBeDefined();
     expect(child.info).toBeTypeOf("function");
     expect(child.child).toBeTypeOf("function");
-    expect(child.flush).toBeTypeOf("function");
     expect(child.close).toBeTypeOf("function");
   });
 
@@ -127,7 +125,7 @@ describe("Logger", () => {
     logger.info("test file message");
     logger.warn("test warning", { extra: "data" });
 
-    await logger.flush();
+    await logger.close();
     await wait(500);
 
     const files = readdirSync(TMP_DIR);
@@ -168,9 +166,6 @@ describe("Logger", () => {
     });
 
     expect(logger.level).toBe("warn");
-    expect(logger.isLevelEnabled("info")).toBe(false);
-    expect(logger.isLevelEnabled("warn")).toBe(true);
-    expect(logger.isLevelEnabled("error")).toBe(true);
   });
 
   it("should allow changing log level at runtime", () => {
@@ -180,12 +175,10 @@ describe("Logger", () => {
     });
 
     expect(logger.level).toBe("info");
-    expect(logger.isLevelEnabled("debug")).toBe(false);
 
     logger.level = "debug";
 
     expect(logger.level).toBe("debug");
-    expect(logger.isLevelEnabled("debug")).toBe(true);
   });
 
   it("should not expose underlying library internals", () => {
@@ -200,8 +193,6 @@ describe("Logger", () => {
       "error",
       "fatal",
       "child",
-      "isLevelEnabled",
-      "flush",
       "close",
     ];
 
@@ -264,7 +255,7 @@ describe("Logger with mongo transport", () => {
     logger.info("logger mongo test message");
     logger.warn("logger mongo warning", { extra: "data" });
 
-    await logger.flush();
+    await logger.close();
     await wait(2000);
 
     const docs = await verifyClient
@@ -299,7 +290,7 @@ describe("Logger with mongo transport", () => {
     const child = logger.child({ requestId: "req-mongo-123" });
     child.info("child logger mongo message");
 
-    await logger.flush();
+    await logger.close();
     await wait(2000);
 
     const docs = await verifyClient
@@ -377,7 +368,7 @@ describe("Logger with sql transport", () => {
     logger.info("logger sql test message");
     logger.warn("logger sql warning", { extra: "data" });
 
-    await logger.flush();
+    await logger.close();
     await wait(2000);
 
     const rows = await verifyDb(TEST_TABLE).select("*");
@@ -409,7 +400,7 @@ describe("Logger with sql transport", () => {
     const child = logger.child({ requestId: "req-sql-456" });
     child.info("child logger sql message");
 
-    await logger.flush();
+    await logger.close();
     await wait(2000);
 
     const rows = await verifyDb(TEST_TABLE).select("*");

@@ -107,8 +107,6 @@ process.on("SIGTERM", async () => {
 | `trace`, `debug`, `info`, `warn`, `error`, `fatal` | `(msg: string, data?: Record<string, unknown>) => void` | Standard log-level methods |
 | `child(bindings)` | `(bindings: Record<string, unknown>) => Logger` | Creates a child logger with merged bindings |
 | `level` | `LogLevel` (get/set) | Read or change the minimum log level at runtime |
-| `isLevelEnabled(level)` | `(level: LogLevel) => boolean` | Check if a level would produce output |
-| `flush()` | `() => Promise<void>` | Flushes buffered logs |
 | `close()` | `() => Promise<void>` | Flushes all transports and ends the transport stream |
 
 **LoggerConfig:**
