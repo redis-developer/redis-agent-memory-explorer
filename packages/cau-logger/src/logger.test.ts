@@ -49,7 +49,9 @@ describe("Logger", () => {
     }
   });
 
-  afterAll(() => {
+  afterAll(async () => {
+    //wait time for worker to fully flush and release the file handle
+    await wait(1000);
     cleanTmpDir();
   });
 
@@ -66,9 +68,7 @@ describe("Logger", () => {
   it("should create a logger with console transport", () => {
     logger = Logger.create({
       level: LogLevel.INFO,
-      transports: [
-        { type: TransportType.CONSOLE, format: LogFormat.JSON },
-      ],
+      transports: [{ type: TransportType.CONSOLE, format: LogFormat.JSON }],
     });
 
     expect(logger).toBeDefined();
@@ -81,9 +81,7 @@ describe("Logger", () => {
   it("should support all log level methods", () => {
     logger = Logger.create({
       level: LogLevel.TRACE,
-      transports: [
-        { type: TransportType.CONSOLE, format: LogFormat.JSON },
-      ],
+      transports: [{ type: TransportType.CONSOLE, format: LogFormat.JSON }],
     });
 
     expect(logger.trace).toBeTypeOf("function");
@@ -97,9 +95,7 @@ describe("Logger", () => {
   it("should create a child logger with merged bindings", () => {
     logger = Logger.create({
       level: LogLevel.INFO,
-      transports: [
-        { type: TransportType.CONSOLE, format: LogFormat.JSON },
-      ],
+      transports: [{ type: TransportType.CONSOLE, format: LogFormat.JSON }],
     });
 
     const child = logger.child({ requestId: "req-123" });
@@ -114,9 +110,7 @@ describe("Logger", () => {
     logger = Logger.create({
       level: LogLevel.INFO,
       context: "TestService",
-      transports: [
-        { type: TransportType.CONSOLE, format: LogFormat.JSON },
-      ],
+      transports: [{ type: TransportType.CONSOLE, format: LogFormat.JSON }],
     });
 
     expect(logger).toBeDefined();
@@ -128,9 +122,7 @@ describe("Logger", () => {
 
     logger = Logger.create({
       level: LogLevel.INFO,
-      transports: [
-        { type: TransportType.FILE, path: logPath, mkdir: true },
-      ],
+      transports: [{ type: TransportType.FILE, path: logPath, mkdir: true }],
     });
 
     logger.info("test file message");
@@ -177,9 +169,7 @@ describe("Logger", () => {
   it("should respect the global log level", () => {
     logger = Logger.create({
       level: LogLevel.WARN,
-      transports: [
-        { type: TransportType.CONSOLE, format: LogFormat.JSON },
-      ],
+      transports: [{ type: TransportType.CONSOLE, format: LogFormat.JSON }],
     });
 
     expect(logger.level).toBe(LogLevel.WARN);
@@ -188,9 +178,7 @@ describe("Logger", () => {
   it("should allow changing log level at runtime", () => {
     logger = Logger.create({
       level: LogLevel.INFO,
-      transports: [
-        { type: TransportType.CONSOLE, format: LogFormat.JSON },
-      ],
+      transports: [{ type: TransportType.CONSOLE, format: LogFormat.JSON }],
     });
 
     expect(logger.level).toBe(LogLevel.INFO);

@@ -21,6 +21,16 @@ import {
   DEFAULT_SQL_TABLE,
 } from "../constants";
 
+const PINO_PRETTY_TARGET = "pino-pretty";
+const PINO_FILE_TARGET = "pino/file";
+const PINO_ROLL_TARGET = "pino-roll";
+const MONGO_TRANSPORT_FILE = "mongo.transport.js";
+const SQL_TRANSPORT_FILE = "sql.transport.js";
+const TRANSPORTS_SUBDIR = "transports";
+const STDOUT_FD = 1;
+const STDERR_FD = 2;
+const PRODUCTION_ENV = "production";
+
 type PinoTarget = {
   target: string;
   level?: string;
@@ -28,17 +38,17 @@ type PinoTarget = {
 };
 
 const getTransportDir = (): string => {
-  const dirnameTransports = join(__dirname, "..", "transports");
-  const mongoInDirname = join(dirnameTransports, "mongo.transport.js");
-  if (existsSync(mongoInDirname)) {
-    return dirnameTransports;
-  }
-  const distTransports = join(process.cwd(), "dist", "transports");
-  const mongoInDist = join(distTransports, "mongo.transport.js");
-  if (existsSync(mongoInDist)) {
-    return distTransports;
-  }
-  return dirnameTransports;
+  const dirnameTransports = join(__dirname, "..", TRANSPORTS_SUBDIR);
+  const distTransports = join(process.cwd(), "dist", TRANSPORTS_SUBDIR);
+
+  const hasDirnameMongo = existsSync(
+    join(dirnameTransports, MONGO_TRANSPORT_FILE),
+  );
+  const hasDistMongo = existsSync(join(distTransports, MONGO_TRANSPORT_FILE));
+
+  const useDist = !hasDirnameMongo && hasDistMongo;
+
+  return useDist ? distTransports : dirnameTransports;
 };
 
 const TRANSPORT_DIR = getTransportDir();
@@ -47,12 +57,13 @@ const buildConsoleTarget = (config: ConsoleTransportConfig): PinoTarget => {
   const isPretty =
     config.format !== undefined
       ? config.format === LogFormat.PRETTY
-      : ENV.NODE_ENV !== "production";
-  const dest = config.destination === OutputDestination.STDERR ? 2 : 1;
+      : ENV.NODE_ENV !== PRODUCTION_ENV;
+  const dest =
+    config.destination === OutputDestination.STDERR ? STDERR_FD : STDOUT_FD;
 
   const target: PinoTarget = isPretty
     ? {
-        target: "pino-pretty",
+        target: PINO_PRETTY_TARGET,
         level: config.level,
         options: {
           colorize: config.colorize ?? true,
@@ -60,7 +71,7 @@ const buildConsoleTarget = (config: ConsoleTransportConfig): PinoTarget => {
         },
       }
     : {
-        target: "pino/file",
+        target: PINO_FILE_TARGET,
         level: config.level,
         options: { destination: dest },
       };
@@ -69,7 +80,7 @@ const buildConsoleTarget = (config: ConsoleTransportConfig): PinoTarget => {
 };
 
 const buildFileTarget = (config: FileTransportConfig): PinoTarget => ({
-  target: "pino-roll",
+  target: PINO_ROLL_TARGET,
   level: config.level,
   options: {
     file: config.path,
@@ -81,7 +92,7 @@ const buildFileTarget = (config: FileTransportConfig): PinoTarget => ({
 });
 
 const buildMongoTarget = (config: MongoTransportConfig): PinoTarget => ({
-  target: join(TRANSPORT_DIR, "mongo.transport.js"),
+  target: join(TRANSPORT_DIR, MONGO_TRANSPORT_FILE),
   level: config.level,
   options: {
     uri: config.uri,
@@ -93,7 +104,7 @@ const buildMongoTarget = (config: MongoTransportConfig): PinoTarget => ({
 });
 
 const buildSqlTarget = (config: SqlTransportConfig): PinoTarget => ({
-  target: join(TRANSPORT_DIR, "sql.transport.js"),
+  target: join(TRANSPORT_DIR, SQL_TRANSPORT_FILE),
   level: config.level,
   options: {
     knexConfig: config.connection,
