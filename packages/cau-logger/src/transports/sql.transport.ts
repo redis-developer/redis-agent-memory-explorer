@@ -33,19 +33,21 @@ const sqlTransport = (opts: SqlTransportOptions) => {
     connected = true;
   };
 
-  const flush = async () => {
-    if (batch.length === 0 || !connected) return;
-    const items = batch.splice(0);
-    const rows = items.map(formatRecord);
-    try {
-      await knex(table).insert(rows);
-    } catch (err) {
+  const flush = async (): Promise<void> => {
+    const shouldFlush = batch.length > 0 && connected;
+    if (shouldFlush) {
+      const items = batch.splice(0);
+      const rows = items.map(formatRecord);
       try {
         await knex(table).insert(rows);
-      } catch (retryErr) {
-        process.stderr.write(
-          `cau-logger [sql]: flush failed, dropping ${items.length} records: ${retryErr}\n`,
-        );
+      } catch (err) {
+        try {
+          await knex(table).insert(rows);
+        } catch (retryErr) {
+          process.stderr.write(
+            `cau-logger [sql]: flush failed, dropping ${items.length} records: ${retryErr}\n`,
+          );
+        }
       }
     }
   };
@@ -71,7 +73,7 @@ const sqlTransport = (opts: SqlTransportOptions) => {
       await flush();
     },
     {
-      close(err: Error, cb: Function) {
+      close: (err: Error, cb: Function) => {
         clearInterval(timer);
         flush()
           .then(() => (knex ? knex.destroy() : undefined))

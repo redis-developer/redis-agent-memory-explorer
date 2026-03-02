@@ -20,18 +20,20 @@ const mongoTransport = (opts: MongoTransportOptions) => {
     connected = true;
   };
 
-  const flush = async () => {
-    if (batch.length === 0 || !connected) return;
-    const items = batch.splice(0);
-    try {
-      await col.insertMany(items, { ordered: false });
-    } catch (err) {
+  const flush = async (): Promise<void> => {
+    const shouldFlush = batch.length > 0 && connected;
+    if (shouldFlush) {
+      const items = batch.splice(0);
       try {
         await col.insertMany(items, { ordered: false });
-      } catch (retryErr) {
-        process.stderr.write(
-          `cau-logger [mongo]: flush failed, dropping ${items.length} records: ${retryErr}\n`,
-        );
+      } catch (err) {
+        try {
+          await col.insertMany(items, { ordered: false });
+        } catch (retryErr) {
+          process.stderr.write(
+            `cau-logger [mongo]: flush failed, dropping ${items.length} records: ${retryErr}\n`,
+          );
+        }
       }
     }
   };
@@ -57,7 +59,7 @@ const mongoTransport = (opts: MongoTransportOptions) => {
       await flush();
     },
     {
-      close(err: Error, cb: Function) {
+      close: (err: Error, cb: Function) => {
         clearInterval(timer);
         flush()
           .then(() => (client ? client.close() : undefined))

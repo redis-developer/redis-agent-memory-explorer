@@ -28,22 +28,22 @@ const buildConsoleTarget = (config: ConsoleTransportConfig): PinoTarget => {
   const isPretty = config.pretty ?? ENV.NODE_ENV !== "production";
   const dest = config.destination === "stderr" ? 2 : 1;
 
-  if (isPretty) {
-    return {
-      target: "pino-pretty",
-      level: config.level,
-      options: {
-        colorize: config.colorize ?? true,
-        destination: dest,
-      },
-    };
-  }
+  const target: PinoTarget = isPretty
+    ? {
+        target: "pino-pretty",
+        level: config.level,
+        options: {
+          colorize: config.colorize ?? true,
+          destination: dest,
+        },
+      }
+    : {
+        target: "pino/file",
+        level: config.level,
+        options: { destination: dest },
+      };
 
-  return {
-    target: "pino/file",
-    level: config.level,
-    options: { destination: dest },
-  };
+  return target;
 };
 
 const buildFileTarget = (config: FileTransportConfig): PinoTarget => ({
@@ -82,16 +82,22 @@ const buildSqlTarget = (config: SqlTransportConfig): PinoTarget => ({
 });
 
 const buildTarget = (config: TransportConfig): PinoTarget => {
+  let target: PinoTarget;
   switch (config.type) {
     case "console":
-      return buildConsoleTarget(config);
+      target = buildConsoleTarget(config);
+      break;
     case "file":
-      return buildFileTarget(config);
+      target = buildFileTarget(config);
+      break;
     case "mongo":
-      return buildMongoTarget(config);
+      target = buildMongoTarget(config);
+      break;
     case "sql":
-      return buildSqlTarget(config);
+      target = buildSqlTarget(config);
+      break;
   }
+  return target;
 };
 
 const buildTargets = (transports: TransportConfig[]): PinoTarget[] =>

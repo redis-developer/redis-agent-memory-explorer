@@ -1,6 +1,12 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { createLogger } from "./logger";
-import { readFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
+import {
+  readFileSync,
+  readdirSync,
+  mkdirSync,
+  rmSync,
+  existsSync,
+} from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -9,14 +15,16 @@ import type { CauLogger } from "./types";
 
 const TMP_DIR = join(tmpdir(), ENV.TEST.CAU_LOGGER_TMP_SUFFIX);
 
-const ensureTmpDir = () => {
-  if (!existsSync(TMP_DIR)) {
+const ensureTmpDir = (): void => {
+  const needsCreate = !existsSync(TMP_DIR);
+  if (needsCreate) {
     mkdirSync(TMP_DIR, { recursive: true });
   }
 };
 
-const cleanTmpDir = () => {
-  if (existsSync(TMP_DIR)) {
+const cleanTmpDir = (): void => {
+  const exists = existsSync(TMP_DIR);
+  if (exists) {
     rmSync(TMP_DIR, { recursive: true, force: true });
   }
 };
@@ -116,7 +124,7 @@ describe("createLogger", () => {
     await logger.flush();
     await wait(500);
 
-    const files = require("fs").readdirSync(TMP_DIR);
+    const files = readdirSync(TMP_DIR);
     const logFile = files.find((f: string) => f.includes("test"));
 
     if (logFile) {
