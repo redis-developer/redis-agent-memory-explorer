@@ -67,7 +67,7 @@ describe("createLogger", () => {
   it("should create a logger with console transport", () => {
     logger = createLogger({
       level: "info",
-      transports: [{ type: "console", pretty: false }],
+      transports: [{ type: "console", format: "json" }],
     });
 
     expect(logger).toBeDefined();
@@ -80,7 +80,7 @@ describe("createLogger", () => {
   it("should support all log level methods", () => {
     logger = createLogger({
       level: "trace",
-      transports: [{ type: "console", pretty: false }],
+      transports: [{ type: "console", format: "json" }],
     });
 
     expect(logger.trace).toBeTypeOf("function");
@@ -94,7 +94,7 @@ describe("createLogger", () => {
   it("should create a child logger with merged bindings", () => {
     logger = createLogger({
       level: "info",
-      transports: [{ type: "console", pretty: false }],
+      transports: [{ type: "console", format: "json" }],
     });
 
     const child = logger.child({ requestId: "req-123" });
@@ -110,7 +110,7 @@ describe("createLogger", () => {
     logger = createLogger({
       level: "info",
       context: "TestService",
-      transports: [{ type: "console", pretty: false }],
+      transports: [{ type: "console", format: "json" }],
     });
 
     expect(logger).toBeDefined();
@@ -153,7 +153,7 @@ describe("createLogger", () => {
     logger = createLogger({
       level: "debug",
       transports: [
-        { type: "console", pretty: false },
+        { type: "console", format: "json" },
         { type: "file", path: join(TMP_DIR, "multi.log"), mkdir: true },
       ],
     });
@@ -165,7 +165,7 @@ describe("createLogger", () => {
   it("should respect the global log level", () => {
     logger = createLogger({
       level: "warn",
-      transports: [{ type: "console", pretty: false }],
+      transports: [{ type: "console", format: "json" }],
     });
 
     expect(logger.level).toBe("warn");
@@ -177,7 +177,7 @@ describe("createLogger", () => {
   it("should allow changing log level at runtime", () => {
     logger = createLogger({
       level: "info",
-      transports: [{ type: "console", pretty: false }],
+      transports: [{ type: "console", format: "json" }],
     });
 
     expect(logger.level).toBe("info");
@@ -365,7 +365,7 @@ describe("createLogger with sql transport", () => {
       transports: [
         {
           type: "sql",
-          knexConfig: KNEX_CONFIG as Record<string, unknown>,
+          connection: KNEX_CONFIG as Record<string, unknown>,
           table: TEST_TABLE,
           batchSize: 2,
           flushInterval: 60000,
@@ -397,7 +397,7 @@ describe("createLogger with sql transport", () => {
       transports: [
         {
           type: "sql",
-          knexConfig: KNEX_CONFIG as Record<string, unknown>,
+          connection: KNEX_CONFIG as Record<string, unknown>,
           table: TEST_TABLE,
           batchSize: 1,
           flushInterval: 60000,

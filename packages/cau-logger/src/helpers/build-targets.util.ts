@@ -40,7 +40,10 @@ const getTransportDir = (): string => {
 const TRANSPORT_DIR = getTransportDir();
 
 const buildConsoleTarget = (config: ConsoleTransportConfig): PinoTarget => {
-  const isPretty = config.pretty ?? ENV.NODE_ENV !== "production";
+  const isPretty =
+    config.format !== undefined
+      ? config.format === "pretty"
+      : ENV.NODE_ENV !== "production";
   const dest = config.destination === "stderr" ? 2 : 1;
 
   const target: PinoTarget = isPretty
@@ -66,7 +69,7 @@ const buildFileTarget = (config: FileTransportConfig): PinoTarget => ({
   level: config.level,
   options: {
     file: config.path,
-    frequency: config.frequency ?? "daily",
+    frequency: config.rotation ?? "daily",
     ...(config.maxSize ? { size: config.maxSize } : {}),
     ...(config.maxFiles ? { limit: { count: config.maxFiles } } : {}),
     mkdir: config.mkdir ?? true,
@@ -89,7 +92,7 @@ const buildSqlTarget = (config: SqlTransportConfig): PinoTarget => ({
   target: join(TRANSPORT_DIR, "sql.transport.js"),
   level: config.level,
   options: {
-    knexConfig: config.knexConfig,
+    knexConfig: config.connection,
     table: config.table ?? DEFAULT_SQL_TABLE,
     batchSize: config.batchSize ?? DEFAULT_BATCH_SIZE,
     flushInterval: config.flushInterval ?? DEFAULT_FLUSH_INTERVAL,

@@ -25,7 +25,7 @@ import { createLogger } from "cau-logger";
 const logger = createLogger({
   level: "info",
   context: "AppBootstrap",
-  transports: [{ type: "console", pretty: true }],
+  transports: [{ type: "console", format: "pretty" }],
 });
 
 logger.info("Server started on port 3000");
@@ -41,8 +41,8 @@ const logger = createLogger({
   level: "debug",
   redact: ["password", "req.headers.authorization"],
   transports: [
-    { type: "console", pretty: false },
-    { type: "file", path: "./logs/app.log", frequency: "daily", maxFiles: 7 },
+    { type: "console", format: "json" },
+    { type: "file", path: "./logs/app.log", rotation: "daily", maxFiles: 7 },
     {
       type: "mongo",
       uri: "mongodb://localhost:27017",
@@ -53,7 +53,7 @@ const logger = createLogger({
     },
     {
       type: "sql",
-      knexConfig: { client: "pg", connection: process.env.DATABASE_URL },
+      connection: { client: "pg", connection: process.env.DATABASE_URL },
       table: "app_logs",
       batchSize: 50,
       flushInterval: 5000,
@@ -83,7 +83,7 @@ process.on("SIGTERM", async () => {
 
 ### `createLogger(config: LoggerConfig): CauLogger`
 
-Creates a Pino logger with the given transports.
+Creates a logger with the given transports.
 
 **LoggerConfig:**
 
@@ -95,37 +95,33 @@ Creates a Pino logger with the given transports.
 | `transports` | `TransportConfig[]` | --       | Array of transport configurations           |
 | `timestamp`  | `boolean`           | `true`   | Include epoch-ms timestamp                  |
 
-### `flushAsync(logger: Logger): Promise<void>`
-
-Promisified wrapper around Pino's callback-based `flush()`.
-
 ### `CauLogger`
 
-Extends Pino's `Logger` with:
+The library-agnostic logger interface:
 
 - `close(): Promise<void>` -- flushes all transports and ends the transport stream.
 
-All standard Pino methods are available: `trace`, `debug`, `info`, `warn`, `error`, `fatal`, `child`, `flush`, `isLevelEnabled`, etc.
+All standard methods are available: `trace`, `debug`, `info`, `warn`, `error`, `fatal`, `child`, `flush`, `isLevelEnabled`.
 
 ## Transport Reference
 
 ### Console
 
 ```typescript
-{ type: "console", pretty?: boolean, colorize?: boolean, destination?: "stdout" | "stderr", level?: LogLevel }
+{ type: "console", format?: "pretty" | "json", colorize?: boolean, destination?: "stdout" | "stderr", level?: LogLevel }
 ```
 
-- `pretty` defaults to `true` when `NODE_ENV !== 'production'`, `false` otherwise.
-- Uses `pino-pretty` for human-readable output, raw JSON via `pino/file` otherwise.
+- `format` defaults to `"pretty"` when `NODE_ENV !== 'production'`, `"json"` otherwise.
+- `colorize` only applies when `format` is `"pretty"`. Defaults to `true`.
 
 ### File
 
 ```typescript
-{ type: "file", path: string, frequency?: "daily" | "hourly" | number, maxSize?: string | number, maxFiles?: number, mkdir?: boolean, level?: LogLevel }
+{ type: "file", path: string, rotation?: "daily" | "hourly" | number, maxSize?: string | number, maxFiles?: number, mkdir?: boolean, level?: LogLevel }
 ```
 
-- Powered by `pino-roll`. Writes JSON lines.
-- `frequency` defaults to `"daily"`. Can be `"hourly"` or milliseconds.
+- Writes JSON lines with automatic rotation.
+- `rotation` defaults to `"daily"`. Can be `"hourly"` or a millisecond interval.
 - `maxSize` accepts strings like `"10m"`, `"1g"` or byte numbers.
 - `mkdir` defaults to `true` (creates log directory if missing).
 
@@ -140,10 +136,10 @@ All standard Pino methods are available: `trace`, `debug`, `info`, `warn`, `erro
 - Uses `insertMany({ ordered: false })` for maximum write speed.
 - On failure: retries once, then drops the batch and writes a warning to stderr.
 
-### SQL (via Knex)
+### SQL
 
 ```typescript
-{ type: "sql", knexConfig: object, table?: string, batchSize?: number, flushInterval?: number, level?: LogLevel }
+{ type: "sql", connection: object, table?: string, batchSize?: number, flushInterval?: number, level?: LogLevel }
 ```
 
 - Requires `knex` + a database driver as peer dependencies.

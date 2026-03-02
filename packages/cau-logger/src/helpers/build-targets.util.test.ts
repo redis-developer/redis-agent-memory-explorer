@@ -6,8 +6,8 @@ import type { TransportConfig } from "../types";
 
 describe("buildTarget", () => {
   describe("console transport", () => {
-    it("should build a pino-pretty target when pretty is true", () => {
-      const config: TransportConfig = { type: "console", pretty: true };
+    it("should build a pino-pretty target when format is pretty", () => {
+      const config: TransportConfig = { type: "console", format: "pretty" };
       const target = buildTarget(config);
 
       expect(target.target).toBe("pino-pretty");
@@ -15,8 +15,8 @@ describe("buildTarget", () => {
       expect(target.options.destination).toBe(1);
     });
 
-    it("should build a pino/file target when pretty is false", () => {
-      const config: TransportConfig = { type: "console", pretty: false };
+    it("should build a pino/file target when format is json", () => {
+      const config: TransportConfig = { type: "console", format: "json" };
       const target = buildTarget(config);
 
       expect(target.target).toBe("pino/file");
@@ -26,7 +26,7 @@ describe("buildTarget", () => {
     it("should use stderr when destination is stderr", () => {
       const config: TransportConfig = {
         type: "console",
-        pretty: true,
+        format: "pretty",
         destination: "stderr",
       };
       const target = buildTarget(config);
@@ -37,7 +37,7 @@ describe("buildTarget", () => {
     it("should pass through the level when specified", () => {
       const config: TransportConfig = {
         type: "console",
-        pretty: true,
+        format: "pretty",
         level: "warn",
       };
       const target = buildTarget(config);
@@ -48,7 +48,7 @@ describe("buildTarget", () => {
     it("should respect colorize override", () => {
       const config: TransportConfig = {
         type: "console",
-        pretty: true,
+        format: "pretty",
         colorize: false,
       };
       const target = buildTarget(config);
@@ -81,11 +81,11 @@ describe("buildTarget", () => {
       expect(target.options.limit).toEqual({ count: 5 });
     });
 
-    it("should allow hourly frequency", () => {
+    it("should allow hourly rotation", () => {
       const config: TransportConfig = {
         type: "file",
         path: "./logs/app.log",
-        frequency: "hourly",
+        rotation: "hourly",
       };
       const target = buildTarget(config);
 
@@ -131,7 +131,7 @@ describe("buildTarget", () => {
     it("should build a target pointing to the compiled sql transport", () => {
       const config: TransportConfig = {
         type: "sql",
-        knexConfig: { client: "pg", connection: "postgres://localhost/test" },
+        connection: { client: "pg", connection: "postgres://localhost/test" },
       };
       const target = buildTarget(config);
 
@@ -150,7 +150,7 @@ describe("buildTarget", () => {
 describe("buildTargets", () => {
   it("should map an array of transport configs to pino targets", () => {
     const configs: TransportConfig[] = [
-      { type: "console", pretty: true },
+      { type: "console", format: "pretty" },
       { type: "file", path: "./logs/app.log" },
     ];
     const targets = buildTargets(configs);

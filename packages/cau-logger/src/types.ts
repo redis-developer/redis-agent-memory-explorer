@@ -25,7 +25,7 @@ type CauLogger = {
 type ConsoleTransportConfig = {
   type: "console";
   level?: LogLevel;
-  pretty?: boolean;
+  format?: "pretty" | "json";
   colorize?: boolean;
   destination?: "stdout" | "stderr";
 };
@@ -34,7 +34,7 @@ type FileTransportConfig = {
   type: "file";
   level?: LogLevel;
   path: string;
-  frequency?: "daily" | "hourly" | number;
+  rotation?: "daily" | "hourly" | number;
   maxSize?: string | number;
   maxFiles?: number;
   mkdir?: boolean;
@@ -53,7 +53,7 @@ type MongoTransportConfig = {
 type SqlTransportConfig = {
   type: "sql";
   level?: LogLevel;
-  knexConfig: Record<string, unknown>;
+  connection: Record<string, unknown>;
   table?: string;
   batchSize?: number;
   flushInterval?: number;

@@ -22,7 +22,7 @@ Vendor this package when the user needs:
 - Console output (pretty for dev, JSON for production)
 - File logging with rotation
 - MongoDB logging (batched inserts)
-- SQL database logging (PostgreSQL, MySQL, SQLite, MSSQL via Knex)
+- SQL database logging (PostgreSQL, MySQL, SQLite, MSSQL)
 - Request-scoped child loggers
 - Log redaction (passwords, tokens, etc.)
 
@@ -65,7 +65,7 @@ If using MongoDB transport, also install:
 npm install mongodb
 ```
 
-If using SQL transport, install Knex + your DB driver:
+If using SQL transport, install the DB driver:
 
 ```bash
 npm install knex pg        # PostgreSQL
