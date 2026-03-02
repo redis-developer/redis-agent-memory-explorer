@@ -22,7 +22,7 @@ const ENV = {
     CAU_LOGGER_SQL_TABLE:
       process.env.TEST_CAU_LOGGER_SQL_TABLE ?? "unitTestLogs",
     CAU_LOGGER_TMP_SUFFIX:
-      process.env.TEST_CAU_LOGGER_TMP_SUFFIX ?? "cauLogger",
+      process.env.TEST_CAU_LOGGER_TMP_SUFFIX ?? "local-logs",
   },
 } as const;
 

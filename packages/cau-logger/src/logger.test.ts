@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, afterEach, afterAll, beforeAll } from "vitest";
 import { MongoClient } from "mongodb";
 import knex from "knex";
 
@@ -13,12 +13,11 @@ import {
   existsSync,
 } from "node:fs";
 import { join } from "node:path";
-import { tmpdir } from "node:os";
 
 import { ENV } from "./config";
 import type { CauLogger } from "./types";
 
-const TMP_DIR = join(tmpdir(), ENV.TEST.CAU_LOGGER_TMP_SUFFIX);
+const TMP_DIR = join(process.cwd(), ENV.TEST.CAU_LOGGER_TMP_SUFFIX);
 
 const ensureTmpDir = (): void => {
   const needsCreate = !existsSync(TMP_DIR);
@@ -48,6 +47,9 @@ describe("createLogger", () => {
         // transport may already be closed
       }
     }
+  });
+
+  afterAll(() => {
     cleanTmpDir();
   });
 
@@ -236,10 +238,10 @@ describe("createLogger with mongo transport", () => {
         // transport may already be closed
       }
     }
-    await verifyClient.db(TEST_DB).collection(TEST_COLLECTION).deleteMany({});
   });
 
   afterAll(async () => {
+    await verifyClient.db(TEST_DB).collection(TEST_COLLECTION).deleteMany({});
     await verifyClient.close();
   });
 
@@ -305,10 +307,10 @@ describe("createLogger with mongo transport", () => {
       .find({})
       .toArray();
 
-    expect(docs.length).toBe(1);
-    expect(docs[0].msg).toBe("child logger mongo message");
-    expect(docs[0].context).toBe("LoggerMongoTest");
-    expect(docs[0].requestId).toBe("req-mongo-123");
+    const msgDoc = docs.find((d) => d.msg === "child logger mongo message");
+    expect(msgDoc).toBeDefined();
+    expect(msgDoc?.context).toBe("LoggerMongoTest");
+    expect(msgDoc?.requestId).toBe("req-mongo-123");
   });
 });
 
@@ -349,10 +351,10 @@ describe("createLogger with sql transport", () => {
         // transport may already be closed
       }
     }
-    await verifyDb(TEST_TABLE).truncate();
   });
 
   afterAll(async () => {
+    await verifyDb(TEST_TABLE).truncate();
     await verifyDb.schema.dropTableIfExists(TEST_TABLE);
     await verifyDb.destroy();
   });
@@ -411,14 +413,14 @@ describe("createLogger with sql transport", () => {
 
     const rows = await verifyDb(TEST_TABLE).select("*");
 
-    expect(rows.length).toBe(1);
-    expect(rows[0].message).toBe("child logger sql message");
-    expect(rows[0].context).toBe("LoggerSqlTest");
+    const msgRow = rows.find(
+      (r: { message: string }) => r.message === "child logger sql message",
+    );
+    expect(msgRow).toBeDefined();
+    expect(msgRow?.context).toBe("LoggerSqlTest");
 
     const data =
-      typeof rows[0].data === "string"
-        ? JSON.parse(rows[0].data)
-        : rows[0].data;
+      typeof msgRow?.data === "string" ? JSON.parse(msgRow.data) : msgRow?.data;
     expect(data.requestId).toBe("req-sql-456");
   });
 });

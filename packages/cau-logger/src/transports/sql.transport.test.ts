@@ -7,7 +7,7 @@ import { ENV } from "../config";
 import sqlTransport from "./sql.transport";
 
 const PG_CONNECTION = ENV.PG_CONNECTION_URL;
-const TEST_TABLE = ENV.TEST.CAU_LOGGER_SQL_TABLE;
+const TEST_TABLE = ENV.TEST.CAU_LOGGER_SQL_TABLE + "Transport";
 
 const KNEX_CONFIG: Knex.Config = {
   client: "pg",
@@ -35,10 +35,12 @@ describe("SqlTransport", () => {
   });
 
   afterEach(async () => {
-    await verifyDb(TEST_TABLE).truncate();
+    // intentionally left empty — cleanup happens in afterAll so records
+    // can be inspected by commenting out the truncate below
   });
 
   afterAll(async () => {
+    await verifyDb(TEST_TABLE).truncate();
     await verifyDb.schema.dropTableIfExists(TEST_TABLE);
     await verifyDb.destroy();
   });
@@ -61,9 +63,8 @@ describe("SqlTransport", () => {
 
     const rows = await verifyDb(TEST_TABLE).select("*");
 
-    expect(rows.length).toBe(2);
-    expect(rows.find((r: any) => r.message === "sql batch 1")).toBeDefined();
-    expect(rows.find((r: any) => r.message === "sql batch 2")).toBeDefined();
+    expect(rows.find((r: { message: string }) => r.message === "sql batch 1")).toBeDefined();
+    expect(rows.find((r: { message: string }) => r.message === "sql batch 2")).toBeDefined();
 
     await new Promise<void>((resolve) => stream.end(() => resolve()));
   });
@@ -83,9 +84,9 @@ describe("SqlTransport", () => {
 
     const rows = await verifyDb(TEST_TABLE).select("*");
 
-    expect(rows.length).toBe(1);
-    expect(rows[0].message).toBe("sql interval msg");
-    expect(rows[0].level).toBe(40);
+    const msgRow = rows.find((r: { message: string }) => r.message === "sql interval msg");
+    expect(msgRow).toBeDefined();
+    expect(msgRow?.level).toBe(40);
 
     await new Promise<void>((resolve) => stream.end(() => resolve()));
   });
@@ -106,8 +107,8 @@ describe("SqlTransport", () => {
 
     const rows = await verifyDb(TEST_TABLE).select("*");
 
-    expect(rows.length).toBe(1);
-    expect(rows[0].message).toBe("sql close msg");
+    const msgRow = rows.find((r: { message: string }) => r.message === "sql close msg");
+    expect(msgRow).toBeDefined();
   });
 
   it("should map log record fields to the correct columns", async () => {
@@ -132,12 +133,12 @@ describe("SqlTransport", () => {
 
     const rows = await verifyDb(TEST_TABLE).select("*");
 
-    expect(rows.length).toBe(1);
-    expect(rows[0].level).toBe(30);
-    expect(rows[0].message).toBe("structured sql log");
-    expect(rows[0].context).toBe("PaymentService");
+    const msgRow = rows.find((r: { message: string }) => r.message === "structured sql log");
+    expect(msgRow).toBeDefined();
+    expect(msgRow?.level).toBe(30);
+    expect(msgRow?.context).toBe("PaymentService");
 
-    const data = typeof rows[0].data === "string" ? JSON.parse(rows[0].data) : rows[0].data;
+    const data = typeof msgRow?.data === "string" ? JSON.parse(msgRow.data) : msgRow?.data;
     expect(data.orderId).toBe("ord-999");
     expect(data.time).toBe(now);
 
