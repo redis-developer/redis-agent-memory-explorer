@@ -85,12 +85,13 @@ await server.start();
 ## Singleton
 
 ```typescript
-const server = ApiServer.getInstance({
+// Bootstrap: create() initializes and stores the singleton.
+const server = ApiServer.create({
   config: { PORT: 3001 },
   routes: [...],
 });
 
-// Elsewhere -- same instance
+// Elsewhere -- retrieve the same instance.
 const server = ApiServer.getInstance();
 ```
 
@@ -121,9 +122,8 @@ On success, `data` has the value and `error` is `null`. On failure, `data` is `n
 
 | Method / Property | Signature | Description |
 |---|---|---|
-| `ApiServer.create(config)` | `(config: ApiServerConfig) => ApiServer` | Creates a new ApiServer instance |
-| `ApiServer.getInstance(config?)` | `(config?: ApiServerConfig) => ApiServer` | Singleton access -- creates on first call |
-| `ApiServer.reset()` | `() => void` | Clears the singleton instance |
+| `ApiServer.create(config)` | `(config: ApiServerConfig) => ApiServer` | Creates a new ApiServer instance and stores it as the singleton |
+| `ApiServer.getInstance()` | `() => ApiServer` | Returns the singleton instance; throws if `create()` has not been called |
 | `server.start()` | `() => Promise<void>` | Starts listening, calls `onAppStart`, registers signal handlers |
 | `server.stop()` | `() => Promise<void>` | Calls `onAppStop`, closes server, removes signal handlers |
 | `server.expressApp` | `express.Application` | Underlying Express app for adding custom middleware |

@@ -130,16 +130,23 @@ class ApiServer {
     const config = buildInternalConfig(input);
     const app = buildExpressApp(config);
 
-    return new ApiServer(app, config);
+    const instance = new ApiServer(app, config);
+
+    ApiServer.#instance = instance;
+
+    return instance;
   };
 
-  static getInstance = (input?: ApiServerConfig): ApiServer => {
-    ApiServer.#instance ??= ApiServer.create(input ?? { routes: [] });
-    return ApiServer.#instance;
-  };
+  static getInstance = (): ApiServer => {
+    const isNotInitialized = ApiServer.#instance === null;
 
-  static reset = (): void => {
-    ApiServer.#instance = null;
+    if (isNotInitialized) {
+      throw new Error(
+        "ApiServer not initialized. Call ApiServer.create() first.",
+      );
+    }
+
+    return ApiServer.#instance!;
   };
 
   get expressApp(): Application {
@@ -177,6 +184,11 @@ class ApiServer {
   };
 
   stop = async (): Promise<void> => {
+    const isSingleton = ApiServer.#instance === this;
+    if (isSingleton) {
+      ApiServer.#instance = null;
+    }
+
     this.#signalCleanup?.();
     this.#signalCleanup = null;
 

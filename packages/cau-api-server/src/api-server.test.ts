@@ -16,7 +16,6 @@ describe("ApiServer", () => {
       await instance.stop();
       instance = null;
     }
-    ApiServer.reset();
   });
 
   it("should create an ApiServer instance with expressApp accessible", () => {
@@ -186,8 +185,8 @@ describe("ApiServer", () => {
     expect(stopCalled).toBe(true);
   });
 
-  it("should return the same instance from getInstance (singleton)", () => {
-    const first = ApiServer.getInstance({
+  it("should return the same instance from getInstance after create (singleton)", () => {
+    const first = ApiServer.create({
       logger: createLogger("test-singleton"),
       routes: [],
     });
@@ -195,6 +194,12 @@ describe("ApiServer", () => {
 
     expect(first).toBe(second);
     instance = first;
+  });
+
+  it("should throw from getInstance when create has not been called", () => {
+    expect(() => ApiServer.getInstance()).toThrow(
+      "ApiServer not initialized. Call ApiServer.create() first.",
+    );
   });
 
   it("should create a default logger when none provided", () => {
