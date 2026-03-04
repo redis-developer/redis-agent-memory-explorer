@@ -6,7 +6,7 @@ metadata:
   version: "0.1.0"
   repo: git@github.com:PrasanKumar93/custom-agent-utils.git
   path: packages/cau-api-server
-  dest: utils/cau-api-server
+  dest: packages/cau-api-server
 ---
 
 # cau-api-server
@@ -27,65 +27,60 @@ Vendor this package when the user needs:
 
 ## Vendoring
 
-### Option A: Git subtree (recommended)
+Sparse checkout + copy. The `--branch` flag accepts a git tag (preferred) or `main`.
+
+You can vendor multiple packages in a single sparse checkout by listing them together.
 
 ```bash
-git subtree add --prefix utils/cau-api-server \
-  git@github.com:PrasanKumar93/custom-agent-utils.git \
-  main --squash
+CAU_REF="<git-tag-or-main>"
+TMPDIR=$(mktemp -d)
+git clone --depth 1 --branch "$CAU_REF" --filter=blob:none --sparse \
+  git@github.com:PrasanKumar93/custom-agent-utils.git "$TMPDIR"
+cd "$TMPDIR" && git sparse-checkout set packages/cau-api-server packages/cau-logger
+cp -r "$TMPDIR/packages/cau-api-server" <your-project>/packages/cau-api-server
+cp -r "$TMPDIR/packages/cau-logger" <your-project>/packages/cau-logger
+rm -rf "$TMPDIR"
 ```
 
-To update later:
-
-```bash
-git subtree pull --prefix utils/cau-api-server \
-  git@github.com:PrasanKumar93/custom-agent-utils.git \
-  main --squash
-```
-
-### Option B: Sparse checkout + copy
-
-```bash
-git clone --filter=blob:none --sparse \
-  git@github.com:PrasanKumar93/custom-agent-utils.git /tmp/cau
-cd /tmp/cau
-git sparse-checkout set packages/cau-api-server
-cp -r packages/cau-api-server <your-project>/utils/cau-api-server
-```
+`cau-logger` is a peer dependency -- always vendor it alongside `cau-api-server`.
 
 ### After vendoring
 
 ```bash
-cd utils/cau-api-server
-npm install
-npm run build
-```
-
-Also vendor `cau-logger` (peer dependency):
-
-```bash
-# repeat vendoring steps for packages/cau-logger
+cd packages/cau-logger && npm install && npm run build
+cd ../cau-api-server && npm install && npm run build
 ```
 
 ### Provenance file
 
-Create `utils/cau-api-server/.vendor.json`:
+Create `packages/cau-api-server/.vendor.json` (and the same for `packages/cau-logger`):
 
 ```json
 {
   "source": "git@github.com:PrasanKumar93/custom-agent-utils.git",
-  "path": "packages/cau-api-server",
-  "version": "0.1.0",
-  "vendoredAt": "<ISO date>",
+  "package": "packages/cau-api-server",
+  "tag": "<git-tag-or-main>",
+  "vendoredAt": "<ISO-8601 date>",
   "forked": false
 }
 ```
 
+### Updating
+
+Re-run the sparse checkout commands above with the new `CAU_REF`, then:
+
+```bash
+cd packages/cau-logger && npm install && npm run build
+cd ../cau-api-server && npm install && npm run build
+```
+
+Update `.vendor.json` in each package with the new `tag` and `vendoredAt`.
+
 ## Quick usage (vendored path)
 
 ```typescript
-import { ApiServer, HTTP_STATUS_CODES } from "./utils/cau-api-server";
-import { Logger } from "./utils/cau-logger";
+import { ApiServer, HTTP_STATUS_CODES } from "cau-api-server";
+import { Logger } from "cau-logger";
 
 const logger = Logger.create({
   context: "MyApp",

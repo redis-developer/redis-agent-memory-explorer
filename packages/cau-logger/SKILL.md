@@ -6,7 +6,7 @@ metadata:
   version: "0.2.0"
   repo: git@github.com:PrasanKumar93/custom-agent-utils.git
   path: packages/cau-logger
-  dest: utils/cau-logger
+  dest: packages/cau-logger
 ---
 
 # cau-logger
@@ -28,33 +28,22 @@ Vendor this package when the user needs:
 
 ## Vendoring
 
-### Option A: Git subtree (recommended)
-
-**First time:**
+Sparse checkout + copy. The `--branch` flag accepts a git tag (preferred) or `main`.
 
 ```bash
-git subtree add --prefix=utils/cau-logger \
-  git@github.com:PrasanKumar93/custom-agent-utils.git main \
-  --squash
-```
-
-Note: this vendors the entire repo. To get only `packages/cau-logger`, use Option B.
-
-### Option B: Sparse checkout + copy
-
-```bash
+CAU_REF="<git-tag-or-main>"
 TMPDIR=$(mktemp -d)
-git clone --depth 1 --filter=blob:none --sparse \
+git clone --depth 1 --branch "$CAU_REF" --filter=blob:none --sparse \
   git@github.com:PrasanKumar93/custom-agent-utils.git "$TMPDIR"
 cd "$TMPDIR" && git sparse-checkout set packages/cau-logger
-cp -r "$TMPDIR/packages/cau-logger" ./utils/cau-logger
+cp -r "$TMPDIR/packages/cau-logger" <your-project>/packages/cau-logger
 rm -rf "$TMPDIR"
 ```
 
 ### After vendoring
 
 ```bash
-cd utils/cau-logger
+cd packages/cau-logger
 npm install
 npm run build
 ```
@@ -75,31 +64,32 @@ npm install knex better-sqlite3  # SQLite
 
 ### Provenance file
 
-After vendoring, create `utils/cau-logger/.vendor.json`:
+After vendoring, create `packages/cau-logger/.vendor.json`:
 
 ```json
 {
   "source": "git@github.com:PrasanKumar93/custom-agent-utils.git",
-  "path": "packages/cau-logger",
-  "ref": "main",
-  "vendored_at": "2026-03-02T00:00:00Z"
+  "package": "packages/cau-logger",
+  "tag": "<git-tag-or-main>",
+  "vendoredAt": "<ISO-8601 date>",
+  "forked": false
 }
 ```
 
-Update `ref` to a tag or commit SHA for production pinning.
-
 ### Updating
 
-Re-run the vendor command (Option A: `git subtree pull`, Option B: re-clone + copy). Then:
+Re-run the sparse checkout commands above with the new `CAU_REF`, then:
 
 ```bash
-cd utils/cau-logger && npm install && npm run build
+cd packages/cau-logger && npm install && npm run build
 ```
+
+Update `.vendor.json` with the new `tag` and `vendoredAt`.
 
 ## Quick usage (vendored path)
 
 ```typescript
-import { Logger } from "./utils/cau-logger";
+import { Logger } from "cau-logger";
 
 // New instance per use-case
 const logger = Logger.create();
