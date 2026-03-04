@@ -276,7 +276,7 @@ Agent vendoring instructions per agentskills.io spec. Contains:
 - Post-vendor steps (npm install, env vars for DB transports)
 - "Do not modify vendored code" policy
 
-### `docs/SKILLS_INDEX.md` (repo root)
+### `PACKAGE_INDEX.md` (in `.cursor/skills/js-package-vendor/`)
 
 Maps agent capabilities to package paths:
 
@@ -296,7 +296,7 @@ Agents consult this index to decide which package to vendor.
 | 3. Mongo Transport           | DONE   | Worker-thread transport, batched inserts, 4 tests against real MongoDB         |
 | 4. SQL Transport             | DONE   | Worker-thread transport, batched Knex inserts, 4 tests against real PostgreSQL |
 | 5. Interface Abstraction     | DONE   | CauLogger (library-agnostic), LogMethod, wrapLogger, defaults-first config     |
-| 6. Agentic Files             | DONE   | SKILL.md (vendoring), SKILLS_INDEX.md (discovery)                              |
+| 6. Agentic Files             | DONE   | SKILL.md (vendoring), PACKAGE_INDEX.md (discovery)                             |
 | 7. Plan + README             | DONE   | Plan updated, README with full API reference + SQL schema                      |
 
 ---

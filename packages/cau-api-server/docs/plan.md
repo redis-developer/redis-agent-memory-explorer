@@ -8,7 +8,7 @@ All code in this package must follow these monorepo skills:
 
 - **js-code-style** -- arrow functions, consolidated exports, separate type exports/imports, import ordering, no nested functions, single return, no hardcoded values, string literal unions as `as const` objects
 - **js-naming-conventions** -- kebab-case files/folders, PascalCase classes/types, camelCase functions/variables, UPPER_SNAKE_CASE constants
-- **js-package-scaffold** -- folder structure, public interface class pattern, config/types/constants conventions, vitest setup, SKILL.md, README.md, SKILLS_INDEX registration
+- **js-package-scaffold** -- folder structure, public interface class pattern, config/types/constants conventions, vitest setup, SKILL.md, README.md, PACKAGE_INDEX registration
 - **js-testing** -- zero mocking, real execution, co-located test files, explicit assertions, shared input/output variables
 
 ---
@@ -549,4 +549,4 @@ export type {
 | 12  | `package.json`, `tsconfig.json`, vitest config   | Pending |
 | 13  | `SKILL.md`                                       | Pending |
 | 14  | `README.md`                                      | Pending |
-| 15  | Register in `docs/SKILLS_INDEX.md`               | Pending |
+| 15  | Register in `PACKAGE_INDEX.md`                   | Pending |
