@@ -91,12 +91,12 @@ Update `.vendor.json` with the new `tag` and `vendoredAt`.
 ```typescript
 import { Logger } from "cau-logger";
 
-// New instance per use-case
+// Bootstrap: create() initializes and stores the singleton.
 const logger = Logger.create();
 logger.info("Server started");
 
-// Or use the singleton
-const logger = Logger.getInstance({ level: "info" });
+// Elsewhere: retrieve the same instance.
+const same = Logger.getInstance();
 ```
 
 See [README.md](./README.md) for multi-transport config, child loggers, graceful shutdown, and full API.

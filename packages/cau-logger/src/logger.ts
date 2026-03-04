@@ -43,17 +43,23 @@ class Logger {
     };
 
     const instance = pino(options, transport);
+    const logger = new Logger(instance, transport);
 
-    return new Logger(instance, transport);
+    Logger.#instance = logger;
+
+    return logger;
   }
 
-  static getInstance(config?: LoggerConfig): Logger {
-    Logger.#instance ??= Logger.create(config);
-    return Logger.#instance;
-  }
+  static getInstance(): Logger {
+    const isNotInitialized = Logger.#instance === null;
 
-  static reset(): void {
-    Logger.#instance = null;
+    if (isNotInitialized) {
+      throw new Error(
+        "Logger not initialized. Call Logger.create() first.",
+      );
+    }
+
+    return Logger.#instance!;
   }
 
   trace: LogMethod = (msg, data) => {
@@ -92,6 +98,11 @@ class Logger {
   }
 
   close = async (): Promise<void> => {
+    const isSingleton = Logger.#instance === this;
+    if (isSingleton) {
+      Logger.#instance = null;
+    }
+
     await new Promise<void>((resolve, reject) => {
       this.#pino.flush((err?: Error) => (err ? reject(err) : resolve()));
     });

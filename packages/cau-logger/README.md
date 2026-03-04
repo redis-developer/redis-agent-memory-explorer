@@ -37,13 +37,13 @@ logger.error("Unhandled rejection", { err });
 ```typescript
 import { Logger } from "cau-logger";
 
-// First call creates the instance; subsequent calls return the same one.
-const logger = Logger.getInstance({
+// Bootstrap: create() initializes and stores the singleton.
+const logger = Logger.create({
   level: "info",
   transports: [{ type: "console", format: "pretty" }],
 });
 
-// Elsewhere in the app -- same instance, no config needed.
+// Elsewhere in the app -- retrieve the same instance.
 const logger = Logger.getInstance();
 ```
 
@@ -101,9 +101,8 @@ process.on("SIGTERM", async () => {
 
 | Method / Property | Signature | Description |
 | --- | --- | --- |
-| `Logger.create(config?)` | `(config?: LoggerConfig) => Logger` | Creates a new logger instance |
-| `Logger.getInstance(config?)` | `(config?: LoggerConfig) => Logger` | Returns (or creates) the singleton instance |
-| `Logger.reset()` | `() => void` | Clears the singleton (useful in tests) |
+| `Logger.create(config?)` | `(config?: LoggerConfig) => Logger` | Creates a new logger instance and stores it as the singleton |
+| `Logger.getInstance()` | `() => Logger` | Returns the singleton instance; throws if `create()` has not been called |
 | `trace`, `debug`, `info`, `warn`, `error`, `fatal` | `(msg: string, data?: Record<string, unknown>) => void` | Standard log-level methods |
 | `child(bindings)` | `(bindings: Record<string, unknown>) => Logger` | Creates a child logger with merged bindings |
 | `level` | `LogLevel` (get/set) | Read or change the minimum log level at runtime |

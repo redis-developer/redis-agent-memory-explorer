@@ -189,6 +189,22 @@ describe("Logger", () => {
     expect(logger.level).toBe(LogLevel.DEBUG);
   });
 
+  it("should return the same instance from getInstance after create (singleton)", () => {
+    logger = Logger.create({
+      level: LogLevel.INFO,
+      transports: [{ type: TransportType.CONSOLE, format: LogFormat.JSON }],
+    });
+    const retrieved = Logger.getInstance();
+
+    expect(retrieved).toBe(logger);
+  });
+
+  it("should throw from getInstance when create has not been called", () => {
+    expect(() => Logger.getInstance()).toThrow(
+      "Logger not initialized. Call Logger.create() first.",
+    );
+  });
+
   it("should not expose underlying library internals", () => {
     logger = Logger.create();
 
