@@ -79,23 +79,16 @@ Update `.vendor.json` in each package with the new `tag` and `vendoredAt`.
 ## Quick usage (vendored path)
 
 ```typescript
-import { ApiServer, HTTP_STATUS_CODES } from "cau-api-server";
-import { Logger } from "cau-logger";
-
-const logger = Logger.create({
-  context: "MyApp",
-  transports: [{ type: "console", format: "pretty" }],
-});
+import { ApiServer } from "cau-api-server";
 
 const server = ApiServer.create({
   config: { PORT: 3001 },
-  logger,
   routes: [
     {
-      path: "/users",
+      path: "/hello",
       handler: async (input, { logger }) => {
-        logger.info("Fetching users");
-        return [{ name: "alice" }];
+        logger.info("Hello handler called");
+        return { message: "hello world" };
       },
     },
   ],
@@ -103,6 +96,8 @@ const server = ApiServer.create({
 
 await server.start();
 ```
+
+See [README.md](./README.md) for custom logger setup, lifecycle callbacks, middleware, and full API.
 
 ## Rules
 
