@@ -1,0 +1,17 @@
+{
+  "name": "custom-agent-utils",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Monorepo for custom-agent-utils packages",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "clean": "npm run clean --workspaces"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
