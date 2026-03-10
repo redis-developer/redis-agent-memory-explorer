@@ -49,6 +49,8 @@ const logger = Logger.getInstance();
 
 ## Multi-Transport
 
+Each transport accepts its own `level` to override the top-level minimum. The top-level `level` sets the floor -- a transport cannot receive logs below it, but can set a higher threshold. In the example below, console receives everything from `debug` up, the file skips `debug` and starts at `info`, MongoDB only stores `warn`+, and the SQL table captures only `error`+.
+
 ```typescript
 import { Logger } from "cau-logger";
 
@@ -56,8 +58,8 @@ const logger = Logger.create({
   level: "debug",
   redact: ["password", "req.headers.authorization"],
   transports: [
-    { type: "console", format: "json" },
-    { type: "file", path: "./logs/app.log", rotation: "daily", maxFiles: 7 },
+    { type: "console", format: "json", level: "debug" },
+    { type: "file", path: "./logs/app.log", rotation: "daily", maxFiles: 7, level: "info" },
     {
       type: "mongo",
       uri: "mongodb://localhost:27017",
@@ -65,6 +67,7 @@ const logger = Logger.create({
       collection: "logs",
       batchSize: 100,
       flushInterval: 5000,
+      level: "warn",
     },
     {
       type: "sql",
@@ -72,6 +75,7 @@ const logger = Logger.create({
       table: "app_logs",
       batchSize: 50,
       flushInterval: 5000,
+      level: "error",
     },
   ],
 });
