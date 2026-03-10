@@ -1,4 +1,8 @@
-import type { MemoryAPIClient, WorkingMemoryResponse as SdkWorkingMemoryResponse } from "agent-memory-client";
+import type {
+  MemoryAPIClient,
+  WorkingMemoryResponse as SdkWorkingMemoryResponse,
+  SessionListResponse as SdkSessionListResponse,
+} from "agent-memory-client";
 import type {
   SessionListOptions,
   SessionListResult,
@@ -17,15 +21,40 @@ import {
 } from "../helpers/map-records.util";
 import { rawGet, rawDelete } from "../helpers/raw-client.util";
 
+/**
+ * The SDK (agent-memory-client@0.3.1) does not support `user_id` as a
+ * query parameter on GET /v1/working-memory/. The server uses `user_id`
+ * for key-scoping, so omitting it returns sessions across all users.
+ * When `userId` is provided we bypass the SDK and issue a raw HTTP GET.
+ */
 const listSessionsOp = async (
   client: MemoryAPIClient,
   options?: SessionListOptions,
+  rawConfig?: RawClientConfig,
 ): Promise<SessionListResult> => {
-  const response = await client.listSessions({
-    namespace: options?.namespace,
-    limit: options?.limit ?? DEFAULT_SESSION_LIST_LIMIT,
-    offset: options?.offset,
-  });
+  const hasUserId = options?.userId !== undefined;
+  const shouldUseRawClient = hasUserId && rawConfig !== undefined;
+
+  let response: SdkSessionListResponse;
+
+  if (shouldUseRawClient) {
+    response = await rawGet<SdkSessionListResponse>(
+      rawConfig!,
+      "/v1/working-memory/",
+      {
+        namespace: options?.namespace,
+        limit: options?.limit ?? DEFAULT_SESSION_LIST_LIMIT,
+        offset: options?.offset,
+        user_id: options?.userId,
+      },
+    );
+  } else {
+    response = await client.listSessions({
+      namespace: options?.namespace,
+      limit: options?.limit ?? DEFAULT_SESSION_LIST_LIMIT,
+      offset: options?.offset,
+    });
+  }
 
   return {
     sessions: response.sessions,
@@ -62,6 +91,7 @@ const getWorkingMemoryOp = async (
         user_id: options?.userId,
         model_name: options?.modelName,
         context_window_max: options?.contextWindowMax,
+        recent_messages_limit: options?.recentMessagesLimit,
       },
     );
   } else {
@@ -145,26 +175,40 @@ const putWorkingMemoryOp = async (
   return mapSdkWorkingMemoryToResult(response);
 };
 
+/**
+ * The SDK's getOrCreateWorkingMemory internally calls getWorkingMemory
+ * which does not pass `user_id`. When `user_id` is part of the Redis
+ * key the GET always misses, causing duplicate session creation.
+ * We bypass the SDK and compose our own get + put using the
+ * workaround-aware getWorkingMemoryOp.
+ */
 const getOrCreateWorkingMemoryOp = async (
   client: MemoryAPIClient,
   sessionId: string,
   options?: WorkingMemoryOptions,
+  rawConfig?: RawClientConfig,
 ): Promise<{ created: boolean; memory: WorkingMemoryResult }> => {
-  const response = await client.getOrCreateWorkingMemory(sessionId, {
-    namespace: options?.namespace,
-    userId: options?.userId,
-    modelName: options?.modelName as Parameters<
-      typeof client.getOrCreateWorkingMemory
-    >[1] extends { modelName?: infer M } ? M : never,
-    contextWindowMax: options?.contextWindowMax,
-  });
+  const existing = await getWorkingMemoryOp(client, sessionId, options, rawConfig);
+  const isNew = existing === null;
 
-  const created = response.new_session === true;
+  let memory: WorkingMemoryResult;
+  let created: boolean;
 
-  return {
-    created,
-    memory: mapSdkWorkingMemoryToResult(response),
-  };
+  if (isNew) {
+    const newPayload: WorkingMemoryPayload = {
+      messages: [],
+      memories: [],
+      userId: options?.userId,
+      namespace: options?.namespace,
+    };
+    memory = await putWorkingMemoryOp(client, sessionId, newPayload, options);
+    created = true;
+  } else {
+    memory = existing!;
+    created = false;
+  }
+
+  return { created, memory };
 };
 
 const deleteWorkingMemoryOp = async (

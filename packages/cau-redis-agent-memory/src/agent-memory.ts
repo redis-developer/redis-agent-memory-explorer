@@ -147,7 +147,7 @@ class AgentMemory {
   listSessions = async (
     options?: SessionListOptions,
   ): Promise<SessionListResult> => {
-    return listSessionsOp(this.#client, options);
+    return listSessionsOp(this.#client, options, this.#rawConfig);
   };
 
   getWorkingMemory = async (
@@ -169,7 +169,7 @@ class AgentMemory {
     sessionId: string,
     options?: WorkingMemoryOptions,
   ): Promise<{ created: boolean; memory: WorkingMemoryResult }> => {
-    return getOrCreateWorkingMemoryOp(this.#client, sessionId, options);
+    return getOrCreateWorkingMemoryOp(this.#client, sessionId, options, this.#rawConfig);
   };
 
   deleteWorkingMemory = async (
@@ -187,7 +187,7 @@ class AgentMemory {
     memories: MemoryRecordInput[],
     options?: CreateMemoriesOptions,
   ): Promise<AckResult> => {
-    return createLongTermMemoriesOp(this.#client, memories, options);
+    return createLongTermMemoriesOp(this.#client, memories, options, this.#rawConfig);
   };
 
   searchLongTermMemory = async (

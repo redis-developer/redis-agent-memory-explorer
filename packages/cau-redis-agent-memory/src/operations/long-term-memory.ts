@@ -7,6 +7,7 @@ import type {
   MemorySearchResult,
   CreateMemoriesOptions,
   AckResult,
+  RawClientConfig,
 } from "../types";
 
 import {
@@ -14,14 +15,37 @@ import {
   mapSdkRecordToResult,
 } from "../helpers/map-records.util";
 import { buildSearchFilters } from "../helpers/build-search-filters.util";
+import { rawPost } from "../helpers/raw-client.util";
 
+/**
+ * The SDK (agent-memory-client@0.3.1) does not support `deduplicate`
+ * in the CreateMemoryRecordRequest body. When `deduplicate` is provided
+ * we bypass the SDK and issue a raw HTTP POST.
+ */
 const createLongTermMemoriesOp = async (
   client: MemoryAPIClient,
   memories: MemoryRecordInput[],
-  _options?: CreateMemoriesOptions,
+  options?: CreateMemoriesOptions,
+  rawConfig?: RawClientConfig,
 ): Promise<AckResult> => {
   const sdkRecords = memories.map(mapInputToSdkRecord);
-  const response = await client.createLongTermMemory(sdkRecords);
+  const hasDeduplicate = options?.deduplicate !== undefined;
+  const shouldUseRawClient = hasDeduplicate && rawConfig !== undefined;
+
+  let response: { status: string };
+
+  if (shouldUseRawClient) {
+    response = await rawPost<{ status: string }>(
+      rawConfig!,
+      "/v1/long-term-memory/",
+      {
+        memories: sdkRecords,
+        deduplicate: options!.deduplicate,
+      },
+    );
+  } else {
+    response = await client.createLongTermMemory(sdkRecords);
+  }
 
   return { status: response.status };
 };

@@ -51,6 +51,7 @@ const rawRequest = async (
   method: string,
   path: string,
   params: Record<string, string | number | undefined>,
+  body?: Record<string, unknown>,
 ): Promise<Response> => {
   const url = buildUrl(config.baseUrl, path, params);
   const headers = buildHeaders(config);
@@ -60,17 +61,19 @@ const rawRequest = async (
   const timer = setTimeout(() => controller.abort(), timeout);
 
   try {
+    const hasBody = body !== undefined;
     const response = await fetch(url, {
       method,
       headers,
+      body: hasBody ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });
 
     const isError = !response.ok;
     if (isError) {
-      const body = await response.text();
+      const responseText = await response.text();
       throw new Error(
-        `Agent Memory Server ${method} ${path} failed (${response.status}): ${body}`,
+        `Agent Memory Server ${method} ${path} failed (${response.status}): ${responseText}`,
       );
     }
 
@@ -103,4 +106,16 @@ const rawDelete = async (
   return result;
 };
 
-export { rawGet, rawDelete };
+const rawPost = async <T>(
+  config: RawClientConfig,
+  path: string,
+  body: Record<string, unknown>,
+  params?: Record<string, string | number | undefined>,
+): Promise<T> => {
+  const response = await rawRequest(config, "POST", path, params ?? {}, body);
+  const result = (await response.json()) as T;
+
+  return result;
+};
+
+export { rawGet, rawPost, rawDelete };
