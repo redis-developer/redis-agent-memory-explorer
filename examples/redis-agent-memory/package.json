@@ -11,7 +11,7 @@
     "ex:05": "npx tsx 05-background-extraction-and-forget.ts"
   },
   "dependencies": {
-    "cau-redis-agent-memory": "file:../../packages/cau-redis-agent-memory",
+    "cau-redis-agent-memory": "*",
     "@langchain/openai": "^0.5.0",
     "@langchain/core": "^0.3.0",
     "@langchain/langgraph": "^0.2.0",

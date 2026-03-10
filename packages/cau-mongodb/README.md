@@ -13,6 +13,7 @@ Dependencies installed automatically: `mongodb`, `zod`, `cau-logger`.
 ## Quick Start
 
 ```typescript
+import { z } from "zod";
 import { MongoDb } from "cau-mongodb";
 
 const instance = MongoDb.create({
@@ -20,10 +21,16 @@ const instance = MongoDb.create({
   database: "myapp",
 });
 
+const UserSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+});
+
 // Insert a document (auto-adds createdAt, updatedAt, status)
 const { insertedId } = await instance.createOne({
   collection: "users",
   doc: { name: "Alice", email: "alice@example.com" },
+  schema: UserSchema,
 });
 
 // Find a document (only active documents are returned)

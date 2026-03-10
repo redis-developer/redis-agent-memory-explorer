@@ -4,7 +4,8 @@
   "private": true,
   "description": "Monorepo for custom-agent-utils packages",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces",
