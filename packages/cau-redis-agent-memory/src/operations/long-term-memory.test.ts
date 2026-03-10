@@ -1,4 +1,4 @@
-import type { MemoryRecordInput } from "../types";
+import type { MemoryRecordInput, RawClientConfig } from "../types";
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { MemoryAPIClient } from "agent-memory-client";
@@ -18,11 +18,16 @@ const createdMemoryIds: string[] = [];
 
 describe("long-term-memory operations", () => {
   let client: MemoryAPIClient;
+  let rawConfig: RawClientConfig;
 
   beforeAll(() => {
     client = new MemoryAPIClient({
       baseUrl: ENV.AGENT_MEMORY_BASE_URL,
     });
+
+    rawConfig = {
+      baseUrl: ENV.AGENT_MEMORY_BASE_URL,
+    };
   });
 
   afterAll(async () => {
@@ -106,5 +111,41 @@ describe("long-term-memory operations", () => {
     expect(verifyGone).toBeNull();
 
     createdMemoryIds.length = 0;
+  });
+
+  it("should create long-term memories with deduplicate via raw client", async () => {
+    const dedupeNamespace = `test-dedup-${Date.now()}`;
+    const text = `Deduplicate test memory ${dedupeNamespace}`;
+
+    const memories: MemoryRecordInput[] = [
+      {
+        text,
+        memoryType: MemoryType.SEMANTIC,
+        topics: ["dedupe-test"],
+        namespace: dedupeNamespace,
+      },
+    ];
+
+    const result = await createLongTermMemoriesOp(
+      client,
+      memories,
+      { deduplicate: true },
+      rawConfig,
+    );
+
+    expect(result.status).toBeDefined();
+
+    await new Promise((r) => setTimeout(r, 2000));
+
+    const found = await searchLongTermMemoryOp(client, {
+      text,
+      namespace: { eq: dedupeNamespace },
+      limit: 10,
+    });
+
+    expect(found.memories.length).toBeGreaterThanOrEqual(1);
+
+    const ids = found.memories.map((m) => m.id);
+    await deleteLongTermMemoriesOp(client, ids).catch(() => {});
   });
 });

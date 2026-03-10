@@ -179,8 +179,14 @@ const putWorkingMemoryOp = async (
  * The SDK's getOrCreateWorkingMemory internally calls getWorkingMemory
  * which does not pass `user_id`. When `user_id` is part of the Redis
  * key the GET always misses, causing duplicate session creation.
- * We bypass the SDK and compose our own get + put using the
- * workaround-aware getWorkingMemoryOp.
+ *
+ * The server auto-creates a transient working memory on GET for
+ * non-existent sessions (returns 200, not 404), setting
+ * `unsaved: true`. We issue a raw GET with `user_id`, then persist
+ * transient sessions via PUT so subsequent GETs see `unsaved: null`.
+ *
+ * When rawConfig is not available, falls back to the SDK's
+ * getOrCreateWorkingMemory (userId may not be scoped correctly).
  */
 const getOrCreateWorkingMemoryOp = async (
   client: MemoryAPIClient,
@@ -188,24 +194,48 @@ const getOrCreateWorkingMemoryOp = async (
   options?: WorkingMemoryOptions,
   rawConfig?: RawClientConfig,
 ): Promise<{ created: boolean; memory: WorkingMemoryResult }> => {
-  const existing = await getWorkingMemoryOp(client, sessionId, options, rawConfig);
-  const isNew = existing === null;
+  const hasRawConfig = rawConfig !== undefined;
 
   let memory: WorkingMemoryResult;
   let created: boolean;
 
-  if (isNew) {
-    const newPayload: WorkingMemoryPayload = {
-      messages: [],
-      memories: [],
-      userId: options?.userId,
-      namespace: options?.namespace,
-    };
-    memory = await putWorkingMemoryOp(client, sessionId, newPayload, options);
-    created = true;
+  if (hasRawConfig) {
+    const getResponse = await rawGet<SdkWorkingMemoryResponse>(
+      rawConfig!,
+      `/v1/working-memory/${encodeURIComponent(sessionId)}`,
+      {
+        namespace: options?.namespace,
+        user_id: options?.userId,
+        model_name: options?.modelName,
+        context_window_max: options?.contextWindowMax,
+      },
+    );
+
+    const isUnsaved = getResponse.unsaved === true;
+    if (isUnsaved) {
+      const newPayload: WorkingMemoryPayload = {
+        messages: [],
+        memories: [],
+        userId: options?.userId,
+        namespace: options?.namespace,
+      };
+      memory = await putWorkingMemoryOp(client, sessionId, newPayload, options);
+      created = true;
+    } else {
+      memory = mapSdkWorkingMemoryToResult(getResponse);
+      created = false;
+    }
   } else {
-    memory = existing!;
-    created = false;
+    const sdkResponse = await client.getOrCreateWorkingMemory(sessionId, {
+      namespace: options?.namespace,
+      userId: options?.userId,
+      modelName: options?.modelName as Parameters<
+        typeof client.getOrCreateWorkingMemory
+      >[1] extends { modelName?: infer M } ? M : never,
+      contextWindowMax: options?.contextWindowMax,
+    });
+    memory = mapSdkWorkingMemoryToResult(sdkResponse);
+    created = sdkResponse.unsaved === true;
   }
 
   return { created, memory };

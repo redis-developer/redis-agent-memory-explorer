@@ -43,8 +43,10 @@ describe("working-memory operations", () => {
       client,
       TEST_SESSION_ID,
       defaultOptions,
+      rawConfig,
     );
 
+    expect(result.created).toBe(true);
     expect(result.memory.sessionId).toBe(TEST_SESSION_ID);
   });
 
@@ -119,6 +121,84 @@ describe("working-memory operations", () => {
 
     expect(result.sessions).toContain(TEST_SESSION_ID);
     expect(result.total).toBeGreaterThanOrEqual(1);
+  });
+
+  it("should list sessions filtered by userId via raw client", async () => {
+    const userId = `list-uid-${Date.now()}`;
+    const sessionA = `list-a-${Date.now()}`;
+    const sessionB = `list-b-${Date.now()}`;
+
+    await putWorkingMemoryOp(
+      client,
+      sessionA,
+      { messages: [{ role: "user", content: "session A" }], userId },
+      { namespace: TEST_NAMESPACE },
+    );
+    await putWorkingMemoryOp(
+      client,
+      sessionB,
+      { messages: [{ role: "user", content: "session B" }], userId },
+      { namespace: TEST_NAMESPACE },
+    );
+
+    const result = await listSessionsOp(
+      client,
+      { namespace: TEST_NAMESPACE, userId },
+      rawConfig,
+    );
+
+    expect(result.sessions).toContain(sessionA);
+    expect(result.sessions).toContain(sessionB);
+    expect(result.total).toBeGreaterThanOrEqual(2);
+
+    await deleteWorkingMemoryOp(
+      client,
+      sessionA,
+      { namespace: TEST_NAMESPACE, userId },
+      rawConfig,
+    ).catch(() => {});
+    await deleteWorkingMemoryOp(
+      client,
+      sessionB,
+      { namespace: TEST_NAMESPACE, userId },
+      rawConfig,
+    ).catch(() => {});
+  });
+
+  it("should getOrCreate with userId via raw client without duplicating", async () => {
+    const userId = `goc-uid-${Date.now()}`;
+    const sessionId = `goc-session-${Date.now()}`;
+    const options: WorkingMemoryOptions = {
+      namespace: TEST_NAMESPACE,
+      userId,
+    };
+
+    const first = await getOrCreateWorkingMemoryOp(
+      client,
+      sessionId,
+      options,
+      rawConfig,
+    );
+
+    expect(first.created).toBe(true);
+    expect(first.memory.sessionId).toBe(sessionId);
+
+    const second = await getOrCreateWorkingMemoryOp(
+      client,
+      sessionId,
+      options,
+      rawConfig,
+    );
+
+    expect(second.created).toBe(false);
+    expect(second.memory.sessionId).toBe(sessionId);
+
+    await deleteWorkingMemoryOp(
+      client,
+      sessionId,
+      { namespace: TEST_NAMESPACE, userId },
+      rawConfig,
+    ).catch(() => {});
   });
 
   it("should delete working memory for the session", async () => {
