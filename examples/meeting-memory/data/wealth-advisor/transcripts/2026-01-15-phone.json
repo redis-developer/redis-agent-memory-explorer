@@ -1,0 +1,248 @@
+{
+  "meeting": {
+    "id": "meeting-004",
+    "date": "2026-01-15",
+    "type": "phone",
+    "durationMinutes": 18,
+    "participants": {
+      "rm": "Sarah Chen",
+      "client": "James Morrison"
+    },
+    "summary": {
+      "topics": ["REIT exposure concern", "commercial property defaults", "market outlook", "529 plan update"],
+      "sentiment": "anxious",
+      "keyDecisions": ["Sarah to research REIT alternatives and present rebalancing options", "529 plan deferred — Maya unavailable"],
+      "followUps": ["Sarah to prepare REIT rebalancing proposal with specific product recommendations", "Reschedule 529 discussion when Maya can join", "Schedule February Google Meet for full review"]
+    }
+  },
+  "chunks": [
+    {
+      "timestamp": "00:00:05",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Happy New Year, James. How were the holidays?"
+    },
+    {
+      "timestamp": "00:00:10",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Happy New Year, Sarah. Holidays were good — relaxing for once. Emily got into Northwestern early decision, so that was the big news."
+    },
+    {
+      "timestamp": "00:00:25",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's fantastic! Congratulations to her and the whole family. Northwestern is an excellent school. That actually makes the 529 conversation even more timely."
+    },
+    {
+      "timestamp": "00:00:40",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Yeah, about that — Maya couldn't join today. She got pulled into something at work last minute. Can we push the 529 deep dive to next month?"
+    },
+    {
+      "timestamp": "00:00:55",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Of course. We still have time. Let me set up a Google Meet for February where Maya can join and we'll go through the plan comparison together. For today, let's focus on the portfolio and the REIT question we tabled."
+    },
+    {
+      "timestamp": "00:01:12",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Good, because the REIT thing is really bothering me. I read an article over the break about commercial real estate defaults hitting a ten-year high. Office buildings sitting empty, landlords handing keys back to lenders. It made me really uncomfortable."
+    },
+    {
+      "timestamp": "00:01:38",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I saw those reports too. The commercial office sector is under real pressure — remote work has permanently changed demand. But I want to make sure we separate the headline from your actual exposure. Let me pull up your REIT holdings."
+    },
+    {
+      "timestamp": "00:02:00",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Please. Because when I read that article, all I could think was — am I exposed to that?"
+    },
+    {
+      "timestamp": "00:02:10",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Your REIT allocation is about three hundred sixty thousand dollars — fifteen percent of the portfolio. The fund you're in is a broad REIT index, which means it's a mix of office, retail, industrial, residential, and healthcare real estate. Office is roughly twenty percent of that fund, so your actual office exposure is about seventy-two thousand."
+    },
+    {
+      "timestamp": "00:02:42",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Seventy-two thousand in office REITs. That's not nothing. And what about retail? Aren't malls dying too?"
+    },
+    {
+      "timestamp": "00:02:55",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Retail is another fifteen percent of the fund, so about fifty-four thousand. Traditional mall REITs have struggled, though some have pivoted to mixed-use and experiential retail. But your concern is valid — between office and traditional retail, you have about a hundred twenty-five thousand in sectors that are under structural pressure."
+    },
+    {
+      "timestamp": "00:03:22",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "A hundred twenty-five thousand in struggling sectors. Yeah, I don't like that. Can we get out of it?"
+    },
+    {
+      "timestamp": "00:03:32",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "We can definitely reduce the exposure. The question is what we replace it with. I want to do this methodically rather than just selling. Let me research some alternatives and come back with a concrete proposal."
+    },
+    {
+      "timestamp": "00:03:52",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "What kind of alternatives are you thinking?"
+    },
+    {
+      "timestamp": "00:04:00",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "A few directions. One — we could trim the REIT allocation from fifteen to maybe five or seven percent and move the rest into fixed income or dividend-paying equities. Two — we could swap the broad REIT index for a more targeted REIT fund that focuses on industrial and healthcare, which are the healthier sectors. Or three — a combination of both."
+    },
+    {
+      "timestamp": "00:04:30",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "I like option three. Reduce the overall REIT exposure and make what's left better quality. I don't want to be out of real estate entirely — I still think it's a good asset class long-term. I just don't want the office and mall garbage."
+    },
+    {
+      "timestamp": "00:04:52",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's a measured approach. I'll model it out. My instinct is to reduce from fifteen percent down to maybe seven or eight, and redirect the freed-up capital into short-duration bonds and dividend equities. That fits your income preference too."
+    },
+    {
+      "timestamp": "00:05:15",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "The dividend angle is a good point. If we're taking money out of REITs, putting it into dividend payers means I'm not losing the income component. I still get cash flow."
+    },
+    {
+      "timestamp": "00:05:30",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Exactly. And dividend aristocrats — companies that have raised their dividend for twenty-five-plus consecutive years — tend to be more resilient in downturns. It's a natural fit for your risk profile."
+    },
+    {
+      "timestamp": "00:05:48",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "I like where this is going. How quickly can you put together the proposal?"
+    },
+    {
+      "timestamp": "00:05:55",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Give me a couple of weeks. I want to look at specific fund options, model the impact on your overall yield and risk profile, and make sure we're doing this tax-efficiently. We just did the tax harvest in December, so I want to be careful about triggering new gains."
+    },
+    {
+      "timestamp": "00:06:18",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Good thinking. No rush — just don't let it drag on too long. Every day I see a headline about commercial real estate, my stomach turns."
+    },
+    {
+      "timestamp": "00:06:30",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I hear you. Let's target the February meeting for the presentation. That gives me four to five weeks. I'll have specific products, projected returns, and a step-by-step rebalancing plan."
+    },
+    {
+      "timestamp": "00:06:48",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "February works. Let's do the Google Meet so you can share your screen with the numbers."
+    },
+    {
+      "timestamp": "00:06:58",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Perfect. Let's talk about the broader market for a moment. The S&P ended the year up about eighteen percent, which was better than most people expected. Your equity sleeve captured most of that. How are you feeling about the market going into this year?"
+    },
+    {
+      "timestamp": "00:07:22",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Cautiously optimistic, I guess. Last year was better than I expected, especially after that scary October. But I keep hearing about how the market is overvalued and due for a bigger correction. Mixed signals."
+    },
+    {
+      "timestamp": "00:07:42",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Valuations are elevated — the S&P price-to-earnings ratio is above the historical average. But that doesn't mean a crash is imminent. Markets can stay expensive for a long time, especially when earnings growth is strong. My view is that we stay invested but stay diversified."
+    },
+    {
+      "timestamp": "00:08:05",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "That sounds right. Stay the course, don't try to time things."
+    },
+    {
+      "timestamp": "00:08:12",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Exactly. The one adjustment we're making — the REIT rebalancing — is about improving quality, not market timing. That's an important distinction."
+    },
+    {
+      "timestamp": "00:08:25",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Good way to put it. Alright, I think we've covered the big stuff. The REIT rebalancing is the priority. The 529 can wait until we get Maya on the call."
+    },
+    {
+      "timestamp": "00:08:40",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Agreed. Let me schedule the February meeting — how does February twenty-sixth look? That gives us a full month for me to prepare the REIT proposal, and we can add the 529 discussion if Maya is available."
+    },
+    {
+      "timestamp": "00:09:00",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "February twenty-sixth works. Let's do late morning — I have a board meeting at eight."
+    },
+    {
+      "timestamp": "00:09:10",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "How about ten AM? That gives you breathing room after the board meeting."
+    },
+    {
+      "timestamp": "00:09:18",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Ten AM is perfect."
+    },
+    {
+      "timestamp": "00:09:22",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Great. I'll send the Google Meet invite. In the meantime, try not to let the headlines get to you. We have a plan, and we're working it."
+    },
+    {
+      "timestamp": "00:09:35",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "I'll try. Thanks for being proactive on the REIT thing, Sarah. It helps knowing someone is on it."
+    },
+    {
+      "timestamp": "00:09:45",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's what I'm here for. Have a great rest of your week, James. And congratulations again on Emily and Northwestern."
+    },
+    {
+      "timestamp": "00:09:55",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Thanks, Sarah. Talk to you in February."
+    }
+  ]
+}

@@ -1,0 +1,338 @@
+{
+  "meeting": {
+    "id": "meeting-003",
+    "date": "2025-12-02",
+    "type": "google-meet",
+    "durationMinutes": 35,
+    "participants": {
+      "rm": "Sarah Chen",
+      "client": "James Morrison"
+    },
+    "summary": {
+      "topics": ["year-end review", "tax loss harvesting", "Emily college fund", "portfolio performance"],
+      "sentiment": "neutral-positive",
+      "keyDecisions": ["Harvest $40K in tax losses from underperforming REIT and international positions", "Start researching 529 plan for Emily's college fund"],
+      "followUps": ["Execute tax loss harvesting trades before year-end", "Sarah to prepare 529 plan comparison for next meeting", "Schedule January check-in"]
+    }
+  },
+  "chunks": [
+    {
+      "timestamp": "00:00:05",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Hey James, good to see you. Can you see my screen okay?"
+    },
+    {
+      "timestamp": "00:00:10",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Yeah, looks good. Nice to see you too, Sarah. First time doing video for one of these — feels more personal than the phone."
+    },
+    {
+      "timestamp": "00:00:22",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I agree. I find clients appreciate being able to see the charts and numbers as we talk through them. So let's dive in — it's December, which means year-end planning time. I've got a few things to cover today."
+    },
+    {
+      "timestamp": "00:00:42",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Perfect. I've been meaning to ask about tax stuff anyway."
+    },
+    {
+      "timestamp": "00:00:50",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Great minds. Let me start with the portfolio overview. Year-to-date, you're up about five point eight percent overall. Equities have been the star — up about nine percent. Fixed income is up about three percent. REITs are still lagging — down about one point five percent."
+    },
+    {
+      "timestamp": "00:01:18",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Five point eight isn't bad considering that scary October we had. I remember calling you twice in one week."
+    },
+    {
+      "timestamp": "00:01:30",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I remember. And you held steady, which was the right call. The market recovered most of that dip within three weeks. Your discipline paid off."
+    },
+    {
+      "timestamp": "00:01:45",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Thanks to you talking me off the ledge. Alright, what about the tax situation?"
+    },
+    {
+      "timestamp": "00:01:55",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "So here's where it gets interesting. We have an opportunity for tax loss harvesting. You have some positions that are sitting at unrealized losses — specifically in the REIT sleeve and a couple of international equity funds. If we sell those before December thirty-first, we can realize about forty thousand dollars in losses."
+    },
+    {
+      "timestamp": "00:02:25",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Forty thousand in losses. That sounds bad, but I know it's actually a good thing for taxes, right?"
+    },
+    {
+      "timestamp": "00:02:35",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Exactly. We use those losses to offset capital gains you've realized this year. You had about thirty-five thousand in gains from the equity rebalancing we did in August. The forty thousand in losses would offset all of that and give you an additional five thousand to carry forward to next year."
+    },
+    {
+      "timestamp": "00:03:00",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "So I'd basically pay no capital gains tax this year?"
+    },
+    {
+      "timestamp": "00:03:07",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "On the investment gains, correct. We'd sell the losing positions, book the losses, and immediately reinvest into similar but not identical funds to maintain your allocation. It's a standard tax optimization move."
+    },
+    {
+      "timestamp": "00:03:28",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "I like it. Is there a catch?"
+    },
+    {
+      "timestamp": "00:03:33",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "The main thing is the wash sale rule — we can't buy substantially identical securities within thirty days. So we'll swap into comparable funds in the same asset class. You'll maintain your exposure, just through a slightly different vehicle for a month."
+    },
+    {
+      "timestamp": "00:03:55",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Sounds like a no-brainer. Let's do it."
+    },
+    {
+      "timestamp": "00:04:02",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Perfect. I'll execute the trades this week so we lock in the losses before year-end. I'll send you a confirmation once it's done."
+    },
+    {
+      "timestamp": "00:04:15",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Great. Now what else did you want to cover?"
+    },
+    {
+      "timestamp": "00:04:22",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I wanted to circle back to something we touched on in our first call — Emily's college fund. She'll be starting in fall 2027, right? That's less than two years out."
+    },
+    {
+      "timestamp": "00:04:40",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Yeah, Emily's a senior this year. She's applying to schools right now, actually. She's got her heart set on a few top-tier places — Stanford, Northwestern, possibly Penn."
+    },
+    {
+      "timestamp": "00:05:00",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Those are all fantastic schools. And they're not cheap. Have you and Maya thought about how much you'd want to earmark for her education?"
+    },
+    {
+      "timestamp": "00:05:15",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "We've talked about it. Honestly, we'd want to cover most of it so she doesn't start life with a mountain of debt. I'm thinking we'd need about two hundred thousand for four years — tuition, room and board, books, all of it."
+    },
+    {
+      "timestamp": "00:05:38",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Two hundred thousand is a realistic number for those schools. Right now, you don't have a dedicated education fund set up. The money would come from the general portfolio, which means we should think about carving out that two hundred thousand and putting it somewhere more protected."
+    },
+    {
+      "timestamp": "00:06:02",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "What are the options?"
+    },
+    {
+      "timestamp": "00:06:08",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "The most common is a 529 college savings plan. Tax-advantaged growth, and withdrawals for qualified education expenses are tax-free. Given that you have less than two years until Emily starts, we'd want a conservative allocation within the 529 — mostly bonds and stable value funds."
+    },
+    {
+      "timestamp": "00:06:35",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "That makes sense. We can't afford to lose any of that money in a downturn right before she needs it."
+    },
+    {
+      "timestamp": "00:06:48",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Exactly. Another option is a custodial brokerage account, which gives you more flexibility but without the tax benefits. For your situation, I'd lean toward the 529."
+    },
+    {
+      "timestamp": "00:07:05",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Let's plan for the 529. Can you put together a comparison of the best plans? I've heard some states have better programs than others."
+    },
+    {
+      "timestamp": "00:07:20",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I'll prepare a comparison of the top three plans for your situation and we can finalize it in our January meeting. We'll want to fund it relatively quickly given the short timeline."
+    },
+    {
+      "timestamp": "00:07:38",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Sounds good. Maya will want to be involved in that decision too, so maybe she can join the January call."
+    },
+    {
+      "timestamp": "00:07:50",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Absolutely. The more aligned you both are, the better. Let me shift to the REIT conversation for a moment. I know you've had some concerns there."
+    },
+    {
+      "timestamp": "00:08:05",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Yeah, I'm still not thrilled about the fifteen percent allocation. The REITs have been the weakest part of the portfolio all year. Down one and a half percent while everything else is up."
+    },
+    {
+      "timestamp": "00:08:22",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "You're right that it's been a drag. Some of that underperformance is tied to the interest rate environment — higher rates make real estate less attractive relative to bonds. The good news is that we just booked some of those REIT losses in the tax harvesting, so we've already reduced that exposure slightly."
+    },
+    {
+      "timestamp": "00:08:50",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Oh, so the tax loss harvesting actually helps with the REIT problem too?"
+    },
+    {
+      "timestamp": "00:08:58",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "In a way, yes. When we swap into the replacement fund, we can choose one with a slightly different focus — maybe less commercial real estate and more residential or healthcare REITs. It's a natural opportunity to improve the quality of that sleeve."
+    },
+    {
+      "timestamp": "00:09:18",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Smart. I like that approach. Let's do that."
+    },
+    {
+      "timestamp": "00:09:25",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I'll factor that into the tax harvesting trades. But I want to flag that we should have a bigger conversation about whether fifteen percent in REITs is still the right allocation for you. That's a January topic."
+    },
+    {
+      "timestamp": "00:09:45",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Agreed. Let's put it on the January agenda."
+    },
+    {
+      "timestamp": "00:09:52",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Good. Let me do a quick check on your retirement track. With the contributions you've made this year and the market performance, your projected end-of-year balance should be around two point five million. That keeps you on track for the three million target by 2031."
+    },
+    {
+      "timestamp": "00:10:18",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Two point five. Nice. So we've grown about a hundred thousand this year between returns and contributions?"
+    },
+    {
+      "timestamp": "00:10:30",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's right. And if we maintain this trajectory — your regular contributions plus moderate market returns — you should comfortably clear three million by your target date, even after we carve out the education fund."
+    },
+    {
+      "timestamp": "00:10:50",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "That's really encouraging. It's nice to see the plan actually working."
+    },
+    {
+      "timestamp": "00:11:00",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "It is. And consistency is the key. You haven't panicked, you haven't made rash decisions. Even in October when things got scary, you held the line. That discipline compounds over time."
+    },
+    {
+      "timestamp": "00:11:18",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Thanks for the pep talk. I needed to hear that after the October anxiety."
+    },
+    {
+      "timestamp": "00:11:28",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Always happy to. Before we wrap up — anything else on your mind? Any changes in your personal situation I should know about?"
+    },
+    {
+      "timestamp": "00:11:42",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "No, nothing major. Work is stable. Maya's doing well at her job. Emily's focused on college applications. It's a good place to be."
+    },
+    {
+      "timestamp": "00:11:58",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Glad to hear it. Stability is underrated. Alright, let me summarize what we're doing. First, I'll execute the tax loss harvesting — about forty thousand in losses from the REIT and international positions. Second, I'll improve the REIT replacement fund quality. Third, I'll prepare a 529 plan comparison for January. And fourth, we'll have a deeper REIT allocation discussion in January."
+    },
+    {
+      "timestamp": "00:12:35",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "That's a solid plan. Thanks for laying it all out."
+    },
+    {
+      "timestamp": "00:12:42",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Let's schedule the January meeting for mid-month. Maybe the fifteenth? And we can invite Maya for the 529 discussion."
+    },
+    {
+      "timestamp": "00:12:55",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "January fifteenth works. I'll check with Maya but I'm sure she can make it."
+    },
+    {
+      "timestamp": "00:13:05",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Wonderful. I'll send the calendar invite. Have a great rest of your year, James. And if anything comes up before January, you know how to reach me."
+    },
+    {
+      "timestamp": "00:13:18",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Thanks, Sarah. Happy holidays."
+    },
+    {
+      "timestamp": "00:13:22",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Happy holidays to you and the family. Talk in January."
+    }
+  ]
+}
