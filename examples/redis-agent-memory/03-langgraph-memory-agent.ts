@@ -43,7 +43,7 @@ const USER_TURNS = [
 ];
 
 const buildTools = (agentMemory: AgentMemory): StructuredToolInterface[] => {
-  const storeMemoryTool = tool(
+  const storeMemoryTool: StructuredToolInterface = tool(
     async (input: { text: string; memoryType?: string; topics?: string[] }) => {
       await agentMemory.createLongTermMemories([
         {
@@ -75,7 +75,7 @@ const buildTools = (agentMemory: AgentMemory): StructuredToolInterface[] => {
     },
   );
 
-  const searchMemoryTool = tool(
+  const searchMemoryTool: StructuredToolInterface = tool(
     async (input: { query: string; limit?: number }) => {
       const result = await agentMemory.searchLongTermMemory({
         text: input.query,
@@ -102,7 +102,7 @@ const buildTools = (agentMemory: AgentMemory): StructuredToolInterface[] => {
     },
   );
 
-  const editMemoryTool = tool(
+  const editMemoryTool: StructuredToolInterface = tool(
     async (input: { memoryId: string; newText: string }) => {
       const edited = await agentMemory.editLongTermMemory(input.memoryId, {
         text: input.newText,
