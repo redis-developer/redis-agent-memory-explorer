@@ -1,0 +1,284 @@
+{
+  "meeting": {
+    "id": "meeting-001",
+    "date": "2025-09-14",
+    "type": "phone",
+    "durationMinutes": 28,
+    "participants": {
+      "rm": "Sarah Chen",
+      "client": "James Morrison"
+    },
+    "summary": {
+      "topics": ["portfolio overview", "retirement planning", "risk profile", "meeting cadence"],
+      "sentiment": "positive",
+      "keyDecisions": ["Set retirement target at $3M liquid by 2031", "Agreed on quarterly review cadence"],
+      "followUps": ["Sarah to prepare detailed asset allocation proposal", "Schedule next review for late October"]
+    }
+  },
+  "chunks": [
+    {
+      "timestamp": "00:00:05",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Hi James, thanks for taking my call today. I'm Sarah Chen, your new relationship manager here at Acme Bank. I know you've been with us for a while, so I wanted to introduce myself and make sure we're fully aligned on your goals."
+    },
+    {
+      "timestamp": "00:00:22",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Hey Sarah, nice to finally connect. Yeah, I've been with Acme for about six years now. My previous RM, David, was great, so I have high expectations."
+    },
+    {
+      "timestamp": "00:00:35",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "David set a high bar, I agree. I've reviewed your file and I want to make sure I have the full picture. Let's start with where things stand today and then talk about where you want to be. Sound good?"
+    },
+    {
+      "timestamp": "00:00:48",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Perfect. Fire away."
+    },
+    {
+      "timestamp": "00:00:52",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "So looking at your portfolio, you're sitting at roughly two point four million in assets under management. You've got about forty-five percent in US equities, thirty percent in fixed income, fifteen percent in REITs, and ten percent in cash and equivalents. Does that match your understanding?"
+    },
+    {
+      "timestamp": "00:01:18",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Yeah, that sounds about right. David and I put that allocation together about two years ago. It's been working reasonably well, though I haven't looked at it closely in a few months."
+    },
+    {
+      "timestamp": "00:01:35",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Understood. The equity portion has done well this year, up about seven percent YTD. Fixed income is steady. REITs have been a bit soft but nothing alarming. Let me ask you the big question — what's the end goal here? What are you working toward?"
+    },
+    {
+      "timestamp": "00:02:00",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Well, I'm fifty-two now. I'm a VP of Operations at Meridian Technologies — been there about fifteen years. I'd like to retire at fifty-seven, so that's about five years from now. My target is to have at least three million dollars liquid at that point."
+    },
+    {
+      "timestamp": "00:02:25",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Three million by 2031. That's a clear target. And with two point four now, you need to grow about six hundred thousand over five years. Assuming reasonable market returns and continued contributions, that's very achievable. Are you still contributing regularly?"
+    },
+    {
+      "timestamp": "00:02:48",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Yeah, I max out my 401k at work, and then I try to move an additional fifty to seventy-five thousand a year into the managed account here at Acme. Depends on bonuses and all that."
+    },
+    {
+      "timestamp": "00:03:08",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's solid. With those contribution levels and a moderate growth assumption, you should comfortably hit the three million mark. Let me ask about risk. How do you feel about the current allocation? Forty-five percent equities — does that feel right to you?"
+    },
+    {
+      "timestamp": "00:03:30",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "I think so. I'm not someone who wants to be aggressive. I've seen people lose their shirts chasing high-growth tech stocks. I want steady, reliable growth. I sleep better at night knowing things aren't too volatile."
+    },
+    {
+      "timestamp": "00:03:52",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's good to know. I'd classify you as moderate risk — willing to take some equity exposure for growth, but you value stability and predictability. We'll keep that as your baseline."
+    },
+    {
+      "timestamp": "00:04:10",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Exactly. Moderate is the right word. I'm not trying to double my money overnight. I just want to know I'll have enough when I'm ready to step away."
+    },
+    {
+      "timestamp": "00:04:28",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Makes perfect sense. Now tell me a bit about your family situation. It helps me think about the full financial picture."
+    },
+    {
+      "timestamp": "00:04:42",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Sure. My wife Maya works in healthcare administration. She makes good money. We have one daughter, Emily — she's a junior in high school right now. She's been talking about wanting to go to a top university, so that's going to be a financial consideration in a couple of years."
+    },
+    {
+      "timestamp": "00:05:10",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Got it. So Emily would be starting college around 2027. Have you thought about how much you'd need to set aside for that?"
+    },
+    {
+      "timestamp": "00:05:22",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "We haven't formalized it yet. It's in the back of my mind but we haven't dedicated a separate vehicle for it. That's probably something we should talk about in a future meeting."
+    },
+    {
+      "timestamp": "00:05:38",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Absolutely. We can look into 529 plans or other education savings vehicles. Let's table that for our next deep dive and keep today focused on the portfolio and retirement track."
+    },
+    {
+      "timestamp": "00:05:55",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Sounds good."
+    },
+    {
+      "timestamp": "00:06:00",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Let me walk through a few things I noticed in the portfolio. Your fixed income sleeve is mostly intermediate-term treasuries and investment-grade corporates. That's solid for stability. The equity side is well-diversified — large cap, mid cap, some international. No concentrated positions."
+    },
+    {
+      "timestamp": "00:06:30",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Yeah, David was big on diversification. I never had more than five percent in any single stock."
+    },
+    {
+      "timestamp": "00:06:42",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Smart approach. The REIT allocation at fifteen percent is a bit higher than what I typically see for moderate-risk profiles. Usually it's closer to five to ten percent. Any particular reason for the heavier weighting?"
+    },
+    {
+      "timestamp": "00:07:02",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "David thought real estate was a good inflation hedge and liked the income from it. I went along with it. It's been fine until recently — I've seen some headlines about commercial real estate that make me a little nervous."
+    },
+    {
+      "timestamp": "00:07:25",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's a fair concern. We don't need to make any changes today, but it's worth monitoring. If you start feeling uncomfortable with that exposure, we can look at trimming it and reallocating. I'll keep an eye on it."
+    },
+    {
+      "timestamp": "00:07:45",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Appreciate that. No rush, but yeah, let's keep it on the radar."
+    },
+    {
+      "timestamp": "00:07:55",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Absolutely. One more thing — I noticed your cash position is at ten percent, which is about two hundred forty thousand. That's a healthy emergency buffer, but depending on your liquidity needs, we might be able to put some of that to work more efficiently."
+    },
+    {
+      "timestamp": "00:08:18",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "I like having cash on hand. My dad always said keep six months of expenses liquid. But I realize it might be earning next to nothing sitting there."
+    },
+    {
+      "timestamp": "00:08:35",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "We can look at high-yield savings or short-term treasury ETFs for part of it. You'd still have liquidity but earn a better return. Something to consider for next time."
+    },
+    {
+      "timestamp": "00:08:52",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Yeah, that makes sense. Let's do that."
+    },
+    {
+      "timestamp": "00:09:00",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Perfect. Now let's talk about how we work together going forward. I like to do quarterly reviews — a proper sit-down where we go through performance, rebalancing needs, any life changes. In between, I'm always available by phone or email. How does that cadence sound?"
+    },
+    {
+      "timestamp": "00:09:25",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Quarterly sounds right. I don't need to be micromanaging things, but I want to stay informed. David and I talked about every three months and it worked well."
+    },
+    {
+      "timestamp": "00:09:42",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Great. Let's pencil in late October for our next review. That'll give me time to put together a detailed analysis and maybe some recommendations on the cash optimization and the REIT position."
+    },
+    {
+      "timestamp": "00:10:00",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Works for me. Late October is good."
+    },
+    {
+      "timestamp": "00:10:08",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I also want to ask — are there any big expenses coming up in the next year or two? Anything I should be planning for beyond Emily's college?"
+    },
+    {
+      "timestamp": "00:10:22",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Not really. We're pretty settled. The house is paid off. Cars are in good shape. Maya and I might do a trip to Europe next summer, but that's more of a fun money thing, not a portfolio concern."
+    },
+    {
+      "timestamp": "00:10:42",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Good to know. A paid-off house is a great position to be in. It gives us more flexibility with the investment portfolio since you don't have a mortgage payment to worry about."
+    },
+    {
+      "timestamp": "00:10:58",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Yeah, we got lucky with timing on the house. Bought it in 2012 right before prices went crazy."
+    },
+    {
+      "timestamp": "00:11:12",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Nice. Let me also make a note about your overall approach. It sounds like you want growth but not at the expense of sleep. You value steady returns, you want to be diversified, and you want to hit three million by retirement in 2031. Anything I'm missing?"
+    },
+    {
+      "timestamp": "00:11:38",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "No, that captures it well. Steady and predictable. I don't need to beat the market. I just need to hit my number."
+    },
+    {
+      "timestamp": "00:11:50",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Perfect. I think we're well-aligned. Let me put together a detailed proposal for the October meeting — I'll look at the overall allocation, the REIT question, and some options for optimizing the cash position."
+    },
+    {
+      "timestamp": "00:12:08",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Sounds great, Sarah. I feel good about this. Looking forward to working with you."
+    },
+    {
+      "timestamp": "00:12:18",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Likewise, James. I'll send you a summary email after this call. Have a great rest of your day."
+    },
+    {
+      "timestamp": "00:12:28",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Thanks, Sarah. Talk soon."
+    }
+  ]
+}

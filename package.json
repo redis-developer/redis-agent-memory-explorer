@@ -5,7 +5,8 @@
   "description": "Monorepo for custom-agent-utils packages",
   "workspaces": [
     "packages/*",
-    "examples/*"
+    "examples/*",
+    "examples/meeting-memory/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces",

@@ -1,0 +1,442 @@
+{
+  "meeting": {
+    "id": "meeting-005",
+    "date": "2026-02-26",
+    "type": "google-meet",
+    "durationMinutes": 22,
+    "participants": {
+      "rm": "Sarah Chen",
+      "client": "James Morrison"
+    },
+    "summary": {
+      "topics": ["REIT rebalancing execution", "spouse early retirement", "bond fund vs individual bonds", "education fund"],
+      "sentiment": "positive",
+      "keyDecisions": [
+        "Rebalance $150K from REITs: $100K → Short-Duration Bond Fund, $50K → Dividend Aristocrats ETF",
+        "James prefers bond fund over individual bonds for simplicity",
+        "Sarah to model dual-retirement scenario with Maya retiring 2027"
+      ],
+      "followUps": [
+        "Execute REIT → Bond/ETF rebalance",
+        "Model dual-retirement income scenario and send to James",
+        "Education fund — needs dedicated session with Maya"
+      ]
+    }
+  },
+  "chunks": [
+    {
+      "timestamp": "00:00:05",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Hi James, good to see you. Can you hear me okay?"
+    },
+    {
+      "timestamp": "00:00:10",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Hey Sarah, yeah, everything's clear. Thanks for setting this up. I've been looking forward to seeing what you've put together on the REIT situation."
+    },
+    {
+      "timestamp": "00:00:25",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I've got a full proposal for you. Let me share my screen. Before we dive into that — quick portfolio check. You're at about two point four million today. Equities are up eight point two percent year-to-date, bonds up three point one, REITs still lagging at negative two point four, and your cash position is earning about four point eight percent in the high-yield account we moved it to."
+    },
+    {
+      "timestamp": "00:01:00",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Equities doing well, REITs still dragging. That confirms what I've been feeling. Alright, show me the plan."
+    },
+    {
+      "timestamp": "00:01:12",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "So here's what I'm proposing. We take a hundred and fifty thousand out of the REIT sleeve. That brings your REIT allocation from fifteen percent down to about eight percent. The remaining REIT position stays in a targeted healthcare and industrial REIT fund — the better quality stuff."
+    },
+    {
+      "timestamp": "00:01:38",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Okay, so we're cutting REITs almost in half. Where does the hundred fifty go?"
+    },
+    {
+      "timestamp": "00:01:48",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I'm recommending a split. A hundred thousand goes into a short-duration bond fund — the Vanguard Short-Term Bond Index. It yields about four point eight percent with very low volatility. The other fifty thousand goes into a Dividend Aristocrats ETF — companies that have raised their dividend for at least twenty-five consecutive years."
+    },
+    {
+      "timestamp": "00:02:18",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "So Sarah, did you look into those REIT alternatives we talked about? I'm still feeling uneasy about that exposure."
+    },
+    {
+      "timestamp": "00:02:30",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's exactly what this proposal addresses. Let me walk you through the numbers. The bond fund gives you stability and income — four point eight percent yield with minimal price fluctuation. The Dividend Aristocrats ETF yields about three point six percent with moderate-to-low risk. Together, you're replacing underperforming REIT exposure with two income-generating positions that match your style."
+    },
+    {
+      "timestamp": "00:03:02",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "I like the sound of that. Four point eight from the bond fund and three point six from the dividend ETF. That's actual income flowing in."
+    },
+    {
+      "timestamp": "00:03:15",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Exactly. And here's the comparison on my screen. The REIT fund has returned negative two point four percent this year. The bond fund would have returned positive four point eight. The dividend ETF positive six point two. Just from this rebalancing, your projected annual income increases by about three thousand dollars."
+    },
+    {
+      "timestamp": "00:03:42",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Three thousand more per year just from moving things around. And I lose the commercial real estate headache. Sounds like a no-brainer to me."
+    },
+    {
+      "timestamp": "00:03:55",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "It does simplify things. Let me show you what the portfolio looks like after the rebalance. Equities go from forty-five to forty-seven percent because of the Dividend Aristocrats. Fixed income goes from thirty to thirty-four percent with the bond fund. REITs drop from fifteen to eight. Cash stays at ten."
+    },
+    {
+      "timestamp": "00:04:22",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "That looks much more balanced. I feel better already just looking at it."
+    },
+    {
+      "timestamp": "00:04:30",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Good. And importantly, this doesn't change your risk profile. If anything, it slightly reduces volatility because we're swapping a volatile asset class for more stable ones. Your projected return stays on track for the three million target."
+    },
+    {
+      "timestamp": "00:04:52",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Perfect. Now before I say yes — is there any tax impact? I know we just did the tax loss harvesting in December."
+    },
+    {
+      "timestamp": "00:05:05",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Good question. The REIT position we're selling has a small unrealized gain — about eight thousand dollars. But that's offset by the carryforward losses from December. So the net tax impact is effectively zero."
+    },
+    {
+      "timestamp": "00:05:25",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Perfect. Then let's do it. Move the hundred and fifty thousand — a hundred to the bond fund, fifty to the dividend ETF."
+    },
+    {
+      "timestamp": "00:05:38",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Excellent. I'll submit the trades today. You should see the rebalance settle within two to three business days. I'll send you a confirmation once everything is executed."
+    },
+    {
+      "timestamp": "00:05:55",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Great. You know, I feel a weight off my shoulders. I've been stressing about those REITs since October."
+    },
+    {
+      "timestamp": "00:06:08",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I'm glad we're resolving it. Now, let me shift gears. Is there anything new going on in your personal life that might affect financial planning? Any changes since January?"
+    },
+    {
+      "timestamp": "00:06:25",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Actually, yes. Something came up that I've been wanting to talk to you about."
+    },
+    {
+      "timestamp": "00:06:32",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Of course. What's going on?"
+    },
+    {
+      "timestamp": "00:06:36",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "It's Maya. She's been talking about retiring early. Like, not in five years — maybe next year. She's been at the hospital system for twenty-two years and she's burned out. The pandemic really took a toll on her, and she's never fully recovered her enthusiasm for the work."
+    },
+    {
+      "timestamp": "00:07:05",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Oh wow. That's a significant life change. When you say next year, are we talking 2027?"
+    },
+    {
+      "timestamp": "00:07:15",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Yeah, probably mid-2027. She'd be fifty-one. She has a good pension and some deferred comp, but obviously losing her active income is a big deal. We'd go from two incomes to one."
+    },
+    {
+      "timestamp": "00:07:35",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's definitely something we need to model out. Do you know roughly what Maya's income is? And what the pension would provide?"
+    },
+    {
+      "timestamp": "00:07:48",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "She makes about a hundred and eighty thousand. Her pension would be around sixty thousand a year, which starts when she retires. So we'd be losing net about a hundred and twenty thousand in annual income."
+    },
+    {
+      "timestamp": "00:08:08",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's meaningful. With your income at around two-eighty and Maya dropping to sixty from the pension, your household goes from four-sixty to three-forty. That's about a twenty-six percent reduction. It changes the math on your retirement target."
+    },
+    {
+      "timestamp": "00:08:35",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "That's what I was afraid of. Does it blow up the three million plan?"
+    },
+    {
+      "timestamp": "00:08:42",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Not necessarily, but we need to run the numbers carefully. The key variables are — how much can you continue contributing to the portfolio with one income, what your actual spending needs are, and whether your withdrawal rate assumptions change. I want to model a dual-retirement scenario."
+    },
+    {
+      "timestamp": "00:09:08",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Dual retirement — meaning what if I also retire in 2031 as planned?"
+    },
+    {
+      "timestamp": "00:09:16",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Exactly. Maya retires 2027, you retire 2031. We model the gap years where you're the sole earner, factor in Maya's pension, and project whether you still hit three million. I'll also model what happens if you need to adjust contributions or delay by six months."
+    },
+    {
+      "timestamp": "00:09:42",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "That would be incredibly helpful. We've been going back and forth about this at home and we just don't have the numbers to make a decision. Maya feels guilty about wanting to stop working, and I keep saying it's fine but honestly I don't know if it is."
+    },
+    {
+      "timestamp": "00:10:08",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Let me take the guesswork out of it. I'll build the model this week and send it to you. That way you and Maya can look at actual numbers and make the decision from an informed place. No guilt required — just math."
+    },
+    {
+      "timestamp": "00:10:28",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Thank you, Sarah. That would mean a lot to both of us."
+    },
+    {
+      "timestamp": "00:10:35",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Of course. Now, switching topics briefly — while I have you, I wanted to touch on something. You mentioned in January that you liked the dividend income concept. The bond fund we're buying today — have you ever thought about buying individual bonds instead of a bond fund?"
+    },
+    {
+      "timestamp": "00:10:58",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Actually, my neighbor was telling me he buys individual treasury bonds and holds them to maturity. He says it's better because you know exactly what you're getting. Is he right?"
+    },
+    {
+      "timestamp": "00:11:15",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "He's not wrong — individual bonds give you a guaranteed return if you hold to maturity. But there are trade-offs. Bond funds give you instant diversification across hundreds of issuers, they're highly liquid, and you don't need to manage maturities yourself. Individual bonds require more capital and more active management."
+    },
+    {
+      "timestamp": "00:11:42",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "What's the difference in terms of actual returns?"
+    },
+    {
+      "timestamp": "00:11:48",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Right now, a two-year treasury yields about four point seven percent. The short-duration bond fund we're buying yields about four point eight and includes a mix of government and investment-grade corporate bonds. The fund slightly outperforms because of the corporate bond premium, and it rebalances automatically as bonds mature."
+    },
+    {
+      "timestamp": "00:12:12",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "So the fund does the work for me and pays slightly more. I think I'll stick with the fund. I don't want to be managing individual bonds on top of everything else."
+    },
+    {
+      "timestamp": "00:12:28",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Smart choice. For someone in your position — busy career, multiple financial priorities — a bond fund is the practical choice. If you ever want to buy individual treasuries for a specific purpose, like a CD-ladder alternative, we can do that separately."
+    },
+    {
+      "timestamp": "00:12:50",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Good to know. I'll pass on that for now."
+    },
+    {
+      "timestamp": "00:12:56",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Sounds good. One more thing before we wrap — Emily's education fund. I know we've been pushing this off. She starts Northwestern in fall 2027 — that's eighteen months from now. We really should get the 529 set up soon."
+    },
+    {
+      "timestamp": "00:13:18",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "You're right. I keep letting it slide. But with Maya potentially retiring around the same time Emily starts college, I want to make sure we have that money locked away somewhere safe. Those two things happening at once could be a crunch."
+    },
+    {
+      "timestamp": "00:13:42",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Exactly — 2027 could be a double event year for your family. Maya's income drops and Emily's tuition starts. All the more reason to get the education fund set up now while both incomes are still flowing."
+    },
+    {
+      "timestamp": "00:14:02",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Can we fold that into the dual-retirement model you're building? So we can see the full picture — retirement, education, Maya's pension — all in one scenario?"
+    },
+    {
+      "timestamp": "00:14:18",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Absolutely. I'll include the education expense in the model. Two hundred thousand over four years starting fall 2027. That way you'll see everything — Maya's retirement impact, Emily's college cost, and your own retirement target — in one comprehensive view."
+    },
+    {
+      "timestamp": "00:14:42",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "That's exactly what we need. One big picture."
+    },
+    {
+      "timestamp": "00:14:50",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I'll have it done within the week. Let's schedule a follow-up call once you and Maya have had a chance to review it. Maybe a two-week window?"
+    },
+    {
+      "timestamp": "00:15:05",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Two weeks is good. That gives us time to digest it and talk."
+    },
+    {
+      "timestamp": "00:15:12",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Perfect. Let me recap what we decided today. One — we're rebalancing a hundred and fifty thousand from REITs. A hundred thousand to the Vanguard Short-Term Bond Fund, fifty thousand to the Dividend Aristocrats ETF. I'll execute today."
+    },
+    {
+      "timestamp": "00:15:35",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Check."
+    },
+    {
+      "timestamp": "00:15:37",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Two — I'm building a dual-retirement scenario model factoring in Maya's potential early retirement in 2027, Emily's college costs, and your 2031 retirement target. I'll send it within the week."
+    },
+    {
+      "timestamp": "00:15:55",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Check."
+    },
+    {
+      "timestamp": "00:15:57",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Three — the 529 education fund is still open. We'll address it in a dedicated session with Maya once you've reviewed the model."
+    },
+    {
+      "timestamp": "00:16:10",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Perfect. Three clear action items. I like the way you work, Sarah."
+    },
+    {
+      "timestamp": "00:16:18",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Thanks, James. Is there anything else before we wrap up?"
+    },
+    {
+      "timestamp": "00:16:25",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Actually, one more thing. My company is doing a stock buyback program and offering employees a discounted purchase window. Should I take advantage of it?"
+    },
+    {
+      "timestamp": "00:16:42",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That depends on the discount and your existing concentration in Meridian stock. Do you know the discount percentage?"
+    },
+    {
+      "timestamp": "00:16:52",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Fifteen percent discount on the market price. Purchase window is next month."
+    },
+    {
+      "timestamp": "00:17:00",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Fifteen percent is attractive. My general rule is — take the discount but don't hold long-term. Buy at the discounted price, then sell after the required holding period and redeploy into your diversified portfolio. You don't want more than five percent of your portfolio in any single company stock, especially your employer."
+    },
+    {
+      "timestamp": "00:17:28",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Smart. Buy the discount, sell it, and move the money over. I like that."
+    },
+    {
+      "timestamp": "00:17:38",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "It's essentially a guaranteed fifteen percent return on a short-term trade. Hard to say no to that. Just send me the details when you get the enrollment packet and I'll help you figure out the timing."
+    },
+    {
+      "timestamp": "00:17:55",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Will do. Alright, Sarah, this was a great meeting. I feel really good about the REIT rebalance, and I'm relieved we're going to get real numbers on the Maya situation."
+    },
+    {
+      "timestamp": "00:18:12",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's the goal — informed decisions, not anxious guessing. You and Maya deserve clarity on this. I'll get the model to you by next Friday."
+    },
+    {
+      "timestamp": "00:18:28",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Appreciate it. Have a great rest of your day, Sarah."
+    },
+    {
+      "timestamp": "00:18:34",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "You too, James. Talk soon."
+    }
+  ]
+}

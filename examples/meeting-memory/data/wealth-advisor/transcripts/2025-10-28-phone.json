@@ -1,0 +1,188 @@
+{
+  "meeting": {
+    "id": "meeting-002",
+    "date": "2025-10-28",
+    "type": "phone",
+    "durationMinutes": 8,
+    "participants": {
+      "rm": "Sarah Chen",
+      "client": "James Morrison"
+    },
+    "summary": {
+      "topics": ["market correction", "portfolio reassurance", "dividend preference"],
+      "sentiment": "anxious",
+      "keyDecisions": ["No changes — stay the course"],
+      "followUps": ["Sarah to send market commentary by email", "Continue monitoring REIT exposure"]
+    }
+  },
+  "chunks": [
+    {
+      "timestamp": "00:00:03",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Sarah, hi, sorry to call again. I know I called on Thursday too. But I'm watching CNBC and the market is down another two percent today. I'm seeing red everywhere."
+    },
+    {
+      "timestamp": "00:00:18",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "James, no need to apologize. That's what I'm here for. Let me pull up your account right now. Take a breath — let's look at this together."
+    },
+    {
+      "timestamp": "00:00:30",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "I've been checking the app every hour. The equity portion is down almost four percent this week. That's like forty thousand dollars. It just feels like it's going to keep going down."
+    },
+    {
+      "timestamp": "00:00:48",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "I understand the feeling completely. Let's put some numbers around this. Your equity sleeve was up about seven percent YTD before this week. With the correction, you're still up roughly three percent for the year. You haven't lost money — you've given back some gains."
+    },
+    {
+      "timestamp": "00:01:12",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "When you put it that way it sounds less scary. But the headlines are all doom and gloom. Some analyst was saying we could see another ten percent drop."
+    },
+    {
+      "timestamp": "00:01:28",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Analysts predict crashes like weather forecasters predict rain — they're right eventually, but the timing is almost always off. The fundamentals haven't changed. Corporate earnings are solid. Employment is strong. This feels like a sentiment-driven correction, not a structural one."
+    },
+    {
+      "timestamp": "00:01:52",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Should we be doing something though? Should we move to cash? I keep thinking about 2008 and people who lost everything because they didn't act."
+    },
+    {
+      "timestamp": "00:02:08",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Here's the thing — the people who lost the most in 2008 were the ones who sold at the bottom and never got back in. Your allocation is already conservative for your age. Thirty percent bonds, ten percent cash. That's your cushion. The equity portion is meant to ride through cycles like this."
+    },
+    {
+      "timestamp": "00:02:35",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Yeah, I know you're right. I just get nervous when I see the numbers go down. My stomach drops."
+    },
+    {
+      "timestamp": "00:02:48",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's completely human, James. And it's important information for me. Now I know that during market dips, you tend to feel the pull to act. My job is to be the steady hand. If we'd sold last month when things dipped, you'd have locked in a loss and missed the three percent bounce we had before this week."
+    },
+    {
+      "timestamp": "00:03:15",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "That's true. I remember being worried then too and nothing happened. I guess I'm just not wired for volatility."
+    },
+    {
+      "timestamp": "00:03:28",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "And that's perfectly fine. It actually reinforces something I want to keep building into your portfolio — more income-generating assets. You mentioned last time that you like the idea of dividends. Stocks that pay you while you hold them."
+    },
+    {
+      "timestamp": "00:03:50",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Exactly. I love that concept. Money that works while I sleep. Even when the market is down, if I'm getting a three or four percent dividend yield, at least something is coming in. It makes the dips easier to stomach."
+    },
+    {
+      "timestamp": "00:04:12",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "That's a really healthy way to think about it. Dividend-paying stocks tend to be more stable during corrections too — mature companies, strong balance sheets, consistent cash flow. As we rebalance over time, I want to tilt more of your equity sleeve toward dividend payers."
+    },
+    {
+      "timestamp": "00:04:38",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "I'd like that. It just gives me more confidence when the market gets choppy."
+    },
+    {
+      "timestamp": "00:04:50",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Good. So here's my recommendation for today — we do nothing. We stay the course. Your portfolio is positioned well for exactly this kind of pullback. If the correction deepens, we actually have dry powder in that cash position to buy on the dip."
+    },
+    {
+      "timestamp": "00:05:12",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Buy on the dip. That sounds better than panic selling."
+    },
+    {
+      "timestamp": "00:05:20",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Much better. And James — call me anytime. Seriously. If you're watching the market and getting anxious, pick up the phone. I'd rather talk you through it than have you lose sleep."
+    },
+    {
+      "timestamp": "00:05:38",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "I appreciate that. I really do. I'm sorry for the two calls this week. I know I'm probably overreacting."
+    },
+    {
+      "timestamp": "00:05:50",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "You're not overreacting. It's your financial future — it's emotional. That's completely normal. I'll send you a market commentary email today that puts this correction in historical context. It might help."
+    },
+    {
+      "timestamp": "00:06:05",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "That would be great. Something I can read and feel grounded about."
+    },
+    {
+      "timestamp": "00:06:15",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "You got it. One more thing — our quarterly review was scheduled for this week but given market conditions, let's push it to mid-November. By then things should have settled and we can have a calmer conversation about rebalancing and the REIT question."
+    },
+    {
+      "timestamp": "00:06:38",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Good idea. I don't think I could sit through a portfolio review right now without wanting to change everything."
+    },
+    {
+      "timestamp": "00:06:50",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Exactly. We'll let the dust settle first. Hang in there, James. You're in a strong position."
+    },
+    {
+      "timestamp": "00:07:00",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Thanks, Sarah. You've calmed me down. I'll try to stop checking the app every hour."
+    },
+    {
+      "timestamp": "00:07:10",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Maybe check it once a day instead. I'll call you if there's anything you actually need to worry about. Deal?"
+    },
+    {
+      "timestamp": "00:07:20",
+      "speaker": "James Morrison",
+      "role": "client",
+      "text": "Deal. Thanks again, Sarah."
+    },
+    {
+      "timestamp": "00:07:26",
+      "speaker": "Sarah Chen",
+      "role": "rm",
+      "text": "Anytime. Talk soon."
+    }
+  ]
+}

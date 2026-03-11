@@ -1,0 +1,106 @@
+{
+  "id": "wealth-advisor",
+  "name": "Intelligent Wealth Advisor",
+  "description": "AI-powered meeting memory for bank relationship managers and high-net-worth clients.",
+  "namespace": "wealth-advisor",
+  "userId": "sarah-chen",
+
+  "branding": {
+    "title": "Wealth Advisor Memory Explorer",
+    "subtitle": "Powered by Redis Agent Memory Server",
+    "footerText": "Redis Released 2026 -- Wealth Advisor Memory Demo",
+    "accentColor": "#dc382c"
+  },
+
+  "roles": {
+    "rm": {
+      "label": "Relationship Manager",
+      "shortLabel": "RM"
+    },
+    "client": {
+      "label": "Client",
+      "shortLabel": "Client"
+    }
+  },
+
+  "participants": {
+    "rm": {
+      "name": "Sarah Chen",
+      "title": "Senior Relationship Manager",
+      "organization": "Acme Bank"
+    },
+    "client": {
+      "name": "James Morrison",
+      "title": "VP of Operations, Meridian Technologies",
+      "organization": "Meridian Technologies"
+    }
+  },
+
+  "memoryLabels": {
+    "workingMemory": {
+      "title": "Working Memory",
+      "description": "Live session state -- transcript messages, token count, and auto-generated context summary.",
+      "contextSummaryLabel": "Conversation Summary (auto-generated)"
+    },
+    "longTermMemory": {
+      "title": "Long-Term Memories",
+      "description": "Durable facts extracted from the transcript by the agent memory server.",
+      "semantic": {
+        "label": "Client Facts & Preferences",
+        "description": "Financial goals, risk profile, family details, investment preferences"
+      },
+      "episodic": {
+        "label": "Decisions & Events",
+        "description": "Portfolio changes, life events, key meeting outcomes"
+      },
+      "message": {
+        "label": "Conversation Records",
+        "description": "Stored conversation segments"
+      }
+    },
+    "summaryViews": {
+      "title": "Summary Views",
+      "description": "AI-generated narrative summaries condensed from extracted memories.",
+      "defaultViewName": "Client Memory Summary",
+      "defaultGroupBy": ["user_id"]
+    },
+    "metrics": {
+      "title": "Redis Under the Hood",
+      "description": "Real-time operational stats from the agent memory server."
+    }
+  },
+
+  "transcriptPanel": {
+    "title": "Meeting Transcript",
+    "playingLabel": "Live Call Simulation",
+    "completedLabel": "Call Ended"
+  },
+
+  "toolbar": {
+    "transcriptDropdownLabel": "Select Meeting",
+    "playLabel": "Play Transcript",
+    "stopLabel": "Stop",
+    "resetLabel": "Clear All Memories & Restart",
+    "speedLabel": "Playback Speed"
+  },
+
+  "statusLabels": {
+    "idle": "Select a meeting to begin",
+    "loading": "Loading transcript...",
+    "playing": "Playing",
+    "completed": "Transcript complete",
+    "extracting": "Extracting long-term memories...",
+    "ready-to-explore": "Ready to explore memories",
+    "error": "Error"
+  },
+
+  "playbackDefaults": {
+    "intervalMs": 2000,
+    "speeds": [
+      { "label": "0.5x", "intervalMs": 4000 },
+      { "label": "1x", "intervalMs": 2000 },
+      { "label": "2x", "intervalMs": 1000 },
+      { "label": "4x", "intervalMs": 500 }
+    ]
+  }
+}
