@@ -1,0 +1,104 @@
+.demo-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+
+  &.demo-page--loading,
+  &.demo-page--error {
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    text-align: center;
+  }
+
+  .demo-page__loading-text {
+    color: var(--fg-muted);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-3xs);
+  }
+
+  .demo-page__error-title {
+    font-size: var(--font-size-xl);
+    color: var(--hyper-05);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .demo-page__error-message {
+    color: var(--fg-muted);
+    font-size: var(--font-size-rg);
+    max-width: 480px;
+  }
+
+  .demo-page__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-3xs) var(--space-xs);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    height: var(--toolbar-height);
+  }
+
+  .demo-page__logo {
+    flex-shrink: 0;
+  }
+
+  .demo-page__title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .demo-page__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--fg-default);
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .demo-page__subtitle {
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
+    margin: 0;
+  }
+
+  .demo-page__panels {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    gap: var(--panel-gap);
+    padding: var(--space-3xs);
+  }
+
+  .demo-page__panel {
+    overflow: hidden;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border);
+    background-color: var(--bg-surface);
+  }
+
+  .demo-page__panel--transcript {
+    width: var(--transcript-panel-width);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .demo-page__panel--explorer {
+    width: var(--memory-panel-width);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .demo-page__footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--footer-height);
+    border-top: 1px solid var(--border);
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
+    flex-shrink: 0;
+  }
+}

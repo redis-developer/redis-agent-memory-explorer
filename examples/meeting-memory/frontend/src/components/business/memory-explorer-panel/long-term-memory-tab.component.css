@@ -1,0 +1,31 @@
+.long-term-memory-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+
+  .long-term-memory-tab__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .long-term-memory-tab__total {
+    font-family: var(--secondary-font);
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
+  }
+
+  .long-term-memory-tab__empty-section {
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
+    text-align: center;
+    padding: var(--space-3xs);
+    margin: 0;
+  }
+
+  .long-term-memory-tab__cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+  }
+}

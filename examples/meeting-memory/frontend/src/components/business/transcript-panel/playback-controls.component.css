@@ -1,0 +1,28 @@
+.playback-controls {
+  padding: var(--space-3xs) var(--space-xs);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+
+  .playback-controls__progress {
+    margin-bottom: var(--space-2xs);
+  }
+
+  .playback-controls__info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .playback-controls__count {
+    font-family: var(--secondary-font);
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
+  }
+
+  .playback-controls__percentage {
+    font-family: var(--secondary-font);
+    font-size: var(--font-size-xs);
+    color: var(--fg-body);
+    font-weight: var(--font-weight-medium);
+  }
+}

@@ -1,0 +1,111 @@
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  padding: var(--space-3xs) var(--space-xs);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  flex-shrink: 0;
+
+  .toolbar__row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3xs);
+  }
+
+  .toolbar__row--top {
+    justify-content: space-between;
+  }
+
+  .toolbar__row--controls {
+    flex-wrap: wrap;
+  }
+
+  .toolbar__health {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+  }
+
+  .toolbar__health-label {
+    font-size: var(--font-size-2xs);
+    color: var(--fg-muted);
+  }
+
+  .toolbar__status-chip {
+    font-family: var(--secondary-font) !important;
+    font-size: var(--font-size-2xs) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: var(--dusk-90) !important;
+    color: var(--fg-body) !important;
+    border: 1px solid var(--border) !important;
+
+    &.toolbar__status-chip--playing {
+      background-color: color-mix(in srgb, var(--color-episodic) 15%, transparent) !important;
+      color: var(--color-episodic) !important;
+      border-color: var(--color-episodic) !important;
+    }
+
+    &.toolbar__status-chip--completed {
+      background-color: color-mix(in srgb, var(--sky-blue) 15%, transparent) !important;
+      color: var(--sky-blue) !important;
+      border-color: var(--sky-blue) !important;
+    }
+
+    &.toolbar__status-chip--error {
+      background-color: color-mix(in srgb, var(--hyper-05) 15%, transparent) !important;
+      color: var(--hyper-05) !important;
+      border-color: var(--hyper-05) !important;
+    }
+  }
+
+  .toolbar__select {
+    flex-shrink: 0;
+  }
+
+  .toolbar__select--transcript {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .toolbar__buttons {
+    display: flex;
+    gap: var(--space-2xs);
+  }
+
+  .toolbar__play-btn {
+    color: var(--color-episodic) !important;
+
+    &:disabled {
+      color: var(--fg-muted) !important;
+      opacity: 0.4;
+    }
+  }
+
+  .toolbar__stop-btn {
+    color: var(--fg-body) !important;
+
+    &:disabled {
+      color: var(--fg-muted) !important;
+      opacity: 0.4;
+    }
+  }
+
+  .toolbar__reset-btn {
+    margin-left: auto !important;
+    color: var(--hyper-05) !important;
+    border-color: var(--hyper-05) !important;
+    font-size: var(--font-size-xs) !important;
+    text-transform: none !important;
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--hyper-05) 10%, transparent) !important;
+      border-color: var(--hyper-07) !important;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+    }
+  }
+}

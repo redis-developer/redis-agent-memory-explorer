@@ -1,0 +1,12 @@
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--dot-color);
+  flex-shrink: 0;
+
+  &.status-dot--checking {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "meeting-memory-frontend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "npx serve out -l 3000"
+  },
+  "dependencies": {
+    "next": "^15.3.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "@mui/material": "^6.5.0",
+    "@mui/icons-material": "^6.5.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  }
+}

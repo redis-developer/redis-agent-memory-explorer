@@ -1,0 +1,80 @@
+type RoleConfig = {
+  label: string;
+  shortLabel: string;
+};
+
+type ParticipantConfig = {
+  name: string;
+  title: string;
+  organization: string;
+};
+
+type MemoryTypeLabel = {
+  label: string;
+  description: string;
+};
+
+type DatasetConfig = {
+  id: string;
+  name: string;
+  description: string;
+  namespace: string;
+  userId: string;
+  branding: {
+    title: string;
+    subtitle: string;
+    footerText: string;
+    accentColor: string;
+  };
+  roles: Record<string, RoleConfig>;
+  participants: Record<string, ParticipantConfig>;
+  memoryLabels: {
+    workingMemory: {
+      title: string;
+      description: string;
+      contextSummaryLabel: string;
+    };
+    longTermMemory: {
+      title: string;
+      description: string;
+      semantic: MemoryTypeLabel;
+      episodic: MemoryTypeLabel;
+      message: MemoryTypeLabel;
+    };
+    summaryViews: {
+      title: string;
+      description: string;
+      defaultViewName: string;
+      defaultGroupBy: string[];
+    };
+    metrics: {
+      title: string;
+      description: string;
+    };
+  };
+  transcriptPanel: {
+    title: string;
+    playingLabel: string;
+    completedLabel: string;
+  };
+  toolbar: {
+    transcriptDropdownLabel: string;
+    playLabel: string;
+    stopLabel: string;
+    resetLabel: string;
+    speedLabel: string;
+  };
+  statusLabels: Record<string, string>;
+  playbackDefaults: {
+    intervalMs: number;
+    speeds: Array<{ label: string; intervalMs: number }>;
+  };
+  defaultSummaryViewId: string | null;
+};
+
+export type {
+  RoleConfig,
+  ParticipantConfig,
+  MemoryTypeLabel,
+  DatasetConfig,
+};

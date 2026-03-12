@@ -1,0 +1,104 @@
+:root {
+  --primary-font: "Space Grotesk", sans-serif;
+  --secondary-font: "Space Mono", monospace;
+
+  --font-size-2xs: 0.625rem;
+  --font-size-xs: 0.75rem;
+  --font-size-rg: 0.875rem;
+  --font-size-sm: 1rem;
+  --font-size-md: 1.125rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  --primary-color: #ff4438;
+  --midnight: #091a23;
+  --yellow: #dcff1e;
+  --base-white: #ffffff;
+  --base-black: #000000;
+
+  --hyper-04: #fd736a;
+  --hyper-05: #ff4438;
+  --hyper-07: #e4291e;
+  --hyper-08: #d1281e;
+  --hyper-09: #8a221c;
+  --hyper-10: #351d22;
+
+  --dusk: #163341;
+  --dusk-09: #0d212c;
+  --dusk-90: #2d4754;
+  --dusk-50: #8a99a0;
+  --dusk-30: #b9c2c6;
+  --dusk-10: #d9d9d9;
+
+  --bg-default: var(--midnight);
+  --bg-surface: var(--dusk-09);
+  --bg-surface-hover: var(--dusk);
+  --bg-surface-accent: var(--dusk-90);
+  --fg-default: var(--base-white);
+  --fg-body: var(--dusk-10);
+  --fg-muted: var(--dusk-30);
+  --fg-brand: var(--yellow);
+  --border: var(--dusk);
+  --stroke-divider: var(--dusk-50);
+
+  --color-semantic: #80dbff;
+  --color-episodic: #dcff1e;
+  --color-message: var(--dusk-50);
+
+  --yellow-06: #d0f41d;
+  --yellow-08: #a9ca03;
+  --yellow-50: #f1ffa5;
+
+  --sky-blue: #80dbff;
+  --sky-blue-50: #bfedff;
+  --sky-blue-09: #0477a5;
+
+  --space-2xs: 0.25rem;
+  --space-3xs: 0.5rem;
+  --space-xs: 1rem;
+  --space-sm: 1.5rem;
+  --space-md: 2.5rem;
+  --space-rg: 3rem;
+  --space-lg: 4.5rem;
+  --space-xl: 6rem;
+
+  --btn-primary-bg: var(--hyper-10);
+  --btn-primary-border: var(--hyper-05);
+  --btn-primary-text: var(--base-white);
+  --btn-primary-hover-bg: var(--hyper-09);
+  --btn-primary-hover-border: var(--hyper-07);
+  --btn-secondary-bg: var(--dusk);
+  --btn-secondary-border: var(--dusk-90);
+  --btn-secondary-text: var(--base-white);
+  --btn-secondary-hover-bg: var(--dusk-90);
+  --btn-font-size: 0.875rem;
+  --btn-font-weight: 500;
+  --btn-border-radius-pill: 200px;
+  --btn-border-radius-rounded: 5px;
+  --btn-padding-sm: 0.5rem 0.75rem;
+  --btn-padding-md: 0.625rem 1.5rem;
+
+  --border-radius: 8px;
+  --border-radius-sm: 4px;
+  --border-radius-lg: 12px;
+  --border-radius-pill: 200px;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  --toolbar-height: 64px;
+  --footer-height: 40px;
+  --panel-gap: var(--space-xs);
+  --transcript-panel-width: 55%;
+  --memory-panel-width: 45%;
+}
