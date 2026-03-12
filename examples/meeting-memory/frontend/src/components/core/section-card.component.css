@@ -1,0 +1,44 @@
+.section-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+
+  .section-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: var(--space-xs);
+    border-bottom: 1px solid var(--border);
+    gap: var(--space-3xs);
+  }
+
+  .section-card__header-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .section-card__title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--fg-default);
+    margin: 0;
+  }
+
+  .section-card__description {
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
+    margin-top: var(--space-2xs);
+    line-height: 1.4;
+  }
+
+  .section-card__actions {
+    flex-shrink: 0;
+    display: flex;
+    gap: var(--space-2xs);
+  }
+
+  .section-card__body {
+    padding: var(--space-xs);
+  }
+}

@@ -1,0 +1,16 @@
+.memory-explorer-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+
+  .memory-explorer-panel__tabs {
+    flex-shrink: 0;
+  }
+
+  .memory-explorer-panel__content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-xs);
+  }
+}

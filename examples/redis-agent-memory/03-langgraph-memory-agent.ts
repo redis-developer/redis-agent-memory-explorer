@@ -14,7 +14,6 @@
  */
 
 import type { BaseMessage } from "@langchain/core/messages";
-import type { StructuredToolInterface } from "@langchain/core/tools";
 import type { MemoryMessage } from "cau-redis-agent-memory";
 
 import { config } from "dotenv";
@@ -42,8 +41,8 @@ const USER_TURNS = [
   "Actually I recently got promoted to senior data engineer.",
 ];
 
-const buildTools = (agentMemory: AgentMemory): StructuredToolInterface[] => {
-  const storeMemoryTool: StructuredToolInterface = tool(
+const buildTools = (agentMemory: AgentMemory) => {
+  const storeMemoryTool = tool(
     async (input: { text: string; memoryType?: string; topics?: string[] }) => {
       await agentMemory.createLongTermMemories([
         {
@@ -75,7 +74,7 @@ const buildTools = (agentMemory: AgentMemory): StructuredToolInterface[] => {
     },
   );
 
-  const searchMemoryTool: StructuredToolInterface = tool(
+  const searchMemoryTool = tool(
     async (input: { query: string; limit?: number }) => {
       const result = await agentMemory.searchLongTermMemory({
         text: input.query,
@@ -102,7 +101,7 @@ const buildTools = (agentMemory: AgentMemory): StructuredToolInterface[] => {
     },
   );
 
-  const editMemoryTool: StructuredToolInterface = tool(
+  const editMemoryTool = tool(
     async (input: { memoryId: string; newText: string }) => {
       const edited = await agentMemory.editLongTermMemory(input.memoryId, {
         text: input.newText,

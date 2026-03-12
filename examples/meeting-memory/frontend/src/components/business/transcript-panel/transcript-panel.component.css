@@ -1,0 +1,21 @@
+.transcript-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+
+  .transcript-panel__header {
+    display: flex;
+    align-items: center;
+    padding: var(--space-3xs) var(--space-xs);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .transcript-panel__title {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+    color: var(--fg-default);
+    margin: 0;
+  }
+}

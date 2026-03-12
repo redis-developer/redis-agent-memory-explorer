@@ -1,0 +1,98 @@
+.working-memory-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+
+  .working-memory-tab__session-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+
+  .working-memory-tab__info-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3xs);
+  }
+
+  .working-memory-tab__info-label {
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+
+  .working-memory-tab__info-value {
+    font-size: var(--font-size-xs);
+    color: var(--fg-body);
+    word-break: break-all;
+
+    &.mono {
+      font-family: var(--secondary-font);
+      font-size: var(--font-size-2xs);
+    }
+  }
+
+  .working-memory-tab__context {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+
+  .working-memory-tab__context-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-2xs);
+    font-family: var(--secondary-font);
+    color: var(--fg-muted);
+  }
+
+  .working-memory-tab__pending-summary {
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
+    font-style: italic;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .working-memory-tab__messages {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+
+  .working-memory-tab__message {
+    display: flex;
+    gap: var(--space-3xs);
+    font-size: var(--font-size-xs);
+    padding: var(--space-2xs) 0;
+    border-bottom: 1px solid var(--border);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .working-memory-tab__message-role {
+    font-family: var(--secondary-font);
+    font-size: var(--font-size-2xs);
+    color: var(--fg-muted);
+    flex-shrink: 0;
+    min-width: 40px;
+    text-transform: uppercase;
+  }
+
+  .working-memory-tab__message-content {
+    color: var(--fg-body);
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  .working-memory-tab__message-more {
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
+    text-align: center;
+    padding: var(--space-2xs);
+    margin: 0;
+  }
+}

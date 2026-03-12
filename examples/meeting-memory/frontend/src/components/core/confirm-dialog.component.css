@@ -1,0 +1,36 @@
+.confirm-dialog {
+  .confirm-dialog__paper {
+    background-color: var(--bg-surface) !important;
+    color: var(--fg-default) !important;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius-lg) !important;
+    min-width: 400px;
+  }
+
+  .confirm-dialog__title {
+    font-family: var(--primary-font) !important;
+    font-weight: var(--font-weight-bold) !important;
+    color: var(--fg-default) !important;
+  }
+
+  .confirm-dialog__content {
+    color: var(--fg-body) !important;
+    font-size: var(--font-size-rg);
+    line-height: 1.6;
+  }
+
+  .confirm-dialog__cancel-btn {
+    color: var(--fg-muted) !important;
+  }
+
+  .confirm-dialog__confirm-btn {
+    background-color: var(--hyper-07) !important;
+    color: var(--base-white) !important;
+    font-weight: var(--font-weight-medium) !important;
+    border-radius: var(--btn-border-radius-rounded) !important;
+
+    &:hover {
+      background-color: var(--hyper-08) !important;
+    }
+  }
+}

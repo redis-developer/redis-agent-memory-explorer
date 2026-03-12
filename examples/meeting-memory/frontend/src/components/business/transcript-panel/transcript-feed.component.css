@@ -1,0 +1,9 @@
+.transcript-feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-xs);
+  overflow-y: auto;
+  flex: 1;
+  scroll-behavior: smooth;
+}
