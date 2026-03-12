@@ -49,9 +49,9 @@ const WorkingMemoryTab = ({
   }
 
   const rawContextPercent =
-    (lastAppendResult?.contextPercentageTotalUsed ?? data.contextPercentageTotalUsed ?? 0) * 100;
+    lastAppendResult?.contextPercentageTotalUsed ?? data.contextPercentageTotalUsed ?? 0;
   const rawUntilSummarization =
-    (lastAppendResult?.contextPercentageUntilSummarization ?? data.contextPercentageUntilSummarization ?? 1) * 100;
+    lastAppendResult?.contextPercentageUntilSummarization ?? data.contextPercentageUntilSummarization ?? 0;
   const contextPercent = Math.min(rawContextPercent, 100);
   const isContextFull = rawContextPercent >= 100 || rawUntilSummarization >= 100;
   const tokenCount = lastAppendResult?.tokens ?? data.tokens ?? 0;

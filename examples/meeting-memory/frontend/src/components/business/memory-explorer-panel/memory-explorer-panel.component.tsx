@@ -4,6 +4,7 @@ import type { DatasetConfig } from "@/types/dataset-config.types";
 import type { ApiMetrics, AppendResult } from "@/types/memory.types";
 
 import { useState, useMemo, useEffect, useRef } from "react";
+
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 
@@ -77,6 +78,10 @@ const MemoryExplorerPanel = ({
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
+    const isSummaryTab = newValue === DEMO_TAB.SUMMARY_VIEWS;
+    if (isSummaryTab) {
+      summaryViews.refreshViews();
+    }
   };
 
   return (

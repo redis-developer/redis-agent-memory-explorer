@@ -78,6 +78,7 @@ const initializeApp = async (): Promise<void> => {
     userId,
     defaultSummaryViewId,
     modelName: ENV.MODEL_NAME,
+    contextWindowMax: ENV.CONTEXT_WINDOW_MAX,
   });
 };
 
