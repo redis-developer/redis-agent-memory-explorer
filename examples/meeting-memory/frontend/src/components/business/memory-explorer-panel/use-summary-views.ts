@@ -106,10 +106,12 @@ const useSummaryViews = (
 
   const computeDefaultSummary = useCallback(
     async (group: Record<string, string>) => {
-      if (!defaultSummaryViewId) return;
-      await doComputeSummary(defaultSummaryViewId, group);
+      const effectiveId =
+        views.find((v) => v.isDefault)?.viewId ?? defaultSummaryViewId;
+      if (!effectiveId) return;
+      await doComputeSummary(effectiveId, group);
     },
-    [defaultSummaryViewId, doComputeSummary],
+    [views, defaultSummaryViewId, doComputeSummary],
   );
 
   const fetchSummariesForView = useCallback(async (viewId: string) => {

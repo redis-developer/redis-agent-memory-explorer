@@ -104,16 +104,15 @@ const deleteSummaryView = (viewId: string): Promise<void> =>
 const fetchTask = (taskId: string): Promise<{ id: string; status: string; result: unknown }> =>
   apiPost<{ id: string; status: string; result: unknown }>("/api/getTask", { taskId });
 
-const resetDemo = (): Promise<{
-  deletedWorkingMemory: number;
-  deletedLongTermMemory: number;
-  recreatedSummaryView: boolean;
-}> =>
-  apiPost<{
-    deletedWorkingMemory: number;
-    deletedLongTermMemory: number;
-    recreatedSummaryView: boolean;
-  }>("/api/resetLifecycle");
+type ResetResult = {
+  sessionsDeleted: number;
+  memoriesDeleted: number;
+  viewsDeleted: number;
+  defaultSummaryViewId: string;
+};
+
+const resetDemo = (): Promise<ResetResult> =>
+  apiPost<ResetResult>("/api/resetLifecycle");
 
 const fetchHealth = (): Promise<HealthResponse> =>
   apiGet<HealthResponse>("/health");

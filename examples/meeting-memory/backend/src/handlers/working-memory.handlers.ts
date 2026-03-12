@@ -68,6 +68,7 @@ const appendWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
   const payload: Parameters<typeof AgentMemory.prototype.putWorkingMemory>[1] =
     {
       messages: allMessages,
+      context: existing?.context ?? undefined,
       userId,
       namespace,
     };
@@ -85,7 +86,7 @@ const appendWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
   const result = await AgentMemory.getInstance().putWorkingMemory(
     sessionId,
     payload,
-    { namespace, modelName: ENV.MODEL_NAME },
+    { namespace, modelName: ENV.MODEL_NAME, contextWindowMax: ENV.CONTEXT_WINDOW_MAX },
   );
 
   const latencyMs = Date.now() - startMs;
