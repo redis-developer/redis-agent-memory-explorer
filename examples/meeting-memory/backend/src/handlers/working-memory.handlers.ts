@@ -9,10 +9,13 @@ import type {
 
 import { AgentMemory, ExtractionStrategy } from "cau-redis-agent-memory";
 
+import {
+  SESSION_ID_PREFIX,
+  DEFAULT_LIST_LIMIT,
+  DEFAULT_LIST_OFFSET,
+} from "../constants";
 import { getAppState } from "../app-state";
-import { MODEL_NAME } from "../config";
-
-const SESSION_ID_PREFIX = "playback";
+import { ENV } from "../config";
 
 const buildSessionId = (transcriptId: string): string => {
   return `${SESSION_ID_PREFIX}-${transcriptId}-${Date.now()}`;
@@ -82,7 +85,7 @@ const appendWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
   const result = await AgentMemory.getInstance().putWorkingMemory(
     sessionId,
     payload,
-    { namespace, modelName: MODEL_NAME },
+    { namespace, modelName: ENV.MODEL_NAME },
   );
 
   const latencyMs = Date.now() - startMs;
@@ -145,9 +148,6 @@ const listWorkingMemorySessionsHandler: RouteHandler = async (
 ) => {
   const { limit, offset } = (input as ListWorkingMemorySessionsInput) ?? {};
   const { namespace, userId } = getAppState();
-
-  const DEFAULT_LIST_LIMIT = 20;
-  const DEFAULT_LIST_OFFSET = 0;
 
   const result = await AgentMemory.getInstance().listSessions({
     namespace,

@@ -3,9 +3,8 @@ import type { ForgetLifecycleInput } from "../types";
 
 import { AgentMemory, SummaryViewSource } from "cau-redis-agent-memory";
 
+import { SEARCH_ALL_LIMIT } from "../constants";
 import { getAppState, setAppState } from "../app-state";
-
-const SEARCH_ALL_LIMIT = 100;
 
 const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   const { namespace, userId, datasetConfig } = getAppState();

@@ -3,13 +3,11 @@ import type { TranscriptData, TranscriptSummary } from "../types";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, basename } from "node:path";
 
-import { DATA_DIR } from "../config";
-
-const TRANSCRIPTS_SUBDIR = "transcripts";
-const JSON_EXT = ".json";
+import { TRANSCRIPTS_SUBDIR, JSON_EXT } from "../constants";
+import { ENV } from "../config";
 
 const getTranscriptsDir = (datasetId: string): string => {
-  return join(DATA_DIR, datasetId, TRANSCRIPTS_SUBDIR);
+  return join(ENV.DATA_DIR, datasetId, TRANSCRIPTS_SUBDIR);
 };
 
 const loadTranscript = (
@@ -37,26 +35,24 @@ const loadTranscript = (
 const listTranscripts = (datasetId: string): TranscriptSummary[] => {
   const dir = getTranscriptsDir(datasetId);
   const dirExists = existsSync(dir);
-
-  if (!dirExists) {
-    return [];
-  }
-
-  const files = readdirSync(dir).filter((f) => f.endsWith(JSON_EXT));
   const summaries: TranscriptSummary[] = [];
 
-  for (const file of files) {
-    const id = basename(file, JSON_EXT);
-    const data = loadTranscript(datasetId, id);
+  if (dirExists) {
+    const files = readdirSync(dir).filter((f) => f.endsWith(JSON_EXT));
 
-    summaries.push({
-      id,
-      date: data.meeting.date,
-      type: data.meeting.type,
-      durationMinutes: data.meeting.durationMinutes,
-      chunkCount: data.chunks.length,
-      participants: data.meeting.participants,
-    });
+    for (const file of files) {
+      const id = basename(file, JSON_EXT);
+      const data = loadTranscript(datasetId, id);
+
+      summaries.push({
+        id,
+        date: data.meeting.date,
+        type: data.meeting.type,
+        durationMinutes: data.meeting.durationMinutes,
+        chunkCount: data.chunks.length,
+        participants: data.meeting.participants,
+      });
+    }
   }
 
   return summaries;

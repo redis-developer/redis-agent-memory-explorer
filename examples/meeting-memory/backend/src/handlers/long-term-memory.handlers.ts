@@ -6,11 +6,12 @@ import type {
 
 import { AgentMemory } from "cau-redis-agent-memory";
 
+import {
+  DEFAULT_SEARCH_LIMIT,
+  DEFAULT_SEARCH_OFFSET,
+  SESSION_SEARCH_LIMIT,
+} from "../constants";
 import { getAppState } from "../app-state";
-
-const DEFAULT_SEARCH_LIMIT = 20;
-const DEFAULT_SEARCH_OFFSET = 0;
-const SESSION_SEARCH_LIMIT = 50;
 
 const searchLongTermMemoryHandler: RouteHandler = async (
   input,

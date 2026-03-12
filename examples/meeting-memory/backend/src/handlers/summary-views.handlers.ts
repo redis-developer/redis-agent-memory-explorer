@@ -10,20 +10,17 @@ import type {
 
 import { AgentMemory } from "cau-redis-agent-memory";
 
+import { SUPPORTED_GROUP_BY_FIELDS } from "../constants";
 import { getAppState } from "../app-state";
-
-const SUPPORTED_GROUP_BY_FIELDS = ["user_id", "session_id", "namespace"];
 
 const validateGroupBy = (groupBy?: string[]): void => {
   const hasGroupBy = groupBy !== undefined && groupBy.length > 0;
-
-  if (!hasGroupBy) {
-    return;
+  let unsupported: string[] = [];
+  if (hasGroupBy) {
+    unsupported = groupBy.filter(
+      (field) => !SUPPORTED_GROUP_BY_FIELDS.includes(field),
+    );
   }
-
-  const unsupported = groupBy.filter(
-    (field) => !SUPPORTED_GROUP_BY_FIELDS.includes(field),
-  );
   const hasUnsupported = unsupported.length > 0;
 
   if (hasUnsupported) {

@@ -3,12 +3,11 @@ import type { DatasetConfig, DatasetSummary } from "../types";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
-import { DATA_DIR } from "../config";
-
-const CONFIG_FILENAME = "dataset.config.json";
+import { CONFIG_FILENAME } from "../constants";
+import { ENV } from "../config";
 
 const loadDatasetConfig = (datasetId: string): DatasetConfig => {
-  const configPath = join(DATA_DIR, datasetId, CONFIG_FILENAME);
+  const configPath = join(ENV.DATA_DIR, datasetId, CONFIG_FILENAME);
   const fileExists = existsSync(configPath);
 
   if (!fileExists) {
@@ -24,24 +23,22 @@ const loadDatasetConfig = (datasetId: string): DatasetConfig => {
 };
 
 const listDatasets = (): DatasetSummary[] => {
-  const dirExists = existsSync(DATA_DIR);
-
-  if (!dirExists) {
-    return [];
-  }
-
-  const entries = readdirSync(DATA_DIR, { withFileTypes: true });
+  const dirExists = existsSync(ENV.DATA_DIR);
   const datasets: DatasetSummary[] = [];
 
-  for (const entry of entries) {
-    const isDirectory = entry.isDirectory();
-    const hasConfig = isDirectory && existsSync(
-      join(DATA_DIR, entry.name, CONFIG_FILENAME),
-    );
+  if (dirExists) {
+    const entries = readdirSync(ENV.DATA_DIR, { withFileTypes: true });
 
-    if (hasConfig) {
-      const config = loadDatasetConfig(entry.name);
-      datasets.push({ id: config.id, name: config.name });
+    for (const entry of entries) {
+      const isDirectory = entry.isDirectory();
+      const hasConfig = isDirectory && existsSync(
+        join(ENV.DATA_DIR, entry.name, CONFIG_FILENAME),
+      );
+
+      if (hasConfig) {
+        const config = loadDatasetConfig(entry.name);
+        datasets.push({ id: config.id, name: config.name });
+      }
     }
   }
 
