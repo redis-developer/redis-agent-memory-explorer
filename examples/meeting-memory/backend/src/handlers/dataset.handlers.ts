@@ -2,7 +2,7 @@ import type { RouteHandler } from "cau-api-server";
 import type { DatasetResponse } from "../types";
 
 import { getAppState } from "../app-state";
-import { ACTIVE_DATASET } from "../config";
+import { ENV } from "../config";
 import { DatasetLoaderService } from "../services/dataset-loader.service";
 
 const getDatasetHandler: RouteHandler = async (_input, { logger }) => {
@@ -23,7 +23,7 @@ const listDatasetsHandler: RouteHandler = async (_input, { logger }) => {
 
   logger.info("Listing datasets", { count: datasets.length });
 
-  return { datasets, active: ACTIVE_DATASET };
+  return { datasets, active: ENV.ACTIVE_DATASET };
 };
 
 export { getDatasetHandler, listDatasetsHandler };
