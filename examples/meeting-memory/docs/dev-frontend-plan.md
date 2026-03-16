@@ -368,7 +368,6 @@ All titles, labels, and descriptions below are read from `config.*` -- never har
 │  │ ║ │ Hey Sarah...      │   ║ │ │ ║  │                            │  ║ ││
 │  │ ║ │ ▼ auto-scrolling  │   ║ │ │ ║  └────────────────────────────┘  ║ ││
 │  │ ║ └───────────────────┘   ║ │ │ ║                                  ║ ││
-│  │ ║                         ║ │ │ ║  Operations: 24 | Avg: 42ms      ║ ││
 │  │ ║ Chunks: 12/56 | 22%    ║ │ │ ║                                  ║ ││
 │  │ ║                         ║ │ │ ║                                  ║ ││
 │  │ ╚═════════════════════════╝ │ │ ╚══════════════════════════════════╝ ││
@@ -652,8 +651,6 @@ No `playbackStatus`, no `playbackMetrics`. The panel has zero knowledge of trans
 - Working memory data (from `useWorkingMemory` hook)
 - Long-term memory data (from `useLongTermMemory` hook)
 - Summary views data (from `useSummaryViews` hook)
-- `apiMetrics` -- internal tracking of all API calls made by this panel (counts, latencies)
-
 All data fetching is triggered internally based on `sessionId` changes only.
 
 #### Internal Behavior (sessionId-driven, no playback knowledge)
@@ -662,8 +659,6 @@ All data fetching is triggered internally based on `sessionId` changes only.
 2. Working memory polling: as data arrives, WorkingMemoryTab updates. When `context` field appears, highlight it.
 3. LT memory polling: initially returns 0 results (extraction hasn't happened yet). When extraction completes on the backend, results start appearing. The panel detects this automatically -- no external signal needed. Once results appear, reduce poll frequency or stop.
 4. On `sessionId` change to `null` (reset): stop all polling, clear all internal state, show empty states
-5. All API calls are tracked in `apiMetrics` for the RedisMetricsTab (call counts, latencies, memory counts)
-
 #### Tabs (labels from config)
 
 | Tab              | Config Label Source                        | Icon           | When Active                   |
@@ -859,7 +854,7 @@ This is a major demo moment -- showing the agent memory server condensing all ex
 
 "Redis Under the Hood" -- shows operational stats tracked entirely within MemoryExplorerPanel.
 
-**Data source:** `apiMetrics` from the panel's internal state. Every API call made by the panel's hooks (working memory polls, LT memory searches, summary computations) is tracked with call count and latency.
+**Data source:** Live memory data from the panel's hooks (working memory state, LT memory count, computed summary count).
 
 **Layout:**
 
@@ -871,19 +866,10 @@ Memory Lifecycle
 │ Working Memory  → 56 messages, 4250 tokens│
 │ Extraction      → 8 long-term facts       │
 │ Summarization   → 1 computed summary      │
-│ Forget          → 0 (none applied)        │
-└───────────────────────────────────────────┘
-
-Operations
-┌───────────────────────────────────────────┐
-│ Working memory reads            4         │
-│ Long-term memory searches       3         │
-│ Summaries computed              1         │
-│ Total API calls                 8         │
 └───────────────────────────────────────────┘
 ```
 
-Each stat is displayed as a key-value row. Values animate/count-up when they change.
+Each stat is displayed as a key-value row showing the current state of the memory lifecycle.
 
 #### Internal Hooks
 
@@ -1505,7 +1491,7 @@ User selects transcript                       │
         │                              - SummaryViewsTab:
         │                                  POST /api/computeSummary
         │                                  POST /api/getComputedSummaries
-        │                              - RedisMetricsTab (internal apiMetrics)
+        │                              - RedisMetricsTab (memory lifecycle stats)
         │
         │  clicks "Clear All Memories & Restart"
         │  (ConfirmDialog → POST /api/resetLifecycle)
@@ -1543,7 +1529,7 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 | 9     | **WorkingMemoryTab** -- `working-memory-tab.component.tsx` + `working-memory-summary.component.tsx` + `use-working-memory.ts`                                                         | Business   | Working memory display + polling hook                                |
 | 10    | **LongTermMemoryTab** -- `long-term-memory-tab.component.tsx` + `memory-card.component.tsx` + `use-long-term-memory.ts`                                                               | Business   | Extracted memories display                                           |
 | 11    | **SummaryViewsTab** -- `summary-views-tab.component.tsx` + `computed-summary-card.component.tsx` + `use-summary-views.ts`                                                             | Business   | Summary views + computed summaries                                   |
-| 12    | **RedisMetricsTab** -- `redis-metrics-tab.component.tsx`                                                                                                                              | Business   | Under the hood stats (internal apiMetrics tracking)                  |
+| 12    | **RedisMetricsTab** -- `redis-metrics-tab.component.tsx`                                                                                                                              | Business   | Under the hood stats (memory lifecycle)                              |
 | 13    | **Integration** -- wire up DemoPage with TranscriptPanel callbacks (`onSessionCreated`, `onReset`) and MemoryExplorerPanel props (`sessionId`)                                        | Page       | Bridge sessionId between business components                         |
 | 14    | **Polish** -- animations, empty states, error states, loading states, responsive layout, demo readiness                                                                               | All        | Demo-grade visual quality                                            |
 
