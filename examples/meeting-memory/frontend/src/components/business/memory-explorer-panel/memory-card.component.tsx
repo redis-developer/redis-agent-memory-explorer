@@ -33,17 +33,16 @@ const MemoryCard = ({ memory }: MemoryCardProps) => {
 
       <p className="memory-card__text">
         {displayText}
-        {isLong && !expanded && "..."}
+        {isLong && !expanded && "... "}
+        {isLong && (
+          <button
+            className="memory-card__expand"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? "Show less" : "Show more"}
+          </button>
+        )}
       </p>
-
-      {isLong && (
-        <button
-          className="memory-card__expand"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? "Show less" : "Show more"}
-        </button>
-      )}
 
       {memory.eventDate && (
         <div className="memory-card__event-date">
