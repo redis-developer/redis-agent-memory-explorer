@@ -11,7 +11,6 @@ type UseWorkingMemoryResult = {
   data: WorkingMemoryData | null;
   isLoading: boolean;
   error: string | null;
-  pollCount: number;
   refetch: () => void;
 };
 
@@ -22,7 +21,6 @@ const useWorkingMemory = (
   const [data, setData] = useState<WorkingMemoryData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pollCount, setPollCount] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasFetchedOnceRef = useRef(false);
 
@@ -40,7 +38,6 @@ const useWorkingMemory = (
         setData(result);
         setIsLoading(false);
         setError(null);
-        setPollCount((prev) => prev + 1);
       })
       .catch((err: Error) => {
         setError(err.message);
@@ -72,12 +69,11 @@ const useWorkingMemory = (
     if (!sessionId) {
       setData(null);
       setError(null);
-      setPollCount(0);
       hasFetchedOnceRef.current = false;
     }
   }, [sessionId]);
 
-  return { data, isLoading, error, pollCount, refetch: doFetch };
+  return { data, isLoading, error, refetch: doFetch };
 };
 
 export { useWorkingMemory };

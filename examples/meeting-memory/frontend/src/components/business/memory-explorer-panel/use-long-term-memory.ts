@@ -15,7 +15,6 @@ type UseLongTermMemoryResult = {
   total: number;
   isLoading: boolean;
   error: string | null;
-  searchCount: number;
   refetch: () => void;
   searchByText: (query: string) => void;
 };
@@ -27,7 +26,6 @@ const useLongTermMemory = (
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchCount, setSearchCount] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const foundMemoriesRef = useRef(false);
   const hasFetchedOnceRef = useRef(false);
@@ -54,7 +52,6 @@ const useLongTermMemory = (
         setTotal(result.total);
         setIsLoading(false);
         setError(null);
-        setSearchCount((prev) => prev + 1);
 
         const hasMemories = result.total > 0;
         if (hasMemories && !foundMemoriesRef.current) {
@@ -77,7 +74,6 @@ const useLongTermMemory = (
       setMemories([]);
       setTotal(0);
       setError(null);
-      setSearchCount(0);
       return;
     }
 
@@ -94,7 +90,6 @@ const useLongTermMemory = (
         setMemories(result.memories);
         setTotal(result.total);
         setIsLoading(false);
-        setSearchCount((prev) => prev + 1);
       })
       .catch((err: Error) => {
         setError(err.message);
@@ -107,7 +102,6 @@ const useLongTermMemory = (
     total,
     isLoading,
     error,
-    searchCount,
     refetch: fetchBySession,
     searchByText,
   };

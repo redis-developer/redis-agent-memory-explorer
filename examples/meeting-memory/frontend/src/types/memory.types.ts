@@ -74,13 +74,6 @@ type CreateSessionResponse = {
   memory: WorkingMemoryData;
 };
 
-type ApiMetrics = {
-  workingMemoryReads: number;
-  longTermSearches: number;
-  summariesComputed: number;
-  totalApiCalls: number;
-};
-
 export type {
   WorkingMemoryMessage,
   WorkingMemoryData,
@@ -89,5 +82,4 @@ export type {
   ComputedSummaryData,
   AppendResult,
   CreateSessionResponse,
-  ApiMetrics,
 };

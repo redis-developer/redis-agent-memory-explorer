@@ -1,9 +1,9 @@
 "use client";
 
 import type { DatasetConfig } from "@/types/dataset-config.types";
-import type { ApiMetrics, AppendResult } from "@/types/memory.types";
+import type { AppendResult } from "@/types/memory.types";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
@@ -60,19 +60,6 @@ const MemoryExplorerPanel = ({
       summaryViews.resetAndRefresh();
     }
   }, [sessionId]);
-
-  const apiMetrics: ApiMetrics = useMemo(
-    () => ({
-      workingMemoryReads: workingMemory.pollCount,
-      longTermSearches: longTermMemory.searchCount,
-      summariesComputed: summaryViews.computeCount,
-      totalApiCalls:
-        workingMemory.pollCount +
-        longTermMemory.searchCount +
-        summaryViews.computeCount,
-    }),
-    [workingMemory.pollCount, longTermMemory.searchCount, summaryViews.computeCount],
-  );
 
   const tabLabels = datasetConfig.memoryLabels;
 
@@ -157,7 +144,6 @@ const MemoryExplorerPanel = ({
             workingMemoryData={workingMemory.data}
             longTermMemoryCount={longTermMemory.total}
             computedSummaryCount={summaryViews.computeCount}
-            apiMetrics={apiMetrics}
             config={datasetConfig}
           />
         )}
