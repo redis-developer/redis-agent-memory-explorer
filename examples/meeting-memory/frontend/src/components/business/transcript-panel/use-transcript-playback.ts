@@ -1,7 +1,7 @@
 "use client";
 
 import type { TranscriptChunk } from "@/types/transcript.types";
-import type { AppendResult, PlaybackMetrics } from "@/types/memory.types";
+import type { AppendResult } from "@/types/memory.types";
 
 import { useState, useRef, useCallback } from "react";
 
@@ -18,7 +18,6 @@ type UseTranscriptPlaybackResult = {
   isComplete: boolean;
   status: PlaybackStatusValue;
   lastAppendResult: AppendResult | null;
-  metrics: PlaybackMetrics;
   error: string | null;
   start: () => void;
   stop: () => void;
@@ -35,12 +34,6 @@ const useTranscriptPlayback = (
   const [status, setStatus] = useState<PlaybackStatusValue>(PLAYBACK_STATUS.IDLE);
   const [lastAppendResult, setLastAppendResult] = useState<AppendResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [metrics, setMetrics] = useState<PlaybackMetrics>({
-    chunksProcessed: 0,
-    totalAppendLatencyMs: 0,
-    avgAppendLatencyMs: 0,
-    appendLatencies: [],
-  });
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const indexRef = useRef(0);
@@ -77,21 +70,9 @@ const useTranscriptPlayback = (
       setCurrentIndex(idx + 1);
       indexRef.current = idx + 1;
 
-      const startMs = Date.now();
       appendChunk(sessionId, chunk, isLastChunk)
         .then((result) => {
-          const latencyMs = Date.now() - startMs;
           setLastAppendResult(result);
-          setMetrics((prev) => {
-            const newLatencies = [...prev.appendLatencies, latencyMs];
-            const totalLatency = prev.totalAppendLatencyMs + latencyMs;
-            return {
-              chunksProcessed: prev.chunksProcessed + 1,
-              totalAppendLatencyMs: totalLatency,
-              avgAppendLatencyMs: totalLatency / newLatencies.length,
-              appendLatencies: newLatencies,
-            };
-          });
         })
         .catch((err: Error) => {
           console.error("Append chunk failed:", err.message);
@@ -117,12 +98,6 @@ const useTranscriptPlayback = (
     setStatus(PLAYBACK_STATUS.IDLE);
     setLastAppendResult(null);
     setError(null);
-    setMetrics({
-      chunksProcessed: 0,
-      totalAppendLatencyMs: 0,
-      avgAppendLatencyMs: 0,
-      appendLatencies: [],
-    });
   }, [clearTimer]);
 
   return {
@@ -133,7 +108,6 @@ const useTranscriptPlayback = (
     isComplete: status === PLAYBACK_STATUS.COMPLETED,
     status,
     lastAppendResult,
-    metrics,
     error,
     start,
     stop,
