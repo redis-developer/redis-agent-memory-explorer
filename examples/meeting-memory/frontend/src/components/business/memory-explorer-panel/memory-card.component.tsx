@@ -52,6 +52,7 @@ const MemoryCard = ({ memory }: MemoryCardProps) => {
 
       {uniqueTopics.length > 0 && (
         <div className="memory-card__tags">
+          <span className="memory-card__tag-label">Topics</span>
           {uniqueTopics.map((topic) => (
             <Chip
               key={`t-${topic}`}
@@ -65,7 +66,8 @@ const MemoryCard = ({ memory }: MemoryCardProps) => {
       )}
 
       {uniqueEntities.length > 0 && (
-        <div className="memory-card__tags">
+        <div className="memory-card__tags memory-card__tags--entities">
+          <span className="memory-card__tag-label">Entities</span>
           {uniqueEntities.map((entity) => (
             <Chip
               key={`e-${entity}`}
