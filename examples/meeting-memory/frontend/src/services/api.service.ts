@@ -11,9 +11,33 @@ import type {
   SummaryViewData,
   ComputedSummaryData,
 } from "@/types/memory.types";
-import type { ApiResponse, HealthResponse, LtSearchResponse } from "@/types/api.types";
+import type {
+  ApiResponse,
+  HealthResponse,
+  LtSearchResponse,
+} from "@/types/api.types";
 
 import { API_BASE_URL } from "@/constants/app.constants";
+
+const API_PATH = {
+  GET_DATASET: "/api/getDataset",
+  LIST_TRANSCRIPTS: "/api/listTranscripts",
+  GET_TRANSCRIPT: "/api/getTranscript",
+  CREATE_WORKING_MEMORY: "/api/createWorkingMemory",
+  APPEND_WORKING_MEMORY: "/api/appendWorkingMemory",
+  GET_WORKING_MEMORY: "/api/getWorkingMemory",
+  DELETE_WORKING_MEMORY: "/api/deleteWorkingMemory",
+  SEARCH_LONG_TERM_MEMORY: "/api/searchLongTermMemory",
+  SEARCH_LONG_TERM_MEMORY_BY_SESSION: "/api/searchLongTermMemoryBySession",
+  CREATE_SUMMARY_VIEW: "/api/createSummaryView",
+  LIST_SUMMARY_VIEWS: "/api/listSummaryViews",
+  COMPUTE_SUMMARY: "/api/computeSummary",
+  GET_COMPUTED_SUMMARIES: "/api/getComputedSummaries",
+  DELETE_SUMMARY_VIEW: "/api/deleteSummaryView",
+  GET_TASK: "/api/getTask",
+  RESET_LIFECYCLE: "/api/resetLifecycle",
+  HEALTH: "/health",
+} as const;
 
 const apiPost = async <T>(path: string, body: unknown = {}): Promise<T> => {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -37,33 +61,37 @@ const apiGet = async <T>(path: string): Promise<T> => {
 };
 
 const fetchDatasetConfig = (): Promise<DatasetConfig> =>
-  apiPost<DatasetConfig>("/api/getDataset");
+  apiPost<DatasetConfig>(API_PATH.GET_DATASET);
 
 const fetchTranscripts = (): Promise<{ transcripts: TranscriptSummary[] }> =>
-  apiPost<{ transcripts: TranscriptSummary[] }>("/api/listTranscripts");
+  apiPost<{ transcripts: TranscriptSummary[] }>(API_PATH.LIST_TRANSCRIPTS);
 
 const fetchTranscript = (transcriptId: string): Promise<TranscriptData> =>
-  apiPost<TranscriptData>("/api/getTranscript", { transcriptId });
+  apiPost<TranscriptData>(API_PATH.GET_TRANSCRIPT, { transcriptId });
 
-const createWorkingMemory = (transcriptId: string): Promise<CreateSessionResponse> =>
-  apiPost<CreateSessionResponse>("/api/createWorkingMemory", { transcriptId });
+const createWorkingMemory = (
+  transcriptId: string,
+): Promise<CreateSessionResponse> =>
+  apiPost<CreateSessionResponse>(API_PATH.CREATE_WORKING_MEMORY, {
+    transcriptId,
+  });
 
 const appendChunk = (
   sessionId: string,
   chunk: TranscriptChunk,
   isLastChunk: boolean,
 ): Promise<AppendResult> =>
-  apiPost<AppendResult>("/api/appendWorkingMemory", {
+  apiPost<AppendResult>(API_PATH.APPEND_WORKING_MEMORY, {
     sessionId,
     chunk,
     isLastChunk,
   });
 
 const fetchWorkingMemory = (sessionId: string): Promise<WorkingMemoryData> =>
-  apiPost<WorkingMemoryData>("/api/getWorkingMemory", { sessionId });
+  apiPost<WorkingMemoryData>(API_PATH.GET_WORKING_MEMORY, { sessionId });
 
 const deleteWorkingMemory = (sessionId: string): Promise<void> =>
-  apiPost<void>("/api/deleteWorkingMemory", { sessionId });
+  apiPost<void>(API_PATH.DELETE_WORKING_MEMORY, { sessionId });
 
 const searchLongTermMemory = (params: {
   text?: string;
@@ -73,10 +101,14 @@ const searchLongTermMemory = (params: {
   limit?: number;
   offset?: number;
 }): Promise<LtSearchResponse> =>
-  apiPost<LtSearchResponse>("/api/searchLongTermMemory", params);
+  apiPost<LtSearchResponse>(API_PATH.SEARCH_LONG_TERM_MEMORY, params);
 
-const searchLongTermMemoryBySession = (sessionId: string): Promise<LtSearchResponse> =>
-  apiPost<LtSearchResponse>("/api/searchLongTermMemoryBySession", { sessionId });
+const searchLongTermMemoryBySession = (
+  sessionId: string,
+): Promise<LtSearchResponse> =>
+  apiPost<LtSearchResponse>(API_PATH.SEARCH_LONG_TERM_MEMORY_BY_SESSION, {
+    sessionId,
+  });
 
 const createSummaryView = (input: {
   name?: string;
@@ -84,25 +116,37 @@ const createSummaryView = (input: {
   groupBy?: string[];
   timeWindowDays?: number;
 }): Promise<SummaryViewData> =>
-  apiPost<SummaryViewData>("/api/createSummaryView", input);
+  apiPost<SummaryViewData>(API_PATH.CREATE_SUMMARY_VIEW, input);
 
 const listSummaryViews = (): Promise<{ views: SummaryViewData[] }> =>
-  apiPost<{ views: SummaryViewData[] }>("/api/listSummaryViews");
+  apiPost<{ views: SummaryViewData[] }>(API_PATH.LIST_SUMMARY_VIEWS);
 
 const computeSummary = (
   viewId: string,
   group: Record<string, string>,
 ): Promise<ComputedSummaryData & { viewId: string }> =>
-  apiPost<ComputedSummaryData & { viewId: string }>("/api/computeSummary", { viewId, group });
+  apiPost<ComputedSummaryData & { viewId: string }>(API_PATH.COMPUTE_SUMMARY, {
+    viewId,
+    group,
+  });
 
-const fetchComputedSummaries = (viewId: string): Promise<{ summaries: ComputedSummaryData[] }> =>
-  apiPost<{ summaries: ComputedSummaryData[] }>("/api/getComputedSummaries", { viewId });
+const fetchComputedSummaries = (
+  viewId: string,
+): Promise<{ summaries: ComputedSummaryData[] }> =>
+  apiPost<{ summaries: ComputedSummaryData[] }>(
+    API_PATH.GET_COMPUTED_SUMMARIES,
+    { viewId },
+  );
 
 const deleteSummaryView = (viewId: string): Promise<void> =>
-  apiPost<void>("/api/deleteSummaryView", { viewId });
+  apiPost<void>(API_PATH.DELETE_SUMMARY_VIEW, { viewId });
 
-const fetchTask = (taskId: string): Promise<{ id: string; status: string; result: unknown }> =>
-  apiPost<{ id: string; status: string; result: unknown }>("/api/getTask", { taskId });
+const fetchTask = (
+  taskId: string,
+): Promise<{ id: string; status: string; result: unknown }> =>
+  apiPost<{ id: string; status: string; result: unknown }>(API_PATH.GET_TASK, {
+    taskId,
+  });
 
 type ResetResult = {
   sessionsDeleted: number;
@@ -112,10 +156,10 @@ type ResetResult = {
 };
 
 const resetDemo = (): Promise<ResetResult> =>
-  apiPost<ResetResult>("/api/resetLifecycle");
+  apiPost<ResetResult>(API_PATH.RESET_LIFECYCLE);
 
 const fetchHealth = (): Promise<HealthResponse> =>
-  apiGet<HealthResponse>("/health");
+  apiGet<HealthResponse>(API_PATH.HEALTH);
 
 export {
   apiPost,

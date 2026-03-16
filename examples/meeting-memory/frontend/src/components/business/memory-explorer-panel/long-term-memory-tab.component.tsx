@@ -2,12 +2,14 @@
 
 import type { MemoryRecordData } from "@/types/memory.types";
 import type { DatasetConfig } from "@/types/dataset-config.types";
+import type { MemoryType } from "@/constants/app.constants";
 
 import { useMemo } from "react";
 import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
 import { EmptyState, SectionCard } from "@/components/core";
+import { MEMORY_TYPE } from "@/constants/app.constants";
 import { MemoryCard } from "./memory-card.component";
 
 import "./long-term-memory-tab.component.css";
@@ -20,16 +22,12 @@ type LongTermMemoryTabProps = {
   onRefresh: () => void;
 };
 
-type GroupedMemories = {
-  semantic: MemoryRecordData[];
-  episodic: MemoryRecordData[];
-  message: MemoryRecordData[];
-};
+type GroupedMemories = Record<MemoryType, MemoryRecordData[]>;
 
 const groupByType = (memories: MemoryRecordData[]): GroupedMemories => ({
-  semantic: memories.filter((m) => m.memoryType === "semantic"),
-  episodic: memories.filter((m) => m.memoryType === "episodic"),
-  message: memories.filter((m) => m.memoryType === "message"),
+  [MEMORY_TYPE.SEMANTIC]: memories.filter((m) => m.memoryType === MEMORY_TYPE.SEMANTIC),
+  [MEMORY_TYPE.EPISODIC]: memories.filter((m) => m.memoryType === MEMORY_TYPE.EPISODIC),
+  [MEMORY_TYPE.MESSAGE]: memories.filter((m) => m.memoryType === MEMORY_TYPE.MESSAGE),
 });
 
 const LongTermMemoryTab = ({
@@ -52,28 +50,28 @@ const LongTermMemoryTab = ({
   }
 
   const sections: Array<{
-    key: keyof GroupedMemories;
+    key: MemoryType;
     label: string;
     description: string;
     items: MemoryRecordData[];
   }> = [
     {
-      key: "semantic",
+      key: MEMORY_TYPE.SEMANTIC,
       label: labels.semantic.label,
       description: labels.semantic.description,
-      items: grouped.semantic,
+      items: grouped[MEMORY_TYPE.SEMANTIC],
     },
     {
-      key: "episodic",
+      key: MEMORY_TYPE.EPISODIC,
       label: labels.episodic.label,
       description: labels.episodic.description,
-      items: grouped.episodic,
+      items: grouped[MEMORY_TYPE.EPISODIC],
     },
     {
-      key: "message",
+      key: MEMORY_TYPE.MESSAGE,
       label: labels.message.label,
       description: labels.message.description,
-      items: grouped.message,
+      items: grouped[MEMORY_TYPE.MESSAGE],
     },
   ];
 

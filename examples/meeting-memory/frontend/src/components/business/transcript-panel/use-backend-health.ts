@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 
 import { fetchHealth } from "@/services/api.service";
-
-const HEALTH_CHECK_INTERVAL_MS = 30000;
+import { HEALTH_CHECK_INTERVAL_MS } from "@/constants/app.constants";
 
 type UseBackendHealthResult = {
   serverOk: boolean;

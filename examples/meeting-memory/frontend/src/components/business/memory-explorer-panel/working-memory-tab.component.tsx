@@ -8,6 +8,7 @@ import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
 import { EmptyState, SectionCard } from "@/components/core";
+import { CONTEXT_THRESHOLD, LAST_MESSAGES_COUNT } from "@/constants/app.constants";
 import { WorkingMemorySummary } from "./working-memory-summary.component";
 
 import "./working-memory-tab.component.css";
@@ -27,8 +28,8 @@ const CONTEXT_COLORS = {
 };
 
 const getContextColor = (percentage: number): string => {
-  if (percentage > 80) return CONTEXT_COLORS.high;
-  if (percentage > 50) return CONTEXT_COLORS.medium;
+  if (percentage > CONTEXT_THRESHOLD.HIGH) return CONTEXT_COLORS.high;
+  if (percentage > CONTEXT_THRESHOLD.MEDIUM) return CONTEXT_COLORS.medium;
   return CONTEXT_COLORS.low;
 };
 
@@ -52,14 +53,14 @@ const WorkingMemoryTab = ({
     lastAppendResult?.contextPercentageTotalUsed ?? data.contextPercentageTotalUsed ?? 0;
   const rawUntilSummarization =
     lastAppendResult?.contextPercentageUntilSummarization ?? data.contextPercentageUntilSummarization ?? 0;
-  const contextPercent = Math.min(rawContextPercent, 100);
-  const isContextFull = rawContextPercent >= 100 || rawUntilSummarization >= 100;
+  const contextPercent = Math.min(rawContextPercent, CONTEXT_THRESHOLD.FULL);
+  const isContextFull = rawContextPercent >= CONTEXT_THRESHOLD.FULL || rawUntilSummarization >= CONTEXT_THRESHOLD.FULL;
   const tokenCount = lastAppendResult?.tokens ?? data.tokens ?? 0;
   const contextColor = getContextColor(rawContextPercent);
   const messageCount = lastAppendResult?.messageCount ?? data.messages?.length ?? 0;
   const contextSummary = lastAppendResult?.context ?? data.context;
   const hasSummary = contextSummary !== null && contextSummary !== undefined;
-  const lastMessages = data.messages?.slice(-5) ?? [];
+  const lastMessages = data.messages?.slice(-LAST_MESSAGES_COUNT) ?? [];
 
   return (
     <div className="working-memory-tab">
@@ -144,9 +145,9 @@ const WorkingMemoryTab = ({
               <span className="working-memory-tab__message-content">{msg.content}</span>
             </div>
           ))}
-          {messageCount > 5 && (
+          {messageCount > LAST_MESSAGES_COUNT && (
             <p className="working-memory-tab__message-more">
-              Showing last 5 of {messageCount} messages
+              Showing last {LAST_MESSAGES_COUNT} of {messageCount} messages
             </p>
           )}
         </div>

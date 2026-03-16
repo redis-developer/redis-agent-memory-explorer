@@ -1,25 +1,21 @@
 "use client";
 
+import type { MemoryType } from "@/constants/app.constants";
+
 import Chip from "@mui/material/Chip";
 
-import "./memory-type-badge.component.css";
+import { MEMORY_TYPE_LABEL } from "@/constants/app.constants";
 
-type MemoryType = "semantic" | "episodic" | "message";
+import "./memory-type-badge.component.css";
 
 type MemoryTypeBadgeProps = {
   memoryType: MemoryType;
 };
 
-const LABELS: Record<MemoryType, string> = {
-  semantic: "Semantic",
-  episodic: "Episodic",
-  message: "Message",
-};
-
 const MemoryTypeBadge = ({ memoryType }: MemoryTypeBadgeProps) => {
   return (
     <Chip
-      label={LABELS[memoryType]}
+      label={MEMORY_TYPE_LABEL[memoryType]}
       size="small"
       className={`memory-type-badge memory-type-badge--${memoryType}`}
     />
@@ -27,4 +23,4 @@ const MemoryTypeBadge = ({ memoryType }: MemoryTypeBadgeProps) => {
 };
 
 export { MemoryTypeBadge };
-export type { MemoryTypeBadgeProps, MemoryType };
+export type { MemoryTypeBadgeProps };

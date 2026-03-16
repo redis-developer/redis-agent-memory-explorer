@@ -6,6 +6,6 @@ export { SectionCard } from "./section-card.component";
 
 export type { StatusDotProps } from "./status-dot.component";
 export type { EmptyStateProps } from "./empty-state.component";
-export type { MemoryTypeBadgeProps, MemoryType } from "./memory-type-badge.component";
+export type { MemoryTypeBadgeProps } from "./memory-type-badge.component";
 export type { ConfirmDialogProps } from "./confirm-dialog.component";
 export type { SectionCardProps } from "./section-card.component";
