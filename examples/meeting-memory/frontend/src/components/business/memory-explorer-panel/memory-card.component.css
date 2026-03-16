@@ -39,13 +39,15 @@
   }
 
   .memory-card__expand {
+    display: inline;
     background: none;
     border: none;
-    color: var(--sky-blue);
-    font-size: var(--font-size-xs);
+    color: var(--hyper-04);
+    font-size: inherit;
+    font-family: inherit;
     cursor: pointer;
     padding: 0;
-    margin-bottom: var(--space-3xs);
+    margin-left: var(--space-2xs);
 
     &:hover {
       text-decoration: underline;

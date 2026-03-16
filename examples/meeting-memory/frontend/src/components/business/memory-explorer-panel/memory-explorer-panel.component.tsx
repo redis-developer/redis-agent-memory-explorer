@@ -29,13 +29,6 @@ type MemoryExplorerPanelProps = {
   lastAppendResult?: AppendResult | null;
 };
 
-const TAB_ORDER = [
-  DEMO_TAB.WORKING_MEMORY,
-  DEMO_TAB.LONG_TERM_MEMORY,
-  DEMO_TAB.SUMMARY_VIEWS,
-  DEMO_TAB.REDIS_METRICS,
-] as const;
-
 const MemoryExplorerPanel = ({
   userId,
   namespace,
