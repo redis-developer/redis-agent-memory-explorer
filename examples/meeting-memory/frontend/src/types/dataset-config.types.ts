@@ -72,9 +72,17 @@ type DatasetConfig = {
   defaultSummaryViewId: string | null;
 };
 
+type UseDatasetConfigResult = {
+  config: DatasetConfig | null;
+  isLoading: boolean;
+  error: string | null;
+  retry: () => void;
+};
+
 export type {
   RoleConfig,
   ParticipantConfig,
   MemoryTypeLabel,
   DatasetConfig,
+  UseDatasetConfigResult,
 };

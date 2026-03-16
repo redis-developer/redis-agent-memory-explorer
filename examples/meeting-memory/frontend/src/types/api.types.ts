@@ -20,9 +20,17 @@ type TaskResponse = {
   result: unknown;
 };
 
+type ResetResult = {
+  sessionsDeleted: number;
+  memoriesDeleted: number;
+  viewsDeleted: number;
+  defaultSummaryViewId: string;
+};
+
 export type {
   ApiResponse,
   HealthResponse,
   LtSearchResponse,
+  ResetResult,
   TaskResponse,
 };
