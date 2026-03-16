@@ -1,3 +1,5 @@
+import type { MemoryType } from "@/constants/app.constants";
+
 type WorkingMemoryMessage = {
   role: string;
   content: string;
@@ -25,7 +27,7 @@ type WorkingMemoryData = {
 type MemoryRecordData = {
   id: string;
   text: string;
-  memoryType: "semantic" | "episodic" | "message";
+  memoryType: MemoryType;
   userId: string;
   sessionId: string;
   namespace: string;

@@ -1,5 +1,7 @@
 "use client";
 
+import { TRANSCRIPT_ROLE } from "@/constants/app.constants";
+
 import "./transcript-chunk.component.css";
 
 type TranscriptChunkProps = {
@@ -21,7 +23,7 @@ const TranscriptChunkComponent = ({
   isNew,
   accentColor,
 }: TranscriptChunkProps) => {
-  const isRm = role === "rm";
+  const isRm = role === TRANSCRIPT_ROLE.RM;
 
   return (
     <div

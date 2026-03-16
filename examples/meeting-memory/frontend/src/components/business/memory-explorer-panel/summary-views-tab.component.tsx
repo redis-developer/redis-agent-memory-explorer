@@ -8,6 +8,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 import { EmptyState } from "@/components/core";
+import { SUMMARY_GROUP_BY_KEY } from "@/constants/app.constants";
 import { ComputedSummaryCard } from "./computed-summary-card.component";
 
 import "./summary-views-tab.component.css";
@@ -49,7 +50,7 @@ const SummaryViewsTab = ({
 
   const handleComputeDefault = () => {
     if (!defaultViewId) return;
-    onComputeSummary(defaultViewId, { user_id: userId });
+    onComputeSummary(defaultViewId, { [SUMMARY_GROUP_BY_KEY.USER_ID]: userId });
   };
 
   if (views.length === 0 && !isLoading) {
@@ -131,7 +132,7 @@ const SummaryViewsTab = ({
                 <div className="summary-views-tab__view-actions">
                   <Button
                     size="small"
-                    onClick={() => onComputeSummary(view.viewId, { user_id: userId })}
+                    onClick={() => onComputeSummary(view.viewId, { [SUMMARY_GROUP_BY_KEY.USER_ID]: userId })}
                     disabled={isComputingSummary}
                     sx={{
                       color: "var(--sky-blue)",

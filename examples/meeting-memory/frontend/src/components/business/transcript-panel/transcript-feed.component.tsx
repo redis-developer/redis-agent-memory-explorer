@@ -5,6 +5,7 @@ import type { RoleConfig, ParticipantConfig } from "@/types/dataset-config.types
 
 import { useRef, useEffect, useState } from "react";
 
+import { AUTO_SCROLL_THRESHOLD_PX } from "@/constants/app.constants";
 import { TranscriptChunkComponent } from "./transcript-chunk.component";
 
 import "./transcript-feed.component.css";
@@ -49,7 +50,7 @@ const TranscriptFeed = ({
 
     const distanceFromBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight;
-    setAutoScroll(distanceFromBottom < 80);
+    setAutoScroll(distanceFromBottom < AUTO_SCROLL_THRESHOLD_PX);
   };
 
   return (

@@ -6,6 +6,7 @@ import { useState } from "react";
 import Chip from "@mui/material/Chip";
 
 import { MemoryTypeBadge } from "@/components/core";
+import { MAX_MEMORY_TEXT_LENGTH } from "@/constants/app.constants";
 
 import "./memory-card.component.css";
 
@@ -13,14 +14,12 @@ type MemoryCardProps = {
   memory: MemoryRecordData;
 };
 
-const MAX_TEXT_LENGTH = 200;
-
 const dedupe = (items: string[]): string[] => [...new Set(items)];
 
 const MemoryCard = ({ memory }: MemoryCardProps) => {
   const [expanded, setExpanded] = useState(false);
-  const isLong = memory.text.length > MAX_TEXT_LENGTH;
-  const displayText = expanded ? memory.text : memory.text.slice(0, MAX_TEXT_LENGTH);
+  const isLong = memory.text.length > MAX_MEMORY_TEXT_LENGTH;
+  const displayText = expanded ? memory.text : memory.text.slice(0, MAX_MEMORY_TEXT_LENGTH);
   const createdDate = new Date(memory.createdAt).toLocaleString();
   const uniqueTopics = dedupe(memory.topics);
   const uniqueEntities = dedupe(memory.entities);

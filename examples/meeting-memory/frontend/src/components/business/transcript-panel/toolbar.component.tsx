@@ -16,7 +16,7 @@ import StopIcon from "@mui/icons-material/Stop";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 
 import { StatusDot } from "@/components/core";
-import { PLAYBACK_STATUS } from "@/constants/app.constants";
+import { PLAYBACK_STATUS, HEALTH_STATUS, SPEED_SELECT_MIN_WIDTH } from "@/constants/app.constants";
 
 import "./toolbar.component.css";
 
@@ -54,7 +54,7 @@ const Toolbar = ({
   const isPlaying = playbackStatus === PLAYBACK_STATUS.PLAYING;
   const isIdle = playbackStatus === PLAYBACK_STATUS.IDLE;
   const statusText = config.statusLabels[playbackStatus] ?? playbackStatus;
-  const healthStatus = isHealthChecking ? "checking" : serverOk ? "ok" : "error";
+  const healthStatus = isHealthChecking ? HEALTH_STATUS.CHECKING : serverOk ? HEALTH_STATUS.OK : HEALTH_STATUS.ERROR;
 
   const handleTranscriptChange = (value: string) => {
     onSelectTranscript(value);
@@ -115,7 +115,7 @@ const Toolbar = ({
           sx={{
             color: "var(--fg-default)",
             fontSize: "var(--font-size-xs)",
-            minWidth: 80,
+            minWidth: SPEED_SELECT_MIN_WIDTH,
             "& .MuiOutlinedInput-notchedOutline": {
               borderColor: "var(--border)",
             },
