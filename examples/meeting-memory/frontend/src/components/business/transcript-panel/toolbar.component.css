@@ -62,6 +62,23 @@
 
   .toolbar__select {
     flex-shrink: 0;
+
+    &.Mui-disabled {
+      opacity: 0.45;
+
+      .MuiSelect-select {
+        color: var(--fg-muted) !important;
+        -webkit-text-fill-color: var(--fg-muted) !important;
+      }
+
+      .MuiOutlinedInput-notchedOutline {
+        border-color: var(--border) !important;
+      }
+
+      .MuiSvgIcon-root {
+        color: var(--fg-muted) !important;
+      }
+    }
   }
 
   .toolbar__select--transcript {
