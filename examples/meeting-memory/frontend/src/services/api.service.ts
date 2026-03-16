@@ -15,6 +15,7 @@ import type {
   ApiResponse,
   HealthResponse,
   LtSearchResponse,
+  ResetResult,
 } from "@/types/api.types";
 
 import { API_BASE_URL } from "@/constants/app.constants";
@@ -147,13 +148,6 @@ const fetchTask = (
   apiPost<{ id: string; status: string; result: unknown }>(API_PATH.GET_TASK, {
     taskId,
   });
-
-type ResetResult = {
-  sessionsDeleted: number;
-  memoriesDeleted: number;
-  viewsDeleted: number;
-  defaultSummaryViewId: string;
-};
 
 const resetDemo = (): Promise<ResetResult> =>
   apiPost<ResetResult>(API_PATH.RESET_LIFECYCLE);

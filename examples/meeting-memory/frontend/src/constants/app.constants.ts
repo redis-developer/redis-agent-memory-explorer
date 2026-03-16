@@ -14,6 +14,12 @@ const MEMORY_TYPE = {
 } as const;
 type MemoryType = (typeof MEMORY_TYPE)[keyof typeof MEMORY_TYPE];
 
+const MEMORY_TYPE_LABEL: Record<MemoryType, string> = {
+  [MEMORY_TYPE.SEMANTIC]: "Semantic",
+  [MEMORY_TYPE.EPISODIC]: "Episodic",
+  [MEMORY_TYPE.MESSAGE]: "Message",
+};
+
 const HEALTH_STATUS = {
   OK: "ok",
   ERROR: "error",
@@ -62,12 +68,6 @@ const LAST_MESSAGES_COUNT = 5;
 const AUTO_SCROLL_THRESHOLD_PX = 80;
 const SPEED_SELECT_MIN_WIDTH = 80;
 const MAX_MEMORY_TEXT_LENGTH = 200;
-
-const MEMORY_TYPE_LABEL: Record<MemoryType, string> = {
-  [MEMORY_TYPE.SEMANTIC]: "Semantic",
-  [MEMORY_TYPE.EPISODIC]: "Episodic",
-  [MEMORY_TYPE.MESSAGE]: "Message",
-};
 
 export {
   API_BASE_URL,
