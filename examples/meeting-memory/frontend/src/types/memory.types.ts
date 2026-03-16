@@ -74,13 +74,6 @@ type CreateSessionResponse = {
   memory: WorkingMemoryData;
 };
 
-type PlaybackMetrics = {
-  chunksProcessed: number;
-  totalAppendLatencyMs: number;
-  avgAppendLatencyMs: number;
-  appendLatencies: number[];
-};
-
 type ApiMetrics = {
   workingMemoryReads: number;
   longTermSearches: number;
@@ -96,6 +89,5 @@ export type {
   ComputedSummaryData,
   AppendResult,
   CreateSessionResponse,
-  PlaybackMetrics,
   ApiMetrics,
 };
