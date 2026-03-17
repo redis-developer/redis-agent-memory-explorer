@@ -26,7 +26,7 @@ import "./transcript-panel.component.css";
 type TranscriptPanelProps = {
   datasetConfig: DatasetConfig;
   onSessionCreated: (sessionId: string) => void;
-  onReset: (newDefaultSummaryViewId?: string) => void;
+  onReset: () => void;
   onAppendResult?: (result: AppendResult) => void;
 };
 
@@ -133,13 +133,13 @@ const TranscriptPanel = ({
     setShowResetDialog(false);
 
     resetDemo()
-      .then((result) => {
+      .then(() => {
         playback.reset();
         setSessionId(null);
         setSelectedTranscriptId(null);
         setTranscriptData(null);
         setIsResetting(false);
-        onReset(result.defaultSummaryViewId);
+        onReset();
       })
       .catch((err: Error) => {
         console.error("Reset failed:", err.message);

@@ -24,7 +24,7 @@ type ResetResult = {
   sessionsDeleted: number;
   memoriesDeleted: number;
   viewsDeleted: number;
-  defaultSummaryViewId: string;
+  viewsCreated: number;
 };
 
 export type {

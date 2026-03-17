@@ -49,7 +49,6 @@ type SummaryViewData = {
   name: string;
   source: string;
   groupBy: string[];
-  isDefault?: boolean;
 };
 
 type ComputedSummaryData = {

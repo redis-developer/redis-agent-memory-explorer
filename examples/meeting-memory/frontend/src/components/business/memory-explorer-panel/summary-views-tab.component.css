@@ -3,7 +3,6 @@
   flex-direction: column;
   gap: var(--space-xs);
 
-  .summary-views-tab__default-view,
   .summary-views-tab__view {
     display: flex;
     flex-direction: column;
@@ -29,14 +28,16 @@
     color: var(--fg-muted);
   }
 
-  .summary-views-tab__compute-btn {
-    align-self: flex-start;
-    margin-top: var(--space-3xs) !important;
-  }
-
   .summary-views-tab__view-actions {
     display: flex;
     gap: var(--space-3xs);
+    align-items: center;
+  }
+
+  .summary-views-tab__view-hint {
+    font-size: var(--font-size-2xs);
+    color: var(--fg-muted);
+    font-style: italic;
   }
 
   .summary-views-tab__error {

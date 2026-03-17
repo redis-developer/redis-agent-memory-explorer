@@ -24,7 +24,6 @@ type MemoryExplorerPanelProps = {
   userId: string;
   namespace: string;
   sessionId: string | null;
-  defaultSummaryViewId: string | null;
   datasetConfig: DatasetConfig;
   lastAppendResult?: AppendResult | null;
 };
@@ -33,7 +32,6 @@ const MemoryExplorerPanel = ({
   userId,
   namespace,
   sessionId,
-  defaultSummaryViewId,
   datasetConfig,
   lastAppendResult,
 }: MemoryExplorerPanelProps) => {
@@ -44,7 +42,7 @@ const MemoryExplorerPanel = ({
 
   const workingMemory = useWorkingMemory(sessionId, hasSession);
   const longTermMemory = useLongTermMemory(sessionId);
-  const summaryViews = useSummaryViews(defaultSummaryViewId);
+  const summaryViews = useSummaryViews();
 
   useEffect(() => {
     const wasReset = prevSessionIdRef.current !== null && sessionId === null;
@@ -112,7 +110,9 @@ const MemoryExplorerPanel = ({
             memories={longTermMemory.memories}
             total={longTermMemory.total}
             isLoading={longTermMemory.isLoading}
+            scope={longTermMemory.scope}
             config={datasetConfig}
+            onScopeChange={longTermMemory.setScope}
             onRefresh={longTermMemory.refetch}
           />
         )}
@@ -122,12 +122,12 @@ const MemoryExplorerPanel = ({
             views={summaryViews.views}
             summaries={summaryViews.summaries}
             isLoading={summaryViews.isLoading}
-            isComputingSummary={summaryViews.isComputingSummary}
-            defaultSummaryViewId={defaultSummaryViewId}
+            computingViewId={summaryViews.computingViewId}
             userId={userId}
+            sessionId={sessionId}
+            namespace={namespace}
             config={datasetConfig}
             onComputeSummary={summaryViews.computeSummaryForView}
-            onFetchSummaries={summaryViews.fetchSummariesForView}
             error={summaryViews.error}
           />
         )}
@@ -135,8 +135,10 @@ const MemoryExplorerPanel = ({
         {activeTab === DEMO_TAB.REDIS_METRICS && (
           <RedisMetricsTab
             workingMemoryData={workingMemory.data}
-            longTermMemoryCount={longTermMemory.total}
-            computedSummaryCount={summaryViews.computeCount}
+            longTermMemorySessionCount={longTermMemory.sessionTotal}
+            longTermMemoryAllCount={longTermMemory.allTotal}
+            summaryViewCount={summaryViews.summaryViewCount}
+            computedSummaryCount={summaryViews.computedSummaryCount}
             config={datasetConfig}
           />
         )}

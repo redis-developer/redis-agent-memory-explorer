@@ -16,20 +16,14 @@ const DemoPage = () => {
   const { config, isLoading, error, retry } = useDatasetConfig();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [lastAppendResult, setLastAppendResult] = useState<AppendResult | null>(null);
-  const [defaultSummaryViewId, setDefaultSummaryViewId] = useState<string | null>(
-    config?.defaultSummaryViewId ?? null,
-  );
 
   const handleSessionCreated = useCallback((id: string) => {
     setSessionId(id);
   }, []);
 
-  const handleReset = useCallback((newDefaultSummaryViewId?: string) => {
+  const handleReset = useCallback(() => {
     setSessionId(null);
     setLastAppendResult(null);
-    if (newDefaultSummaryViewId) {
-      setDefaultSummaryViewId(newDefaultSummaryViewId);
-    }
   }, []);
 
   const handleAppendResult = useCallback((result: AppendResult) => {
@@ -90,7 +84,6 @@ const DemoPage = () => {
             userId={config.userId}
             namespace={config.namespace}
             sessionId={sessionId}
-            defaultSummaryViewId={defaultSummaryViewId}
             datasetConfig={config}
             lastAppendResult={lastAppendResult}
           />
