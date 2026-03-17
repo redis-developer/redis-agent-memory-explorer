@@ -1,4 +1,7 @@
-import type { MemoryType, SummaryViewSource } from "cau-redis-agent-memory";
+import type {
+  MemoryType,
+  SummaryViewSource,
+} from "cau-redis-agent-memory";
 
 // --- Dataset Config (matches dataset.config.json schema) ---
 
@@ -48,8 +51,7 @@ type DatasetConfig = {
     summaryViews: {
       title: string;
       description: string;
-      defaultViewName: string;
-      defaultGroupBy: string[];
+      views: SummaryViewConfigEntry[];
     };
     metrics: {
       title: string;
@@ -75,13 +77,19 @@ type DatasetConfig = {
   };
 };
 
+type SummaryViewConfigEntry = {
+  name: string;
+  source: SummaryViewSource;
+  groupBy: string[];
+  filters?: Record<string, unknown>;
+  timeWindowDays?: number;
+  continuous?: boolean;
+  prompt?: string;
+};
+
 type DatasetSummary = {
   id: string;
   name: string;
-};
-
-type DatasetResponse = DatasetConfig & {
-  defaultSummaryViewId: string | null;
 };
 
 // --- Transcript ---
@@ -204,7 +212,6 @@ type ForgetLifecycleInput = {
 
 type AppState = {
   datasetConfig: DatasetConfig | null;
-  defaultSummaryViewId: string | null;
   namespace: string;
   userId: string;
 };
@@ -213,9 +220,9 @@ export type {
   RoleConfig,
   ParticipantConfig,
   MemoryTypeLabel,
+  SummaryViewConfigEntry,
   DatasetConfig,
   DatasetSummary,
-  DatasetResponse,
   TranscriptChunk,
   TranscriptMeeting,
   TranscriptData,

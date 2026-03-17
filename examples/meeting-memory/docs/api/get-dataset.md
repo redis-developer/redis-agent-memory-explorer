@@ -46,8 +46,10 @@ Returns the active dataset configuration. First call the frontend makes on page 
       "summaryViews": {
         "title": "Summary Views",
         "description": "AI-generated narrative summaries condensed from extracted memories.",
-        "defaultViewName": "Client Memory Summary",
-        "defaultGroupBy": ["user_id"]
+        "views": [
+          { "name": "Client Memory Summary", "source": "long_term", "groupBy": ["user_id"] },
+          { "name": "Session Recap", "source": "long_term", "groupBy": ["session_id"], "prompt": "Summarize the key discussion points, decisions made, and action items from this meeting session." }
+        ]
       },
       "metrics": { "title": "Redis Under the Hood", "description": "Real-time operational stats from the agent memory server." }
     },
@@ -77,7 +79,6 @@ Returns the active dataset configuration. First call the frontend makes on page 
         { "label": "4x", "intervalMs": 500 }
       ]
     },
-    "defaultSummaryViewId": "01KKEW9QGYHP3A9ABQG9NEA8B9"
   },
   "error": null
 }

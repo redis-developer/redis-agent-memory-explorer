@@ -2,7 +2,6 @@ import type { AppState } from "./types";
 
 const state: AppState = {
   datasetConfig: null,
-  defaultSummaryViewId: null,
   namespace: "",
   userId: "",
 };

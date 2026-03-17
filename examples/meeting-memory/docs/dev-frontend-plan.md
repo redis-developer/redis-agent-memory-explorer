@@ -35,8 +35,8 @@ The frontend consumes the backend's **POST-only REST API** defined in [dev-backe
 │  │  │                            │  │                               │ │  │
 │  │  │  ┌──────────────────────┐  │  │  Props: userId, sessionId,   │ │  │
 │  │  │  │  Toolbar (sub)       │  │  │    namespace,                │ │  │
-│  │  │  │  transcript picker,  │  │  │    defaultSummaryViewId,     │ │  │
-│  │  │  │  play/stop/reset,    │  │  │    datasetConfig             │ │  │
+│  │  │  │  transcript picker,  │  │  │    datasetConfig             │ │  │
+│  │  │  │  play/stop/reset,    │  │  │                               │ │  │
 │  │  │  │  speed, status chip  │  │  │                               │ │  │
 │  │  │  └──────────────────────┘  │  │  Owns hooks internally:      │ │  │
 │  │  │  ┌──────────────────────┐  │  │  - useWorkingMemory          │ │  │
@@ -93,7 +93,6 @@ DemoPage
          props: userId ◄── config.userId
                 namespace ◄── config.namespace
                 sessionId ◄── sessionId state
-                defaultSummaryViewId ◄── config.defaultSummaryViewId
                 datasetConfig ◄── config (for labels only)
 ```
 
@@ -394,7 +393,7 @@ Note: `userId` and `namespace` are read from `datasetConfig.userId` and `dataset
 
 **Lifecycle:**
 
-1. On mount: fetch dataset config from `POST /api/getDataset` (via `useDatasetConfig`). Show loading spinner until config arrives. Config includes `defaultSummaryViewId`. All labels render from this config.
+1. On mount: fetch dataset config from `POST /api/getDataset` (via `useDatasetConfig`). Show loading spinner until config arrives. All labels render from this config.
 2. On config loaded: render TranscriptPanel and MemoryExplorerPanel.
 3. TranscriptPanel emits `onSessionCreated(sessionId)` -> DemoPage sets `sessionId` -> MemoryExplorerPanel receives it as a prop, begins internal memory polling.
 4. TranscriptPanel emits `onReset()` -> DemoPage clears `sessionId` -> MemoryExplorerPanel receives `null`, clears all internal state.
@@ -412,7 +411,6 @@ Note: `userId` and `namespace` are read from `datasetConfig.userId` and `dataset
     userId={config.userId}
     namespace={config.namespace}
     sessionId={sessionId}
-    defaultSummaryViewId={config.defaultSummaryViewId}
     datasetConfig={config}
   />
 </main>
@@ -630,7 +628,6 @@ type MemoryExplorerPanelProps = {
   userId: string;
   namespace: string;
   sessionId: string | null;
-  defaultSummaryViewId: string;
   datasetConfig: DatasetConfig;
 };
 ```
@@ -639,7 +636,6 @@ type MemoryExplorerPanelProps = {
 
 - `userId` + `namespace` -- identify whose memories to query. Not tied to any transcript concept.
 - `sessionId` -- scopes working memory and session-specific LT memory queries. Can be `null` (shows empty states). The panel reacts to `sessionId` changes -- that is its only external signal.
-- `defaultSummaryViewId` -- the pre-created summary view ID. The panel uses it for one-click summary computation.
 - `datasetConfig` -- used for display labels and branding only. The panel never modifies it.
 
 No `playbackStatus`, no `playbackMetrics`. The panel has zero knowledge of transcript playback. It derives all its internal states from `sessionId` and the data it fetches from its own API calls.
@@ -797,33 +793,25 @@ Single long-term memory card used within LongTermMemoryTab.
 
 #### Sub-component: SummaryViewsTab (`summary-views-tab.component.tsx`)
 
-Displays computed summaries. Supports both the **pre-created default view** (for quick demo flow) and **on-the-fly custom views** (for showing flexibility).
+Displays all summary views in a uniform flat list. All pre-seeded views from the dataset config are available immediately, each with its own compute/recompute button.
 
-**Data source:** `useSummaryViews(defaultSummaryViewId)` internal hook.
+**Data source:** `useSummaryViews()` internal hook.
 
-**Workflow (primary demo path -- pre-created view):**
+**Workflow:**
 
-1. The backend pre-creates a default summary view at startup. Its `viewId` is in `defaultSummaryViewId` prop.
-2. When the user opens the Summary Views tab, a **"Compute Summary"** button is shown for the default view. No creation step needed.
-3. Clicking "Compute Summary" calls `POST /api/computeSummary { viewId: defaultSummaryViewId, group: { user_id: userId } }` and shows a loading spinner. This triggers the LLM to generate the narrative (not auto-computed -- must be explicitly triggered).
-4. The computed summary is fetched via `POST /api/getComputedSummaries { viewId }` and displayed as a `ComputedSummaryCard`.
-
-**Workflow (optional -- on-the-fly custom views):**
-
-1. **"Create Custom View"** button opens a mini-form (pre-filled from config defaults):
-   - Name (text input, default: `config.memoryLabels.summaryViews.defaultViewName`)
-   - Source: "Long-Term Memory" or "Working Memory" (radio)
-   - Group By: pre-selected from `config.memoryLabels.summaryViews.defaultGroupBy`
-2. Calls `POST /api/createSummaryView { name, source, groupBy }`.
-3. New view appears in the list with its own "Compute Summary" button.
-4. This lets the presenter say: "We can also create custom views grouped by topic, by session, or by time window."
+1. The backend pre-creates all summary views defined in `config.memoryLabels.summaryViews.views` at startup. The frontend discovers them via `POST /api/listSummaryViews`.
+2. When the user opens the Summary Views tab, all views are rendered uniformly -- each with a header (name, source, groupBy) and a **"Compute Summary"** button.
+3. Clicking "Compute Summary" calls `POST /api/computeSummary { viewId, group: { user_id: userId } }` and shows a loading spinner. This triggers the LLM to generate the narrative.
+4. Once computed, the summary is displayed inline as a `ComputedSummaryCard`. The button changes to **"Recompute"** so the presenter can re-trigger (e.g., after a second transcript session adds more memories).
+5. A **"Refresh"** button appears alongside "Recompute" to fetch the latest cached summaries.
+6. The `createSummaryView` API remains available for on-the-fly custom views if needed.
 
 #### Sub-component: ComputedSummaryCard (`computed-summary-card.component.tsx`)
 
 Display for a single computed summary.
 
 ```
-SUMMARY: {config.memoryLabels.summaryViews.defaultViewName}
+SUMMARY: {view.name}
 Source: Long-Term Memory | Group: user_id = {userId}
 Memories analyzed: 8 | Computed: 2026-02-26 10:20
 
@@ -875,7 +863,7 @@ Each stat is displayed as a key-value row showing the current state of the memor
 
 - `useWorkingMemory` -- see [Hooks section](#useWorkingMemorysessionid-enabled)
 - `useLongTermMemory` -- see [Hooks section](#uselongtermemorysessionid)
-- `useSummaryViews` -- see [Hooks section](#usesummaryviewsdefaultsummaryviewid)
+- `useSummaryViews` -- see [Hooks section](#usesummaryviews)
 
 ---
 
@@ -899,7 +887,7 @@ type UseDatasetConfigResult = {
 
 1. On mount: `POST /api/getDataset {}` (empty body)
 2. Unwraps `{ data, error }` response envelope
-3. Stores the full config (including `defaultSummaryViewId`) in state
+3. Stores the full config in state
 4. While loading, the page shows a centered spinner
 5. On error, shows a full-page error with retry button
 6. Once loaded, config is passed as a prop to both business components
@@ -953,8 +941,7 @@ type DatasetConfig = {
     summaryViews: {
       title: string;
       description: string;
-      defaultViewName: string;
-      defaultGroupBy: string[];
+      views: SummaryViewConfigEntry[];
     };
     metrics: {
       title: string;
@@ -978,11 +965,10 @@ type DatasetConfig = {
     intervalMs: number;
     speeds: Array<{ label: string; intervalMs: number }>;
   };
-  defaultSummaryViewId: string;
 };
 ```
 
-Note: `defaultSummaryViewId` is appended by the backend at runtime (not in the static `dataset.config.json` file). The backend pre-creates the summary view at startup and includes its ID in the `dataset.get` response.
+Note: `SummaryViewConfigEntry` is `{ name: string; source: string; groupBy: string[]; filters?: Record<string, unknown>; timeWindowDays?: number; continuous?: boolean; prompt?: string }`. These view definitions are pre-seeded by the backend at startup -- the frontend discovers them via `listSummaryViews`.
 
 ---
 
@@ -1089,9 +1075,9 @@ type UseLongTermMemoryResult = {
 - Groups memories by `memoryType` for display
 - Can poll at `EXTRACTION_POLL_INTERVAL_MS` during the "extracting" phase until memories appear
 
-#### `useSummaryViews(defaultSummaryViewId)`
+#### `useSummaryViews()`
 
-Manages summary views and computed summary operations. Lives inside the MemoryExplorerPanel folder. The `defaultSummaryViewId` comes from the panel's props -- this view is pre-created by the backend at startup.
+Manages summary views and computed summary operations. Lives inside the MemoryExplorerPanel folder. All views are discovered via `listSummaryViews` -- pre-seeded views are created by the backend at startup from the dataset config.
 
 ```typescript
 type UseSummaryViewsResult = {
@@ -1099,10 +1085,9 @@ type UseSummaryViewsResult = {
   summaries: Map<string, ComputedSummaryData[]>;
   isLoading: boolean;
   isComputingSummary: boolean;
-  computeDefaultSummary: (group: Record<string, string>) => Promise<void>;
-  fetchComputedSummaries: (viewId: string) => Promise<void>;
-  createView: (input: CreateSummaryViewInput) => Promise<void>;
-  computeSummary: (
+  fetchSummariesForView: (viewId: string) => Promise<void>;
+  createNewView: (input: CreateSummaryViewInput) => Promise<void>;
+  computeSummaryForView: (
     viewId: string,
     group: Record<string, string>,
   ) => Promise<void>;
@@ -1113,10 +1098,9 @@ type UseSummaryViewsResult = {
 
 **Behavior:**
 
-- `computeDefaultSummary(group)` -- calls `POST /api/computeSummary { viewId: defaultSummaryViewId, group }`. This is the primary demo action -- one click to trigger LLM summarization.
-- `fetchComputedSummaries(viewId)` -- calls `POST /api/getComputedSummaries { viewId }` to read computed summaries.
-- `createView(input)` -- calls `POST /api/createSummaryView` for on-the-fly custom views.
-- `computeSummaryForView(viewId, group)` -- calls `POST /api/computeSummary` for custom views.
+- `computeSummaryForView(viewId, group)` -- calls `POST /api/computeSummary { viewId, group }`. Used for any view -- all views are treated uniformly.
+- `fetchSummariesForView(viewId)` -- calls `POST /api/getComputedSummaries { viewId }` to read cached computed summaries.
+- `createNewView(input)` -- calls `POST /api/createSummaryView` for on-the-fly custom views.
 - On mount, fetches the list of views via `POST /api/listSummaryViews`.
 
 ---
@@ -1435,7 +1419,7 @@ Page loads (DemoPage)
         │
         │  useDatasetConfig() → POST /api/getDataset {}
         │  (fetch dataset.config.json -- all labels, namespace,
-        │   userId, defaultSummaryViewId)
+        │   userId)
         ▼
   [CONFIG_LOADING]  (full-page spinner)
         │
@@ -1548,7 +1532,7 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 9. **Memories appear** -- MemoryExplorerPanel's LT polling detects results, tabs become active
 10. **Click Long-Term Memory tab** -- memories appear grouped by type (section labels from `config.memoryLabels.longTermMemory`)
 11. **Narrate** -- "These facts were auto-extracted: Maya's retirement, James's bond fund preference, the REIT rebalance decision. Each tagged with topics and entities."
-12. **Click Summary Views tab** -- click "Compute Summary" (uses pre-created default view -- no creation step needed), or create a custom view to show flexibility
+12. **Click Summary Views tab** -- multiple pre-seeded views are visible, each with a "Compute Summary" button. Click any to trigger LLM summarization. After computing, "Recompute" button stays visible.
 13. **Narrate** -- "This summary condenses all extracted memories into one coherent narrative. Computed by Redis in under 2 seconds."
 14. **Click Redis tab** -- "8 memories extracted, 1 summary computed, 12 working memory polls. Average latency: 42 milliseconds. All powered by Redis."
 15. **Click "Clear All Memories & Restart"** -- confirm dialog, everything resets, clean slate for next demo or next dataset
@@ -1573,7 +1557,7 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 ### Component Architecture
 
 - **Two-layer component model:** `core/` (generic UI primitives) and `business/` (domain-specific). Business components export only their main component -- sub-components, hooks, and styles are internal. This enforces encapsulation and prevents cross-component coupling.
-- **MemoryExplorerPanel is fully portable.** It takes `userId`, `sessionId`, `namespace`, `defaultSummaryViewId`, and `datasetConfig` as props. It owns all memory API calls, polling logic, and metrics tracking internally. When `sessionId` is non-null, it starts polling. When `sessionId` is `null`, it shows empty states. Zero knowledge of transcripts or playback. To integrate it in a chatbot page, just pass a `sessionId` (or `null` for cross-session exploration).
+- **MemoryExplorerPanel is fully portable.** It takes `userId`, `sessionId`, `namespace`, and `datasetConfig` as props. It owns all memory API calls, polling logic, and metrics tracking internally. When `sessionId` is non-null, it starts polling. When `sessionId` is `null`, it shows empty states. Zero knowledge of transcripts or playback. To integrate it in a chatbot page, just pass a `sessionId` (or `null` for cross-session exploration).
 - **TranscriptPanel owns the entire transcript lifecycle** including the toolbar, transcript picker, playback controls, playback status, playback metrics, session creation, reset, and health check. It communicates with DemoPage through only two callbacks: `onSessionCreated` and `onReset`. Playback status and metrics never leave this component.
 - **DemoPage is a thin orchestrator.** It loads the dataset config (only page-level hook) and bridges a single piece of state -- `sessionId` -- between the two business components. It has no domain logic of its own.
 
@@ -1581,13 +1565,13 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 
 - **Zero hardcoded display strings.** Every label, title, description, button text, speaker name, and status message is read from `datasetConfig` (fetched once from `POST /api/getDataset`). To support a new dataset, create a new `data/{dataset}/dataset.config.json` and set the backend's `ACTIVE_DATASET` env var. No frontend code changes needed.
 - The `config.branding.accentColor` is applied as a CSS custom property override on mount (`document.documentElement.style.setProperty('--accent-primary', config.branding.accentColor)`), allowing per-dataset color theming.
-- **Summary views use a pre-created default view.** The backend creates a default summary view at startup; its `viewId` is in `datasetConfig.defaultSummaryViewId`. The frontend can compute a summary with one click -- no view creation step needed. Custom views can also be created on-the-fly for showing flexibility.
+- **Summary views are pre-seeded from the dataset config.** The backend creates all views defined in `config.memoryLabels.summaryViews.views` at startup. The frontend discovers them via `listSummaryViews` and renders them uniformly -- each with a compute/recompute button. No special "default view" concept. Custom views can also be created on-the-fly via the API for showing flexibility.
 
 ### API & Data
 
 - **All backend calls are POST-only** with camelCase paths. No URL params, no query strings. All parameters in JSON body. Responses unwrapped from `{ data, error }` envelope by `api.service.ts`.
 - **`userId` and `namespace` are never sent by the frontend** -- they are derived from the active dataset config on every backend request. The frontend reads them from `datasetConfig` for display purposes only.
-- The "Clear All Memories & Restart" button (in TranscriptPanel's toolbar) calls `POST /api/resetLifecycle` which wipes all working memory sessions, long-term memories, and summary views within the active namespace. The backend re-creates the default summary view. TranscriptPanel emits `onReset()`, DemoPage clears `sessionId`, MemoryExplorerPanel reacts to `sessionId=null` by stopping all polling and clearing its internal state.
+- The "Clear All Memories & Restart" button (in TranscriptPanel's toolbar) calls `POST /api/resetLifecycle` which wipes all working memory sessions, long-term memories, and summary views within the active namespace. The backend re-creates all pre-seeded summary views. TranscriptPanel emits `onReset()`, DemoPage clears `sessionId`, MemoryExplorerPanel reacts to `sessionId=null` by stopping all polling and clearing its internal state.
 
 ### CSS Style
 
@@ -1621,7 +1605,6 @@ To reuse MemoryExplorerPanel on a future chatbot page that searches across sessi
   userId="sarah-chen"
   namespace="wealth-advisor"
   sessionId={null}
-  defaultSummaryViewId={config.defaultSummaryViewId}
   datasetConfig={config}
 />
 ```

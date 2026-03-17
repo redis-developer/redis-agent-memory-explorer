@@ -1,6 +1,8 @@
+import type { SummaryViewConfigEntry } from "./types";
+
 import { ApiServer } from "cau-api-server";
 import { Logger } from "cau-logger";
-import { AgentMemory, SummaryViewSource } from "cau-redis-agent-memory";
+import { AgentMemory } from "cau-redis-agent-memory";
 
 import { LOGGER_CONTEXT } from "./constants";
 import { routes } from "./routes";
@@ -14,34 +16,37 @@ const logger = Logger.create({
   transports: [{ type: "console", format: "pretty" }],
 });
 
-const createDefaultSummaryView = async (
-  defaultViewName: string,
-  defaultGroupBy: string[],
-): Promise<string> => {
-  let viewId: string;
-  let logMessage: string;
-
+const ensureSummaryViews = async (
+  viewConfigs: SummaryViewConfigEntry[],
+): Promise<void> => {
   const memory = AgentMemory.getInstance();
   const existingViews = await memory.listSummaryViews();
-  const matchingView = existingViews.find((v) => v.name === defaultViewName);
-  const isExisting = matchingView !== undefined && matchingView.id;
 
-  if (isExisting) {
-    viewId = matchingView.id;
-    logMessage = "Default summary view already exists";
-  } else {
-    const created = await memory.createSummaryView({
-      name: defaultViewName,
-      source: SummaryViewSource.LONG_TERM,
-      groupBy: defaultGroupBy,
-    });
-    viewId = created.id;
-    logMessage = "Created default summary view";
+  for (const config of viewConfigs) {
+    const matchingView = existingViews.find((v) => v.name === config.name);
+    const isExisting = matchingView !== undefined;
+
+    if (isExisting) {
+      logger.info("Summary view already exists", {
+        name: config.name,
+        id: matchingView.id,
+      });
+    } else {
+      const created = await memory.createSummaryView({
+        name: config.name,
+        source: config.source,
+        groupBy: config.groupBy,
+        filters: config.filters,
+        timeWindowDays: config.timeWindowDays,
+        continuous: config.continuous,
+        prompt: config.prompt,
+      });
+      logger.info("Created summary view", {
+        name: config.name,
+        id: created.id,
+      });
+    }
   }
-
-  logger.info(logMessage, { id: viewId });
-
-  return viewId;
 };
 
 const initializeApp = async (): Promise<void> => {
@@ -60,14 +65,10 @@ const initializeApp = async (): Promise<void> => {
     baseUrl: ENV.AGENT_MEMORY_BASE_URL,
   });
 
-  const defaultSummaryViewId = await createDefaultSummaryView(
-    datasetConfig.memoryLabels.summaryViews.defaultViewName,
-    datasetConfig.memoryLabels.summaryViews.defaultGroupBy,
-  );
+  await ensureSummaryViews(datasetConfig.memoryLabels.summaryViews.views);
 
   setAppState({
     datasetConfig,
-    defaultSummaryViewId,
     namespace,
     userId,
   });
@@ -76,7 +77,6 @@ const initializeApp = async (): Promise<void> => {
     dataset: ENV.ACTIVE_DATASET,
     namespace,
     userId,
-    defaultSummaryViewId,
     modelName: ENV.MODEL_NAME,
     contextWindowMax: ENV.CONTEXT_WINDOW_MAX,
   });
