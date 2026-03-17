@@ -97,7 +97,7 @@ The backend reads this config at startup and serves it to the frontend via `POST
 │  ├─────────────────────────────┤  │
 │  │ long-term-memory handlers   │  │  ← search all, search by session
 │  ├─────────────────────────────┤  │
-│  │ summary-views handlers      │  │  ← pre-created view, compute + fetch summaries
+│  │ summary-views handlers      │  │  ← pre-seeded views, compute + fetch summaries
 │  ├─────────────────────────────┤  │
 │  │ lifecycle handlers          │  │  ← forget, reset
 │  └──────────┬──────────────────┘  │
@@ -283,7 +283,7 @@ Serves the active dataset's configuration to the frontend. This is the **first c
 
 Request: `{}` (empty body)
 
-Response `data`: the full `dataset.config.json` for the active dataset, plus the `defaultSummaryViewId` (pre-created at startup -- see Summary Views section).
+Response `data`: the full `dataset.config.json` for the active dataset.
 
 ```json
 {
@@ -297,8 +297,7 @@ Response `data`: the full `dataset.config.json` for the active dataset, plus the
   "memoryLabels": { ... },
   "toolbar": { ... },
   "statusLabels": { ... },
-  "playbackDefaults": { ... },
-  "defaultSummaryViewId": "view-abc123"
+  "playbackDefaults": { ... }
 }
 ```
 
@@ -307,12 +306,11 @@ Key fields the frontend uses:
 - `branding.title` -- page title (e.g., "Wealth Advisor Memory Explorer")
 - `roles` -- how to label speakers in transcript bubbles
 - `participants` -- speaker names, titles
-- `memoryLabels` -- all tab titles, section headers, descriptions
+- `memoryLabels` -- all tab titles, section headers, descriptions (including `memoryLabels.summaryViews.views` -- the pre-seeded summary view definitions)
 - `toolbar` -- button labels, dropdown labels
 - `statusLabels` -- status chip text for each playback phase
 - `playbackDefaults` -- default speed and speed options
 - `namespace`, `userId` -- passed to all memory API calls
-- `defaultSummaryViewId` -- the pre-created summary view ID for the "quick summary" button
 
 **`POST /api/listDatasets`**
 
@@ -613,11 +611,11 @@ In short: **View = recipe, Computed Summary = the cooked dish.**
 
 Our demo API names reflect this: `createSummaryView` / `listSummaryViews` / `getSummaryView` / `deleteSummaryView` manage the recipe, while `computeSummary` and `getComputedSummaries` deal with the actual generated text.
 
-**Strategy: pre-create default + on-the-fly flexibility**
+**Strategy: pre-seeded views from dataset config + on-the-fly flexibility**
 
-The summary views approach provides **both** a pre-created default view for quick demo flow and the ability to create custom views on-the-fly for showing flexibility:
+Summary views are defined in the dataset config (`memoryLabels.summaryViews.views` array). At startup, the backend creates all of them, giving the demo multiple ready-to-use views out of the box:
 
-1. **Pre-created default view** -- At startup (`onAppStart`), the backend creates a default summary view using `config.memoryLabels.summaryViews.defaultViewName` and `config.memoryLabels.summaryViews.defaultGroupBy`. Its `viewId` is stored and included in the `getDataset` response as `defaultSummaryViewId`. The frontend can immediately use this to compute or fetch a summary -- no creation step needed during the demo.
+1. **Pre-seeded views** -- At startup (`onAppStart`), the backend iterates `config.memoryLabels.summaryViews.views` and creates each one via `AgentMemory.createSummaryView()`. If a view with the same name already exists (e.g., server restarted), it is skipped. The frontend calls `listSummaryViews` to discover all available views and renders them uniformly -- no special "default" concept.
 
 2. **On-the-fly creation** -- The `createSummaryView` API remains available so the presenter can demonstrate flexibility: "We can also create custom views grouped by topic, by session, or by time window."
 
@@ -625,18 +623,42 @@ The summary views approach provides **both** a pre-created default view for quic
 
 4. **Fetch computed summaries** -- `getComputedSummaries` is the key API the frontend calls to **read** previously generated summary text.
 
+**Dataset config view definitions:**
+
+```json
+"summaryViews": {
+  "title": "Summary Views",
+  "description": "AI-generated narrative summaries condensed from extracted memories.",
+  "views": [
+    { "name": "Client Memory Summary", "source": "long_term", "groupBy": ["user_id"] },
+    { "name": "Session Recap", "source": "long_term", "groupBy": ["session_id"], "prompt": "Summarize the key discussion points..." }
+  ]
+}
+```
+
+Each view entry supports all `CreateSummaryViewInput` fields: `name`, `source`, `groupBy`, `filters`, `timeWindowDays`, `continuous`, `prompt`.
+
 **Startup pre-creation (in `onAppStart`):**
 
 ```typescript
-const defaultView = await AgentMemory.getInstance().createSummaryView({
-  name: datasetConfig.memoryLabels.summaryViews.defaultViewName,
-  source: SummaryViewSource.LONG_TERM,
-  groupBy: datasetConfig.memoryLabels.summaryViews.defaultGroupBy,
-});
-// Store defaultView.id for dataset.get response
-```
+const viewConfigs = datasetConfig.memoryLabels.summaryViews.views;
+const existingViews = await AgentMemory.getInstance().listSummaryViews();
 
-If the view already exists (e.g., server restarted), catch the error and reuse the existing one via `listSummaryViews()`.
+for (const config of viewConfigs) {
+  const alreadyExists = existingViews.find((v) => v.name === config.name);
+  if (!alreadyExists) {
+    await AgentMemory.getInstance().createSummaryView({
+      name: config.name,
+      source: config.source,
+      groupBy: config.groupBy,
+      filters: config.filters,
+      timeWindowDays: config.timeWindowDays,
+      continuous: config.continuous,
+      prompt: config.prompt,
+    });
+  }
+}
+```
 
 **`POST /api/createSummaryView`**
 
@@ -667,7 +689,7 @@ Response `data`:
 
 **`POST /api/listSummaryViews`**
 
-Lists all summary views (both pre-created and on-the-fly).
+Lists all summary views (both pre-seeded and on-the-fly).
 
 Request: `{}` (empty body)
 
@@ -680,15 +702,13 @@ Response `data`:
       "viewId": "view-abc123",
       "name": "Client Memory Summary",
       "source": "long_term",
-      "groupBy": ["user_id"],
-      "isDefault": true
+      "groupBy": ["user_id"]
     },
     {
-      "viewId": "view-xyz789",
-      "name": "Topic-Based Summary",
+      "viewId": "view-def456",
+      "name": "Session Recap",
       "source": "long_term",
-      "groupBy": ["topics"],
-      "isDefault": false
+      "groupBy": ["session_id"]
     }
   ]
 }
@@ -807,7 +827,7 @@ Response `data`:
 
 **`POST /api/resetLifecycle`**
 
-Full demo reset. Deletes all working memory sessions, long-term memories, and summary views for the active dataset's namespace. Then re-creates the default summary view.
+Full demo reset. Deletes all working memory sessions, long-term memories, and summary views for the active dataset's namespace. Then re-creates all pre-seeded summary views from the dataset config.
 
 Request: `{}` (empty body)
 
@@ -818,7 +838,7 @@ Steps:
 3. Search all long-term memories in namespace via `searchLongTermMemory({ namespace: { eq: NAMESPACE }, limit: 100 })`
 4. Delete all found memories via `deleteLongTermMemories(ids)`
 5. Delete all summary views via `listSummaryViews()` + `deleteSummaryView(viewId)` for matching views
-6. **Re-create the default summary view** (same as `onAppStart`) so it's ready for the next run
+6. **Re-create all pre-seeded summary views** from `config.memoryLabels.summaryViews.views` (same as `onAppStart`) so they're ready for the next run
 
 Response `data`:
 
@@ -827,7 +847,7 @@ Response `data`:
   "sessionsDeleted": 1,
   "memoriesDeleted": 8,
   "viewsDeleted": 2,
-  "defaultSummaryViewId": "view-new123"
+  "viewsCreated": 2
 }
 ```
 
@@ -867,9 +887,9 @@ Reads and validates `dataset.config.json` for the active dataset. Initialized at
 The loaded `DatasetConfig` is used by:
 
 - `config.ts` to derive `NAMESPACE` and `USER_ID`
-- `dataset.handlers.ts` to serve to the frontend (with `defaultSummaryViewId` appended)
+- `dataset.handlers.ts` to serve to the frontend
 - `transcript-loader.service.ts` to resolve the transcript directory path
-- `summary-views.handlers.ts` for default view creation settings
+- `index.ts` and `lifecycle.handlers.ts` for pre-seeded summary view creation at startup and on reset
 
 ### TranscriptLoaderService (`transcript-loader.service.ts`)
 
@@ -958,19 +978,13 @@ const server = ApiServer.create({
     // 3. Initialize TranscriptLoaderService
     TranscriptLoaderService.init(ACTIVE_DATASET);
 
-    // 4. Pre-create default summary view
-    const defaultView = await AgentMemory.getInstance().createSummaryView({
-      name: datasetConfig.memoryLabels.summaryViews.defaultViewName,
-      source: "long_term",
-      groupBy: datasetConfig.memoryLabels.summaryViews.defaultGroupBy,
-    });
-    // Store defaultView.id for dataset.get response
+    // 4. Pre-create all summary views from dataset config
+    await ensureSummaryViews(datasetConfig.memoryLabels.summaryViews.views);
 
     logger.info("Backend ready", {
       dataset: ACTIVE_DATASET,
       namespace,
       userId,
-      defaultSummaryViewId: defaultView.id,
     });
   },
   onAppStop: async () => {
@@ -992,7 +1006,7 @@ Summary of the bootstrap:
    b. Derive NAMESPACE + USER_ID
    c. AgentMemory.create() + healthCheck()
    d. TranscriptLoaderService.init()
-   e. Pre-create default summary view
+   e. Pre-create all summary views from dataset config
    f. Log "Backend ready" with dataset info
 4. server.start() -- starts listening
 5. onAppStop (on SIGTERM/SIGINT):
@@ -1011,8 +1025,7 @@ Frontend                                Backend                     Agent Memory
   │                                       │                              │
   │ POST /api/getDataset {}              │                              │
   │──────────────────────────────────────>│ (reads dataset.config.json)  │
-  │       { data: { id, branding, ... ,   │                              │
-  │         defaultSummaryViewId } }      │                              │
+  │       { data: { id, branding, ... } }  │                              │
   │<──────────────────────────────────────│                              │
   │                                       │                              │
   │ (frontend stores config, renders      │                              │
@@ -1061,7 +1074,7 @@ Frontend                                Backend                     Agent Memory
   │                                       │                              │
   │ POST /api/computeSummary              │                              │
       │                              │
-  │   { viewId: defaultSummaryViewId,     │ computeSummary()    │
+  │   { viewId: "<any-view-id>",           │ computeSummary()             │
   │     group: { user_id: "sarah-chen" } }│                              │
   │──────────────────────────────────────>│─────────────────────────────>│
   │       { data: { summary } }           │                              │
@@ -1069,7 +1082,7 @@ Frontend                                Backend                     Agent Memory
   │                                       │                              │
   │ POST /api/getComputedSummaries         │                              │
   │                                       │ listSummaryViewPartitions()  │
-  │   { viewId: defaultSummaryViewId }    │                              │
+  │   { viewId: "<any-view-id>" }         │                              │
   │──────────────────────────────────────>│─────────────────────────────>│
   │       { data: { summaries[] } }       │                              │
   │<──────────────────────────────────────│                              │
@@ -1081,18 +1094,18 @@ Frontend                                Backend                     Agent Memory
 
 ### Flow A: Live Playback Experience
 
-1. **Page load** -- Frontend calls `POST /api/getDataset` to get all labels, config, namespace, userId, and `defaultSummaryViewId`
+1. **Page load** -- Frontend calls `POST /api/getDataset` to get all labels, config, namespace, userId
 2. **Select transcript** -- Frontend calls `POST /api/getTranscript { transcriptId }` (full JSON in one call)
 3. **Click Play** -- Frontend calls `POST /api/createWorkingMemory { transcriptId }` to create a session
 4. **Watch** -- Frontend's `setInterval` displays chunks one at a time AND calls `POST /api/appendWorkingMemory` for each
 5. **Observe** -- Each append response returns working memory stats (tokens, context, etc.) displayed in real-time
 6. **Complete** -- Last chunk sent with `isLastChunk: true`, triggers background extraction
 7. **Wait ~15s** -- Frontend polls `POST /api/searchLongTermMemory` until memories appear
-8. **Quick Summary** -- Frontend calls `POST /api/computeSummary { viewId: defaultSummaryViewId, group }` using the pre-created view -- no need to create a view first. This triggers the LLM to generate the narrative from extracted memories.
-9. **Read Summary** -- Frontend calls `POST /api/getComputedSummaries { viewId }` to display the computed summary
-10. **Explore** -- Frontend displays long-term memories, summary views, working memory context
+8. **Compute Summaries** -- Frontend calls `POST /api/listSummaryViews` to discover all pre-seeded views. Each view has a "Compute Summary" button. Clicking it calls `POST /api/computeSummary { viewId, group }` to trigger the LLM narrative.
+9. **Read Summary** -- Computed summaries are displayed inline. Can be recomputed any time via the "Recompute" button.
+10. **Explore** -- Frontend displays long-term memories, multiple summary views side by side, working memory context
 11. **Show Flexibility** (optional) -- Create a custom view via `POST /api/createSummaryView`, compute a different summary
-12. **Click "Clear All Memories & Restart"** -- Frontend calls `POST /api/resetLifecycle`, then resets its own state. Backend re-creates the default summary view, ready for a fresh run.
+12. **Click "Clear All Memories & Restart"** -- Frontend calls `POST /api/resetLifecycle`, then resets its own state. Backend re-creates all pre-seeded summary views, ready for a fresh run.
 
 ---
 
@@ -1104,7 +1117,7 @@ Frontend                                Backend                     Agent Memory
 | **Working Memory Context** (`context` field)                                        | Auto-generated by agent memory server when context window fills | Condensed summary of the conversation so far                          |
 | **Long-Term Memory (Semantic)** (`searchLongTermMemory`, type=`semantic`)           | Background extraction from working memory                       | Durable facts: "Maya Morrison considering early retirement 2027"      |
 | **Long-Term Memory (Episodic)** (`searchLongTermMemory`, type=`episodic`)           | Background extraction                                           | Events with dates: "Meeting on Feb 26 to discuss REIT rebalancing"    |
-| **Computed Summaries** (`computeSummary`, `getComputedSummaries`)       | Pre-created default view or on-demand custom views              | AI-generated summary grouped by user/topic (LLM-computed, not auto) |
+| **Computed Summaries** (`computeSummary`, `getComputedSummaries`)       | Pre-seeded views from dataset config or on-demand custom views  | AI-generated summary grouped by user/session/topic (LLM-computed, not auto) |
 | **Forget / Lifecycle** (`forgetLifecycle`)                                          | Manual trigger                                                  | Demonstrates memory cleanup policies                                  |
 
 ---
@@ -1147,7 +1160,7 @@ To run with a different dataset: `MEETING_MEMORY_ACTIVE_DATASET=sdr-advisor npm 
 | Route Path                             | Handler                             | Description                                    |
 | -------------------------------------- | ----------------------------------- | ---------------------------------------------- |
 | `GET /health`                          | (built-in)                          | Server health + uptime                         |
-| `POST /api/getDataset`                 | `getDatasetHandler`                 | Active dataset config (+ defaultSummaryViewId) |
+| `POST /api/getDataset`                 | `getDatasetHandler`                 | Active dataset config                          |
 | `POST /api/listDatasets`               | `listDatasetsHandler`               | All available datasets                         |
 | `POST /api/listTranscripts`            | `listTranscriptsHandler`            | Available transcript files                     |
 | `POST /api/getTranscript`              | `getTranscriptHandler`              | Full transcript JSON                           |
@@ -1165,7 +1178,7 @@ To run with a different dataset: `MEETING_MEMORY_ACTIVE_DATASET=sdr-advisor npm 
 | `POST /api/getComputedSummaries`     | `getComputedSummariesHandler`     | Read previously computed summaries for a view    |
 | `POST /api/deleteSummaryView`          | `deleteSummaryViewHandler`          | Delete a summary view                          |
 | `POST /api/getTask`                    | `getTaskHandler`                    | Poll async task status                         |
-| `POST /api/resetLifecycle`             | `resetLifecycleHandler`             | Full demo reset + re-create default view       |
+| `POST /api/resetLifecycle`             | `resetLifecycleHandler`             | Full demo reset + re-create pre-seeded views   |
 | `POST /api/forgetLifecycle`            | `forgetLifecycleHandler`            | Run forget policy                              |
 | `POST /api/hydrateMemoryPrompt`        | `hydrateMemoryPromptHandler`        | (V1.1) Hydrate query with memory context       |
 
@@ -1180,7 +1193,7 @@ To run with a different dataset: `MEETING_MEMORY_ACTIVE_DATASET=sdr-advisor npm 
 | 3     | `transcript-loader.service.ts` + `transcript.handlers.ts`                                                                | Serve transcript data                             |
 | 4     | `working-memory.handlers.ts` (create-session, append, get, delete, list-sessions)                                        | Core: frontend writes chunks, reads state         |
 | 5     | `long-term-memory.handlers.ts` (search, get-by-session)                                                                  | Show extracted memories after playback            |
-| 6     | `summary-views.handlers.ts` (pre-create default in onAppStart, create, list, get, compute, get-computed, delete)             | Summary views -- both pre-created and on-the-fly  |
+| 6     | `summary-views.handlers.ts` (pre-seed views in onAppStart, create, list, get, compute, get-computed, delete)                 | Summary views -- pre-seeded from config + on-the-fly  |
 | 7     | `lifecycle.handlers.ts` (reset, forget)                                                                                  | Demo reset (the "Clear All" button backend)       |
 
 ---
@@ -1193,9 +1206,9 @@ To run with a different dataset: `MEETING_MEMORY_ACTIVE_DATASET=sdr-advisor npm 
 - **Structured logging via `cau-logger`** -- every request gets a child logger with `requestId` bound. All handler log calls include the request context automatically.
 - **All APIs are POST-only** with dot-notation paths. No URL params (`:id`), no query strings. All parameters go in the JSON request body.
 - **`userId` and `namespace` are never sent by the frontend** -- they are derived from the active dataset config on every request. This prevents data leakage across datasets.
-- **Summary views are pre-created at startup** so the demo can immediately compute summaries without a creation step. On-the-fly creation is also supported for showing flexibility.
+- **Summary views are pre-seeded from the dataset config at startup** so the demo has multiple views ready to compute summaries without any creation step. On-the-fly creation via the API is also supported for showing flexibility.
 - No LLM calls are made directly by the backend. The Agent Memory Server handles extraction (via `longTermMemoryStrategy`) and summarization (via summary views) using its own configured model (`FAST_MODEL` env var on the Python server).
 - The `appendWorkingMemory` handler is the only "smart" handler -- it reads current working memory, appends, and writes back. Everything else is a direct pass-through to `AgentMemory`.
-- The `resetLifecycle` handler re-creates the default summary view after wiping everything, so the next demo run is ready immediately.
+- The `resetLifecycle` handler re-creates all pre-seeded summary views after wiping everything, so the next demo run is ready immediately.
 - Metrics (operation counts, latencies) are tracked client-side. Each API response includes timing info the frontend can aggregate.
 - The backend follows the same code style as the monorepo packages: arrow functions, consolidated exports, separate type imports, kebab-case files, no emojis.

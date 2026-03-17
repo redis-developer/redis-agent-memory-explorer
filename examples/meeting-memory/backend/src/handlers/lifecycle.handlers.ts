@@ -1,17 +1,16 @@
 import type { RouteHandler } from "cau-api-server";
 import type { ForgetLifecycleInput } from "../types";
 
-import { AgentMemory, SummaryViewSource } from "cau-redis-agent-memory";
+import { AgentMemory } from "cau-redis-agent-memory";
 
 import { SEARCH_ALL_LIMIT } from "../constants";
-import { getAppState, setAppState } from "../app-state";
+import { getAppState } from "../app-state";
 
 const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   const { namespace, userId, datasetConfig } = getAppState();
   const memory = AgentMemory.getInstance();
 
   logger.info("Resetting lifecycle -- clearing all memories", { namespace });
-
   // 1. Delete all working memory sessions
   const sessions = await memory.listSessions({ namespace, userId });
   let sessionsDeleted = 0;
@@ -32,41 +31,42 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   if (hasMemories) {
     await memory.deleteLongTermMemories(memoryIds);
   }
-
   // 3. Delete all summary views
-  const views = await memory.listSummaryViews();
+  const existingViews = await memory.listSummaryViews();
   let viewsDeleted = 0;
-  for (const view of views) {
+  for (const view of existingViews) {
     await memory.deleteSummaryView(view.id);
     viewsDeleted += 1;
   }
+  // 4. Re-create summary view definition
 
-  // 4. Re-create the default summary view
-  const defaultViewName =
-    datasetConfig!.memoryLabels.summaryViews.defaultViewName;
-  const defaultGroupBy =
-    datasetConfig!.memoryLabels.summaryViews.defaultGroupBy;
-
-  const newDefaultView = await memory.createSummaryView({
-    name: defaultViewName,
-    source: SummaryViewSource.LONG_TERM,
-    groupBy: defaultGroupBy,
-  });
-
-  setAppState({ defaultSummaryViewId: newDefaultView.id });
+  const viewConfigs = datasetConfig!.memoryLabels.summaryViews.views;
+  let viewsCreated = 0;
+  for (const config of viewConfigs) {
+    await memory.createSummaryView({
+      name: config.name,
+      source: config.source,
+      groupBy: config.groupBy,
+      filters: config.filters,
+      timeWindowDays: config.timeWindowDays,
+      continuous: config.continuous,
+      prompt: config.prompt,
+    });
+    viewsCreated += 1;
+  }
 
   logger.info("Lifecycle reset complete", {
     sessionsDeleted,
     memoriesDeleted,
     viewsDeleted,
-    defaultSummaryViewId: newDefaultView.id,
+    viewsCreated,
   });
 
   return {
     sessionsDeleted,
     memoriesDeleted,
     viewsDeleted,
-    defaultSummaryViewId: newDefaultView.id,
+    viewsCreated,
   };
 };
 

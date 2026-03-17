@@ -1,6 +1,6 @@
 # POST /api/listSummaryViews
 
-Lists all summary views. The `isDefault` flag marks the pre-created view.
+Lists all summary views (both pre-seeded from dataset config and any created on-the-fly).
 
 ## Input
 
@@ -16,8 +16,13 @@ Lists all summary views. The `isDefault` flag marks the pre-created view.
         "viewId": "01KKEW9QGYHP3A9ABQG9NEA8B9",
         "name": "Client Memory Summary",
         "source": "long_term",
-        "groupBy": ["user_id"],
-        "isDefault": true
+        "groupBy": ["user_id"]
+      },
+      {
+        "viewId": "01KKEWB2XY3VD4K5NQPWSC03QW",
+        "name": "Session Recap",
+        "source": "long_term",
+        "groupBy": ["session_id"]
       }
     ]
   },

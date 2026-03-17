@@ -1,21 +1,15 @@
 import type { RouteHandler } from "cau-api-server";
-import type { DatasetResponse } from "../types";
 
 import { getAppState } from "../app-state";
 import { ENV } from "../config";
 import { DatasetLoaderService } from "../services/dataset-loader.service";
 
 const getDatasetHandler: RouteHandler = async (_input, { logger }) => {
-  const { datasetConfig, defaultSummaryViewId } = getAppState();
+  const { datasetConfig } = getAppState();
 
   logger.info("Serving dataset config", { dataset: datasetConfig?.id });
 
-  const response: DatasetResponse = {
-    ...datasetConfig!,
-    defaultSummaryViewId,
-  };
-
-  return response;
+  return datasetConfig!;
 };
 
 const listDatasetsHandler: RouteHandler = async (_input, { logger }) => {

@@ -1,6 +1,6 @@
 # POST /api/resetLifecycle
 
-Full demo reset. Deletes all working memory sessions, long-term memories, and summary views for the active dataset's namespace. Then re-creates the default summary view so the next demo run is ready immediately.
+Full demo reset. Deletes all working memory sessions, long-term memories, and summary views for the active dataset's namespace. Then re-creates all pre-seeded summary views from the dataset config so the next demo run is ready immediately.
 
 ## Input
 
@@ -14,13 +14,11 @@ Full demo reset. Deletes all working memory sessions, long-term memories, and su
     "sessionsDeleted": 0,
     "memoriesDeleted": 2,
     "viewsDeleted": 2,
-    "defaultSummaryViewId": "01KKEWHXVY1VD3K3NQPWSC02PV"
+    "viewsCreated": 2
   },
   "error": null
 }
 ```
-
-The `defaultSummaryViewId` is the newly created view -- the frontend should update its cached ID.
 
 ## curl
 

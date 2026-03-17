@@ -11,7 +11,6 @@ import type {
 import { AgentMemory } from "cau-redis-agent-memory";
 
 import { SUPPORTED_GROUP_BY_FIELDS } from "../constants";
-import { getAppState } from "../app-state";
 
 const validateGroupBy = (groupBy?: string[]): void => {
   const hasGroupBy = groupBy !== undefined && groupBy.length > 0;
@@ -56,14 +55,12 @@ const createSummaryViewHandler: RouteHandler = async (input, { logger }) => {
 
 const listSummaryViewsHandler: RouteHandler = async (_input, { logger }) => {
   const views = await AgentMemory.getInstance().listSummaryViews();
-  const { defaultSummaryViewId } = getAppState();
 
   const mapped = views.map((v) => ({
     viewId: v.id,
     name: v.name,
     source: v.source,
     groupBy: v.groupBy,
-    isDefault: v.id === defaultSummaryViewId,
   }));
 
   logger.info("Listing summary views", { count: mapped.length });

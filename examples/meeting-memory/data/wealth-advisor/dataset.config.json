@@ -61,8 +61,19 @@
     "summaryViews": {
       "title": "Summary Views",
       "description": "AI-generated narrative summaries condensed from extracted memories.",
-      "defaultViewName": "Client Memory Summary",
-      "defaultGroupBy": ["user_id"]
+      "views": [
+        {
+          "name": "Client Memory Summary",
+          "source": "long_term",
+          "groupBy": ["user_id"]
+        },
+        {
+          "name": "Session Recap",
+          "source": "long_term",
+          "groupBy": ["session_id"],
+          "prompt": "Summarize the key discussion points, decisions made, and action items from this meeting session."
+        }
+      ]
     },
     "metrics": {
       "title": "Redis Under the Hood",
