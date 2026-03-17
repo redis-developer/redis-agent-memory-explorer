@@ -2,14 +2,16 @@
 
 import type { MemoryRecordData } from "@/types/memory.types";
 import type { DatasetConfig } from "@/types/dataset-config.types";
-import type { MemoryType } from "@/constants/app.constants";
+import type { MemoryType, LtScope } from "@/constants/app.constants";
 
 import { useMemo } from "react";
 import IconButton from "@mui/material/IconButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import ToggleButton from "@mui/material/ToggleButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
 import { EmptyState, SectionCard } from "@/components/core";
-import { MEMORY_TYPE } from "@/constants/app.constants";
+import { LT_SCOPE, MEMORY_TYPE } from "@/constants/app.constants";
 import { MemoryCard } from "./memory-card.component";
 
 import "./long-term-memory-tab.component.css";
@@ -18,7 +20,9 @@ type LongTermMemoryTabProps = {
   memories: MemoryRecordData[];
   total: number;
   isLoading: boolean;
+  scope: LtScope;
   config: DatasetConfig;
+  onScopeChange: (scope: LtScope) => void;
   onRefresh: () => void;
 };
 
@@ -30,22 +34,83 @@ const groupByType = (memories: MemoryRecordData[]): GroupedMemories => ({
   [MEMORY_TYPE.MESSAGE]: memories.filter((m) => m.memoryType === MEMORY_TYPE.MESSAGE),
 });
 
+const TOGGLE_SX = {
+  root: {
+    height: 28,
+    "& .MuiToggleButton-root": {
+      color: "var(--fg-muted)",
+      borderColor: "var(--border)",
+      fontSize: "var(--font-size-2xs)",
+      fontFamily: "var(--secondary-font)",
+      textTransform: "none" as const,
+      padding: "2px 10px",
+      lineHeight: 1.4,
+      "&.Mui-selected": {
+        color: "var(--base-white)",
+        backgroundColor: "var(--sky-blue-09)",
+        borderColor: "var(--sky-blue-09)",
+        "&:hover": {
+          backgroundColor: "var(--sky-blue)",
+        },
+      },
+      "&:hover": {
+        backgroundColor: "var(--surface-hover)",
+      },
+    },
+  },
+} as const;
+
+const SCOPE_LABELS: Record<LtScope, string> = {
+  [LT_SCOPE.SESSION]: "This Session",
+  [LT_SCOPE.ALL]: "All Memories",
+};
+
 const LongTermMemoryTab = ({
   memories,
   total,
   isLoading,
+  scope,
   config,
+  onScopeChange,
   onRefresh,
 }: LongTermMemoryTabProps) => {
   const grouped = useMemo(() => groupByType(memories), [memories]);
   const labels = config.memoryLabels.longTermMemory;
 
+  const handleScopeChange = (_: React.MouseEvent<HTMLElement>, newScope: string | null) => {
+    if (newScope !== null) {
+      onScopeChange(newScope as LtScope);
+    }
+  };
+
+  const scopeToggle = (
+    <ToggleButtonGroup
+      value={scope}
+      exclusive
+      onChange={handleScopeChange}
+      size="small"
+      sx={TOGGLE_SX.root}
+    >
+      <ToggleButton value={LT_SCOPE.SESSION}>{SCOPE_LABELS[LT_SCOPE.SESSION]}</ToggleButton>
+      <ToggleButton value={LT_SCOPE.ALL}>{SCOPE_LABELS[LT_SCOPE.ALL]}</ToggleButton>
+    </ToggleButtonGroup>
+  );
+
   if (memories.length === 0) {
+    const emptyDescription = isLoading
+      ? "Searching for extracted memories..."
+      : labels.description;
+
     return (
-      <EmptyState
-        title={labels.title}
-        description={isLoading ? "Searching for extracted memories..." : labels.description}
-      />
+      <div className="long-term-memory-tab">
+        <div className="long-term-memory-tab__header">
+          {scopeToggle}
+          <IconButton size="small" onClick={onRefresh} sx={{ color: "var(--fg-muted)" }}>
+            <RefreshIcon fontSize="small" />
+          </IconButton>
+        </div>
+        <EmptyState title={labels.title} description={emptyDescription} />
+      </div>
     );
   }
 
@@ -75,15 +140,20 @@ const LongTermMemoryTab = ({
     },
   ];
 
+  const scopeLabel = scope === LT_SCOPE.SESSION ? "this session" : "all sessions";
+
   return (
     <div className="long-term-memory-tab">
       <div className="long-term-memory-tab__header">
-        <span className="long-term-memory-tab__total">
-          {total} {total === 1 ? "memory" : "memories"} extracted
-        </span>
-        <IconButton size="small" onClick={onRefresh} sx={{ color: "var(--fg-muted)" }}>
-          <RefreshIcon fontSize="small" />
-        </IconButton>
+        {scopeToggle}
+        <div className="long-term-memory-tab__header-right">
+          <span className="long-term-memory-tab__total">
+            {total} {total === 1 ? "memory" : "memories"} from {scopeLabel}
+          </span>
+          <IconButton size="small" onClick={onRefresh} sx={{ color: "var(--fg-muted)" }}>
+            <RefreshIcon fontSize="small" />
+          </IconButton>
+        </div>
       </div>
 
       {sections.map((section) => (

@@ -16,10 +16,10 @@ type UseSummaryViewsResult = {
   views: SummaryViewData[];
   summaries: Map<string, ComputedSummaryData[]>;
   isLoading: boolean;
-  isComputingSummary: boolean;
+  computingViewId: string | null;
   error: string | null;
-  computeCount: number;
-  computeDefaultSummary: (group: Record<string, string>) => Promise<void>;
+  computedSummaryCount: number;
+  summaryViewCount: number;
   fetchSummariesForView: (viewId: string) => Promise<void>;
   createNewView: (input: {
     name?: string;
@@ -36,15 +36,17 @@ type UseSummaryViewsResult = {
   resetAndRefresh: () => void;
 };
 
-const useSummaryViews = (
-  defaultSummaryViewId: string | null,
-): UseSummaryViewsResult => {
+const useSummaryViews = (): UseSummaryViewsResult => {
   const [views, setViews] = useState<SummaryViewData[]>([]);
   const [summaries, setSummaries] = useState<Map<string, ComputedSummaryData[]>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
-  const [isComputingSummary, setIsComputingSummary] = useState(false);
+  const [computingViewId, setComputingViewId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [computeCount, setComputeCount] = useState(0);
+  const computedSummaryCount = Array.from(summaries.values()).reduce(
+    (acc, list) => acc + list.length,
+    0,
+  );
+  const summaryViewCount = views.length;
 
   const loadViews = useCallback(() => {
     setIsLoading(true);
@@ -65,7 +67,7 @@ const useSummaryViews = (
 
   const doComputeSummary = useCallback(
     async (viewId: string, group: Record<string, string>) => {
-      setIsComputingSummary(true);
+      setComputingViewId(viewId);
       setError(null);
 
       try {
@@ -94,24 +96,13 @@ const useSummaryViews = (
           }
           return next;
         });
-        setComputeCount((prev) => prev + 1);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
-        setIsComputingSummary(false);
+        setComputingViewId(null);
       }
     },
     [],
-  );
-
-  const computeDefaultSummary = useCallback(
-    async (group: Record<string, string>) => {
-      const effectiveId =
-        views.find((v) => v.isDefault)?.viewId ?? defaultSummaryViewId;
-      if (!effectiveId) return;
-      await doComputeSummary(effectiveId, group);
-    },
-    [views, defaultSummaryViewId, doComputeSummary],
   );
 
   const fetchSummariesForView = useCallback(async (viewId: string) => {
@@ -168,7 +159,6 @@ const useSummaryViews = (
 
   const resetAndRefresh = useCallback(() => {
     setSummaries(new Map());
-    setComputeCount(0);
     setError(null);
     loadViews();
   }, [loadViews]);
@@ -177,10 +167,10 @@ const useSummaryViews = (
     views,
     summaries,
     isLoading,
-    isComputingSummary,
+    computingViewId,
     error,
-    computeCount,
-    computeDefaultSummary,
+    computedSummaryCount,
+    summaryViewCount,
     fetchSummariesForView,
     createNewView,
     computeSummaryForView: doComputeSummary,

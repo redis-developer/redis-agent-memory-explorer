@@ -9,19 +9,42 @@ import "./redis-metrics-tab.component.css";
 
 type RedisMetricsTabProps = {
   workingMemoryData: WorkingMemoryData | null;
-  longTermMemoryCount: number;
+  longTermMemorySessionCount: number;
+  longTermMemoryAllCount: number;
+  summaryViewCount: number;
   computedSummaryCount: number;
   config: DatasetConfig;
 };
 
 const RedisMetricsTab = ({
   workingMemoryData,
-  longTermMemoryCount,
+  longTermMemorySessionCount,
+  longTermMemoryAllCount,
+  summaryViewCount,
   computedSummaryCount,
   config,
 }: RedisMetricsTabProps) => {
   const messageCount = workingMemoryData?.messages?.length ?? 0;
   const tokens = workingMemoryData?.tokens ?? 0;
+
+  const rows = [
+    {
+      label: "Working Memory",
+      value: `${messageCount} messages, ${tokens.toLocaleString()} tokens`,
+    },
+    {
+      label: "Long-Term Memories (Session)",
+      value: `${longTermMemorySessionCount} extracted`,
+    },
+    {
+      label: "Long-Term Memories (All)",
+      value: `${longTermMemoryAllCount} total`,
+    },
+    {
+      label: "Summary Views",
+      value: `${summaryViewCount} configured, ${computedSummaryCount} computed`,
+    },
+  ];
 
   return (
     <div className="redis-metrics-tab">
@@ -32,24 +55,12 @@ const RedisMetricsTab = ({
 
       <SectionCard title="Memory Lifecycle">
         <div className="redis-metrics-tab__lifecycle">
-          <div className="redis-metrics-tab__row">
-            <span className="redis-metrics-tab__label">Working Memory</span>
-            <span className="redis-metrics-tab__value">
-              {messageCount} messages, {tokens.toLocaleString()} tokens
-            </span>
-          </div>
-          <div className="redis-metrics-tab__row">
-            <span className="redis-metrics-tab__label">Extraction</span>
-            <span className="redis-metrics-tab__value">
-              {longTermMemoryCount} long-term facts
-            </span>
-          </div>
-          <div className="redis-metrics-tab__row">
-            <span className="redis-metrics-tab__label">Summarization</span>
-            <span className="redis-metrics-tab__value">
-              {computedSummaryCount} computed {computedSummaryCount === 1 ? "summary" : "summaries"}
-            </span>
-          </div>
+          {rows.map((row) => (
+            <div key={row.label} className="redis-metrics-tab__row">
+              <span className="redis-metrics-tab__label">{row.label}</span>
+              <span className="redis-metrics-tab__value">{row.value}</span>
+            </div>
+          ))}
         </div>
       </SectionCard>
     </div>

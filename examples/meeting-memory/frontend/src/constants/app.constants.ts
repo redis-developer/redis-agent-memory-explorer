@@ -56,6 +56,8 @@ const TRANSCRIPT_ROLE = {
 
 const SUMMARY_GROUP_BY_KEY = {
   USER_ID: "user_id",
+  SESSION_ID: "session_id",
+  NAMESPACE: "namespace",
 } as const;
 
 const CONTEXT_THRESHOLD = {
@@ -64,6 +66,13 @@ const CONTEXT_THRESHOLD = {
   FULL: 100,
 } as const;
 
+const LT_SCOPE = {
+  SESSION: "session",
+  ALL: "all",
+} as const;
+type LtScope = (typeof LT_SCOPE)[keyof typeof LT_SCOPE];
+
+const SEARCH_ALL_LIMIT = 100;
 const LAST_MESSAGES_COUNT = 5;
 const AUTO_SCROLL_THRESHOLD_PX = 80;
 const SPEED_SELECT_MIN_WIDTH = 80;
@@ -83,6 +92,8 @@ export {
   EXPLORER_STATUS,
   TRANSCRIPT_ROLE,
   SUMMARY_GROUP_BY_KEY,
+  LT_SCOPE,
+  SEARCH_ALL_LIMIT,
   CONTEXT_THRESHOLD,
   LAST_MESSAGES_COUNT,
   AUTO_SCROLL_THRESHOLD_PX,
@@ -91,4 +102,4 @@ export {
   MEMORY_TYPE_LABEL,
 };
 
-export type { MemoryType, HealthStatus };
+export type { MemoryType, HealthStatus, LtScope };

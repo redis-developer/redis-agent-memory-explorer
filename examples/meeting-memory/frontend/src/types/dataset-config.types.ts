@@ -14,6 +14,16 @@ type MemoryTypeLabel = {
   description: string;
 };
 
+type SummaryViewConfigEntry = {
+  name: string;
+  source: string;
+  groupBy: string[];
+  filters?: Record<string, unknown>;
+  timeWindowDays?: number;
+  continuous?: boolean;
+  prompt?: string;
+};
+
 type DatasetConfig = {
   id: string;
   name: string;
@@ -44,8 +54,7 @@ type DatasetConfig = {
     summaryViews: {
       title: string;
       description: string;
-      defaultViewName: string;
-      defaultGroupBy: string[];
+      views: SummaryViewConfigEntry[];
     };
     metrics: {
       title: string;
@@ -69,7 +78,6 @@ type DatasetConfig = {
     intervalMs: number;
     speeds: Array<{ label: string; intervalMs: number }>;
   };
-  defaultSummaryViewId: string | null;
 };
 
 type UseDatasetConfigResult = {
@@ -83,6 +91,7 @@ export type {
   RoleConfig,
   ParticipantConfig,
   MemoryTypeLabel,
+  SummaryViewConfigEntry,
   DatasetConfig,
   UseDatasetConfigResult,
 };
