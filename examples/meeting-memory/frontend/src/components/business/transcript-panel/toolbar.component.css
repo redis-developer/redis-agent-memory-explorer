@@ -37,26 +37,24 @@
     font-size: var(--font-size-2xs) !important;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    border-radius: var(--border-radius-pill) !important;
     background-color: var(--dusk-90) !important;
     color: var(--fg-body) !important;
-    border: 1px solid var(--border) !important;
+    border: none !important;
 
     &.toolbar__status-chip--playing {
       background-color: color-mix(in srgb, var(--color-episodic) 15%, transparent) !important;
       color: var(--color-episodic) !important;
-      border-color: var(--color-episodic) !important;
     }
 
     &.toolbar__status-chip--completed {
       background-color: color-mix(in srgb, var(--sky-blue) 15%, transparent) !important;
       color: var(--sky-blue) !important;
-      border-color: var(--sky-blue) !important;
     }
 
     &.toolbar__status-chip--error {
       background-color: color-mix(in srgb, var(--hyper-05) 15%, transparent) !important;
       color: var(--hyper-05) !important;
-      border-color: var(--hyper-05) !important;
     }
   }
 
@@ -111,14 +109,17 @@
 
   .toolbar__reset-btn {
     margin-left: auto !important;
-    color: var(--hyper-05) !important;
-    border-color: var(--hyper-05) !important;
+    background-color: var(--btn-primary-bg) !important;
+    color: var(--btn-primary-text) !important;
+    border: 1px solid var(--btn-primary-border) !important;
+    border-radius: var(--border-radius-pill) !important;
     font-size: var(--font-size-xs) !important;
     text-transform: none !important;
+    box-shadow: var(--shadow-sm) !important;
 
     &:hover {
-      background-color: color-mix(in srgb, var(--hyper-05) 10%, transparent) !important;
-      border-color: var(--hyper-07) !important;
+      background-color: var(--btn-primary-hover-bg) !important;
+      border-color: var(--btn-primary-hover-border) !important;
     }
 
     &:disabled {

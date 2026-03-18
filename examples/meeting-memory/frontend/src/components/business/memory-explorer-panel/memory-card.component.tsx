@@ -58,7 +58,7 @@ const MemoryCard = ({ memory }: MemoryCardProps) => {
               key={`t-${topic}`}
               label={topic}
               size="small"
-              variant="outlined"
+              variant="filled"
               className="memory-card__topic-chip"
             />
           ))}
@@ -73,7 +73,7 @@ const MemoryCard = ({ memory }: MemoryCardProps) => {
               key={`e-${entity}`}
               label={entity}
               size="small"
-              variant="outlined"
+              variant="filled"
               className="memory-card__entity-chip"
             />
           ))}

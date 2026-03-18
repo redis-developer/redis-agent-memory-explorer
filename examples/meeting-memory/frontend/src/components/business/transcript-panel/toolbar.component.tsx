@@ -162,12 +162,12 @@ const Toolbar = ({
         <Button
           onClick={onReset}
           disabled={isResetting}
-          variant="outlined"
+          variant="contained"
           size="small"
           className="toolbar__reset-btn"
           startIcon={
             isResetting ? (
-              <CircularProgress size={14} sx={{ color: "var(--hyper-05)" }} />
+              <CircularProgress size={14} sx={{ color: "var(--base-white)" }} />
             ) : (
               <DeleteSweepIcon />
             )
