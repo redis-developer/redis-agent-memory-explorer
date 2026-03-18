@@ -20,6 +20,11 @@ type TaskResponse = {
   result: unknown;
 };
 
+type ListSessionsResponse = {
+  sessions: string[];
+  total: number;
+};
+
 type ResetResult = {
   sessionsDeleted: number;
   memoriesDeleted: number;
@@ -30,6 +35,7 @@ type ResetResult = {
 export type {
   ApiResponse,
   HealthResponse,
+  ListSessionsResponse,
   LtSearchResponse,
   ResetResult,
   TaskResponse,

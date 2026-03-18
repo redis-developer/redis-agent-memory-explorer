@@ -51,7 +51,7 @@ const useLongTermMemory = (
   }, []);
 
   const refreshAllTotal = useCallback(() => {
-    searchLongTermMemory({ limit: 1 })
+    searchLongTermMemory({ limit: SEARCH_ALL_LIMIT })
       .then((result) => {
         setAllTotal(result.total);
       })

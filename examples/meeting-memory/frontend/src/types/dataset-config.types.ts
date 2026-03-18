@@ -68,6 +68,7 @@ type DatasetConfig = {
   };
   toolbar: {
     transcriptDropdownLabel: string;
+    sessionDropdownLabel: string;
     playLabel: string;
     stopLabel: string;
     resetLabel: string;
