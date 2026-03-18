@@ -14,6 +14,7 @@ import type {
 import type {
   ApiResponse,
   HealthResponse,
+  ListSessionsResponse,
   LtSearchResponse,
   ResetResult,
 } from "@/types/api.types";
@@ -28,6 +29,7 @@ const API_PATH = {
   APPEND_WORKING_MEMORY: "/api/appendWorkingMemory",
   GET_WORKING_MEMORY: "/api/getWorkingMemory",
   DELETE_WORKING_MEMORY: "/api/deleteWorkingMemory",
+  LIST_WORKING_MEMORY_SESSIONS: "/api/listWorkingMemorySessions",
   SEARCH_LONG_TERM_MEMORY: "/api/searchLongTermMemory",
   SEARCH_LONG_TERM_MEMORY_BY_SESSION: "/api/searchLongTermMemoryBySession",
   CREATE_SUMMARY_VIEW: "/api/createSummaryView",
@@ -93,6 +95,15 @@ const fetchWorkingMemory = (sessionId: string): Promise<WorkingMemoryData> =>
 
 const deleteWorkingMemory = (sessionId: string): Promise<void> =>
   apiPost<void>(API_PATH.DELETE_WORKING_MEMORY, { sessionId });
+
+const listWorkingMemorySessions = (
+  limit?: number,
+  offset?: number,
+): Promise<ListSessionsResponse> =>
+  apiPost<ListSessionsResponse>(API_PATH.LIST_WORKING_MEMORY_SESSIONS, {
+    limit,
+    offset,
+  });
 
 const searchLongTermMemory = (params: {
   text?: string;
@@ -165,6 +176,7 @@ export {
   appendChunk,
   fetchWorkingMemory,
   deleteWorkingMemory,
+  listWorkingMemorySessions,
   searchLongTermMemory,
   searchLongTermMemoryBySession,
   createSummaryView,

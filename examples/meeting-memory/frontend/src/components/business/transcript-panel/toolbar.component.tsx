@@ -1,6 +1,6 @@
 "use client";
 
-import type { DatasetConfig, RoleConfig, ParticipantConfig } from "@/types/dataset-config.types";
+import type { DatasetConfig } from "@/types/dataset-config.types";
 import type { TranscriptSummary } from "@/types/transcript.types";
 import type { PlaybackStatusValue } from "./use-transcript-playback";
 
@@ -36,6 +36,17 @@ type ToolbarProps = {
   isHealthChecking: boolean;
 };
 
+const SELECT_SX = {
+  color: "var(--fg-default)",
+  fontSize: "var(--font-size-xs)",
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "var(--border)",
+  },
+  "& .MuiSvgIcon-root": {
+    color: "var(--fg-muted)",
+  },
+} as const;
+
 const Toolbar = ({
   config,
   transcripts,
@@ -52,13 +63,8 @@ const Toolbar = ({
   isHealthChecking,
 }: ToolbarProps) => {
   const isPlaying = playbackStatus === PLAYBACK_STATUS.PLAYING;
-  const isIdle = playbackStatus === PLAYBACK_STATUS.IDLE;
   const statusText = config.statusLabels[playbackStatus] ?? playbackStatus;
   const healthStatus = isHealthChecking ? HEALTH_STATUS.CHECKING : serverOk ? HEALTH_STATUS.OK : HEALTH_STATUS.ERROR;
-
-  const handleTranscriptChange = (value: string) => {
-    onSelectTranscript(value);
-  };
 
   return (
     <div className="toolbar">
@@ -80,21 +86,12 @@ const Toolbar = ({
       <div className="toolbar__row toolbar__row--controls">
         <Select
           value={selectedTranscriptId ?? ""}
-          onChange={(e) => handleTranscriptChange(e.target.value)}
+          onChange={(e) => onSelectTranscript(e.target.value)}
           displayEmpty
           size="small"
           className="toolbar__select toolbar__select--transcript"
           disabled={isPlaying || isResetting}
-          sx={{
-            color: "var(--fg-default)",
-            fontSize: "var(--font-size-xs)",
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: "var(--border)",
-            },
-            "& .MuiSvgIcon-root": {
-              color: "var(--fg-muted)",
-            },
-          }}
+          sx={SELECT_SX}
         >
           <MenuItem value="" disabled>
             {config.toolbar.transcriptDropdownLabel}
@@ -113,15 +110,8 @@ const Toolbar = ({
           className="toolbar__select toolbar__select--speed"
           disabled={isPlaying || isResetting}
           sx={{
-            color: "var(--fg-default)",
-            fontSize: "var(--font-size-xs)",
+            ...SELECT_SX,
             minWidth: SPEED_SELECT_MIN_WIDTH,
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: "var(--border)",
-            },
-            "& .MuiSvgIcon-root": {
-              color: "var(--fg-muted)",
-            },
           }}
         >
           {config.playbackDefaults.speeds.map((s) => (

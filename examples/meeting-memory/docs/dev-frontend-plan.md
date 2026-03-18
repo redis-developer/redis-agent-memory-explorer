@@ -319,6 +319,10 @@ const ExplorerStatus = {
   EXPLORING: "exploring", // LT memories available, all tabs active
   ERROR: "error",
 } as const;
+
+// Session ID parsing (for Load Existing Session feature)
+const SESSION_ID_PREFIX = "playback";
+const SESSION_ID_PATTERN = /^playback-(.+)-(\d{13,})$/;
 ```
 
 **What moved to `dataset.config.json` (fetched at runtime):**
@@ -513,6 +517,7 @@ Only two callbacks. No playback status or metrics leak outside. The parent only 
 #### Internal State (managed within TranscriptPanel)
 
 - `transcripts` -- list of available transcripts (from `POST /api/listTranscripts`)
+- `sessions` -- list of existing working memory session IDs (from `POST /api/listWorkingMemorySessions`)
 - `selectedTranscriptId` -- which transcript is selected in the dropdown
 - `transcriptData` -- full transcript JSON (fetched on selection)
 - `displayedChunks` -- array of chunks visible in the feed (grows during playback)
@@ -523,26 +528,28 @@ Only two callbacks. No playback status or metrics leak outside. The parent only 
 
 #### Internal Lifecycle
 
-1. On mount: fetch transcript list from `POST /api/listTranscripts`
+1. On mount: fetch transcript list from `POST /api/listTranscripts` AND session list from `POST /api/listWorkingMemorySessions`
 2. On transcript selection: fetch full transcript via `POST /api/getTranscript { transcriptId }`
 3. On Play: call `POST /api/createWorkingMemory { transcriptId }` to create session -> emit `onSessionCreated(sessionId)` -> start playback via `useTranscriptPlayback`
 4. During playback: update internal `playbackStatus` and `playbackMetrics` per tick
 5. On playback complete: update internal status to "completed". TranscriptPanel has no knowledge of extraction -- that is MemoryExplorerPanel's concern.
-6. On "Clear All": show ConfirmDialog, call `POST /api/resetLifecycle`, clear internal state, emit `onReset()`
+6. On "Load Existing Session": parse `transcriptId` from session ID (format: `playback-{transcriptId}-{timestamp}`), fetch the transcript, display all chunks instantly via `playback.loadAll()`, set status to "completed", emit `onSessionCreated(sessionId)` -- MemoryExplorerPanel auto-populates with working memory, LT memories, and summaries for the loaded session.
+7. On "Clear All": show ConfirmDialog, call `POST /api/resetLifecycle`, clear internal state (including sessions list), emit `onReset()`
 
 #### Sub-component: Toolbar (`toolbar.component.tsx`)
 
 Top horizontal bar within TranscriptPanel. **All labels from `datasetConfig.toolbar` and `datasetConfig.statusLabels`.**
 
-| Element             | Config source                                                   | Type                          | Behavior                                                                                           |
-| ------------------- | --------------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------- |
-| Transcript dropdown | `config.toolbar.transcriptDropdownLabel`                        | MUI Select                    | Lists available transcripts                                                                        |
-| Speed dropdown      | `config.toolbar.speedLabel`, `config.playbackDefaults.speeds[]` | MUI Select                    | Speed options from config                                                                          |
-| Play button         | `config.toolbar.playLabel`                                      | MUI IconButton (PlayArrow)    | Starts playback, disabled while playing                                                            |
-| Stop button         | `config.toolbar.stopLabel`                                      | MUI IconButton (Stop)         | Stops playback mid-stream, keeps data                                                              |
-| Clear All button    | `config.toolbar.resetLabel`                                     | MUI Button (DeleteSweep, red) | **Prominently styled.** Triggers `POST /api/resetLifecycle` via parent. Shows ConfirmDialog first. |
-| Status chip         | `config.statusLabels[playbackStatus]`                           | MUI Chip                      | Config-driven text per status                                                                      |
-| Health indicator    | --                                                              | StatusDot (core)              | Green/red based on `GET /health`                                                                   |
+| Element                   | Config source                                                   | Type                          | Behavior                                                                                                                                                  |
+| ------------------------- | --------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Transcript dropdown       | `config.toolbar.transcriptDropdownLabel`                        | MUI Select                    | Lists available transcripts                                                                                                                               |
+| Session picker dropdown   | `config.toolbar.sessionDropdownLabel`                           | MUI Select                    | Lists existing working memory sessions (from `POST /api/listWorkingMemorySessions`). Only renders when sessions exist. Separated from transcript dropdown by "or" label. Selecting a session loads the full transcript + sets completed state + populates MemoryExplorerPanel. |
+| Speed dropdown            | `config.toolbar.speedLabel`, `config.playbackDefaults.speeds[]` | MUI Select                    | Speed options from config                                                                                                                                 |
+| Play button               | `config.toolbar.playLabel`                                      | MUI IconButton (PlayArrow)    | Starts playback, disabled while playing                                                                                                                   |
+| Stop button               | `config.toolbar.stopLabel`                                      | MUI IconButton (Stop)         | Stops playback mid-stream, keeps data                                                                                                                     |
+| Clear All button          | `config.toolbar.resetLabel`                                     | MUI Button (DeleteSweep, red) | **Prominently styled.** Triggers `POST /api/resetLifecycle` via parent. Shows ConfirmDialog first.                                                        |
+| Status chip               | `config.statusLabels[playbackStatus]`                           | MUI Chip                      | Config-driven text per status                                                                                                                             |
+| Health indicator          | --                                                              | StatusDot (core)              | Green/red based on `GET /health`                                                                                                                          |
 
 **Clear All button details:**
 
@@ -955,6 +962,7 @@ type DatasetConfig = {
   };
   toolbar: {
     transcriptDropdownLabel: string;
+    sessionDropdownLabel: string;
     playLabel: string;
     stopLabel: string;
     resetLabel: string;
@@ -991,6 +999,7 @@ type UseTranscriptPlaybackResult = {
   start: () => void;
   stop: () => void;
   reset: () => void;
+  loadAll: () => void;
 };
 
 type PlaybackMetrics = {
@@ -1013,6 +1022,7 @@ type PlaybackMetrics = {
    f. If `currentIndex === totalChunks - 1`, send with `isLastChunk: true` and stop the interval
 3. `stop()` clears the interval but keeps displayed chunks and session intact
 4. `reset()` clears everything -- displayed chunks, metrics, session ID
+5. `loadAll()` instantly displays all chunks (no interval), sets `currentIndex` to `chunks.length`, sets status to `COMPLETED`. Used by the "Load Existing Session" feature to show the full transcript without replaying it.
 
 **Why fire-and-forget the POST:** The UI display is instant (from local state). The API call happens in the background. If the API is slow on one tick, the next chunk still displays on time. The `lastAppendResult` state updates asynchronously, so the Working Memory tab shows the latest server-side stats with a slight lag -- which is fine for the demo and actually looks more realistic.
 
@@ -1157,6 +1167,8 @@ const fetchWorkingMemory = (sessionId: string) =>
   apiPost<WorkingMemoryData>("/api/getWorkingMemory", { sessionId });
 const deleteWorkingMemory = (sessionId: string) =>
   apiPost<void>("/api/deleteWorkingMemory", { sessionId });
+const listWorkingMemorySessions = (limit?: number, offset?: number) =>
+  apiPost<ListSessionsResponse>("/api/listWorkingMemorySessions", { limit, offset });
 
 // Long-Term Memory
 const searchLongTermMemory = (params: LTSearchParams) =>
@@ -1431,9 +1443,12 @@ Page loads (DemoPage)
   (owns playback, status, metrics)    (owns memory polling, exploration)
         │                                     │
         │  POST /api/listTranscripts          │  sessionId = null
-        │  (fetch transcript list)            │  (shows empty states)
+        │  POST /api/listWorkingMemorySessions│  (shows empty states)
+        │  (fetch transcript + session lists) │
         ▼                                     │
 User selects transcript                       │
+   ─OR─ User loads existing session ──────────┼──── (shortcut: see below)
+        │                                     │
         │                                     │
         │  POST /api/getTranscript            │
         │  { transcriptId }                   │
@@ -1488,7 +1503,27 @@ User selects transcript                       │
      [IDLE]  (clean slate, ready for another demo run)
 ```
 
-Note: the "Clear All" button is in TranscriptPanel's toolbar and is accessible from **any** state (idle, playing, completed). If clicked during playback, TranscriptPanel stops the interval first, then proceeds with the reset API call, then emits `onReset()`.
+**Load Existing Session (shortcut path):**
+
+```
+User selects session from "Load Existing Session" dropdown
+        │
+        │  TranscriptPanel.handleLoadSession:
+        │  1. Parse transcriptId from sessionId (regex: /^playback-(.+)-(\d{13,})$/)
+        │  2. playback.reset() (clean slate)
+        │  3. setSessionId(selectedSessionId)
+        │  4. onSessionCreated(selectedSessionId) ──────► MemoryExplorerPanel starts
+        │  5. POST /api/getTranscript { transcriptId }     polling (session already has
+        │  6. On response: setTranscriptData(data)          data, so all tabs populate
+        │  7. playback.loadAll() -- displays all chunks     immediately)
+        │     instantly, sets status = COMPLETED
+        ▼
+    [COMPLETED] -- whole page looks like post-playback
+                   (transcript feed shows all chunks,
+                    MemoryExplorerPanel shows all memory data)
+```
+
+Note: the "Clear All" button is in TranscriptPanel's toolbar and is accessible from **any** state (idle, playing, completed). If clicked during playback, TranscriptPanel stops the interval first, then proceeds with the reset API call, then emits `onReset()`. After reset, the sessions list is cleared (since all sessions are deleted by the backend).
 
 ---
 
@@ -1522,7 +1557,7 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 ## Demo Presenter Script (What to Click)
 
 1. **Open the app** -- dark themed Memory Explorer loads (title from `config.branding.title`), shows config-driven idle status
-2. **Select transcript** -- dropdown shows available transcripts for the active dataset
+2. **Select transcript** -- dropdown shows available transcripts for the active dataset. Alternatively, if existing sessions are available from a previous run, the "Load Existing Session" dropdown appears -- selecting one instantly loads the full transcript + all memory data (no playback needed).
 3. **Optionally set speed** -- options from `config.playbackDefaults.speeds`
 4. **Click Play** -- transcript chunks start appearing on the left, one at a time, with speaker labels from `config.roles`
 5. **Narrate** -- "Each transcript chunk is being written to Redis working memory in real-time. Watch the token count grow."

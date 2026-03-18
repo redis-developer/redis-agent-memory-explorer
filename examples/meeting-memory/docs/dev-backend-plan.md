@@ -509,6 +509,8 @@ Response `data`: `{ sessions: string[], total: number }`
 
 Lists all active sessions. Calls `AgentMemory.getInstance().listSessions({ namespace: NAMESPACE, userId: USER_ID, limit, offset })`.
 
+This endpoint is used by the frontend's **"Load Existing Session"** dropdown. On page load, the frontend calls `listWorkingMemorySessions` to discover existing sessions from previous runs. Session IDs follow the format `playback-{transcriptId}-{timestamp}`, allowing the frontend to parse the `transcriptId` and load the corresponding transcript for display.
+
 ---
 
 ### 5. Long-Term Memory -- `long-term-memory.handlers.ts`
@@ -1094,8 +1096,8 @@ Frontend                                Backend                     Agent Memory
 
 ### Flow A: Live Playback Experience
 
-1. **Page load** -- Frontend calls `POST /api/getDataset` to get all labels, config, namespace, userId
-2. **Select transcript** -- Frontend calls `POST /api/getTranscript { transcriptId }` (full JSON in one call)
+1. **Page load** -- Frontend calls `POST /api/getDataset` to get all labels, config, namespace, userId. Also calls `POST /api/listWorkingMemorySessions` to check for existing sessions from previous runs.
+2. **Select transcript** -- Frontend calls `POST /api/getTranscript { transcriptId }` (full JSON in one call). Alternatively, if sessions exist, the presenter can select an existing session from the "Load Existing Session" dropdown to instantly load all data without replaying.
 3. **Click Play** -- Frontend calls `POST /api/createWorkingMemory { transcriptId }` to create a session
 4. **Watch** -- Frontend's `setInterval` displays chunks one at a time AND calls `POST /api/appendWorkingMemory` for each
 5. **Observe** -- Each append response returns working memory stats (tokens, context, etc.) displayed in real-time

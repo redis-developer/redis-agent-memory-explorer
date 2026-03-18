@@ -22,6 +22,7 @@ type UseTranscriptPlaybackResult = {
   start: () => void;
   stop: () => void;
   reset: () => void;
+  loadAll: () => void;
 };
 
 const useTranscriptPlayback = (
@@ -100,6 +101,19 @@ const useTranscriptPlayback = (
     setError(null);
   }, [clearTimer]);
 
+  const loadAll = useCallback(() => {
+    const hasNoChunks = chunks.length === 0;
+    if (hasNoChunks) return;
+
+    clearTimer();
+    setDisplayedChunks([...chunks]);
+    const total = chunks.length;
+    setCurrentIndex(total);
+    indexRef.current = total;
+    setStatus(PLAYBACK_STATUS.COMPLETED);
+    setError(null);
+  }, [chunks, clearTimer]);
+
   return {
     displayedChunks,
     currentIndex,
@@ -112,6 +126,7 @@ const useTranscriptPlayback = (
     start,
     stop,
     reset,
+    loadAll,
   };
 };
 

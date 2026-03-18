@@ -50,9 +50,26 @@ const useSummaryViews = (): UseSummaryViewsResult => {
 
   const loadViews = useCallback(() => {
     setIsLoading(true);
+    setError(null);
     listSummaryViews()
       .then((res) => {
         setViews(res.views);
+        const fetchPromises = res.views.map((view) =>
+          fetchComputedSummaries(view.viewId)
+            .then((r) => ({ viewId: view.viewId, summaries: r.summaries }))
+            .catch(() => ({ viewId: view.viewId, summaries: [] as ComputedSummaryData[] })),
+        );
+        return Promise.all(fetchPromises);
+      })
+      .then((results) => {
+        const newSummaries = new Map<string, ComputedSummaryData[]>();
+        for (const { viewId, summaries: viewSummaries } of results) {
+          const hasSummaries = viewSummaries.length > 0;
+          if (hasSummaries) {
+            newSummaries.set(viewId, viewSummaries);
+          }
+        }
+        setSummaries(newSummaries);
         setIsLoading(false);
       })
       .catch((err: Error) => {

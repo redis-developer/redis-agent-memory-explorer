@@ -45,9 +45,9 @@ const MemoryExplorerPanel = ({
   const summaryViews = useSummaryViews();
 
   useEffect(() => {
-    const wasReset = prevSessionIdRef.current !== null && sessionId === null;
+    const sessionChanged = prevSessionIdRef.current !== sessionId;
     prevSessionIdRef.current = sessionId;
-    if (wasReset) {
+    if (sessionChanged) {
       summaryViews.resetAndRefresh();
     }
   }, [sessionId]);

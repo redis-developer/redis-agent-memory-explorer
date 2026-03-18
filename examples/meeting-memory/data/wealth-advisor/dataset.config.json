@@ -89,6 +89,7 @@
 
   "toolbar": {
     "transcriptDropdownLabel": "Select Meeting",
+    "sessionDropdownLabel": "Load Existing Session",
     "playLabel": "Play Transcript",
     "stopLabel": "Stop",
     "resetLabel": "Clear All Memories & Restart",
