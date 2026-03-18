@@ -85,14 +85,16 @@
   .memory-card__topic-chip {
     font-size: var(--font-size-2xs) !important;
     color: var(--sky-blue) !important;
-    border-color: var(--sky-blue) !important;
+    background-color: color-mix(in srgb, var(--sky-blue) 12%, transparent) !important;
+    border: none !important;
     height: 22px !important;
   }
 
   .memory-card__entity-chip {
     font-size: var(--font-size-2xs) !important;
     color: var(--color-episodic) !important;
-    border-color: var(--color-episodic) !important;
+    background-color: color-mix(in srgb, var(--color-episodic) 12%, transparent) !important;
+    border: none !important;
     height: 22px !important;
   }
 }

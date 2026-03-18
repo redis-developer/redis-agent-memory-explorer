@@ -5,22 +5,36 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-radius: var(--border-radius-sm) !important;
+  border: none !important;
+
+  .MuiChip-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: currentColor;
+      flex-shrink: 0;
+    }
+  }
 
   &.memory-type-badge--semantic {
     background-color: color-mix(in srgb, var(--color-semantic) 20%, transparent) !important;
     color: var(--color-semantic) !important;
-    border: 1px solid var(--color-semantic) !important;
   }
 
   &.memory-type-badge--episodic {
     background-color: color-mix(in srgb, var(--color-episodic) 20%, transparent) !important;
     color: var(--color-episodic) !important;
-    border: 1px solid var(--color-episodic) !important;
   }
 
   &.memory-type-badge--message {
     background-color: color-mix(in srgb, var(--color-message) 20%, transparent) !important;
     color: var(--color-message) !important;
-    border: 1px solid var(--color-message) !important;
   }
 }

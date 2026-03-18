@@ -6,8 +6,8 @@ import type { MemoryType, LtScope } from "@/constants/app.constants";
 
 import { useMemo } from "react";
 import IconButton from "@mui/material/IconButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import ToggleButton from "@mui/material/ToggleButton";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
 import { EmptyState, SectionCard } from "@/components/core";
@@ -34,29 +34,24 @@ const groupByType = (memories: MemoryRecordData[]): GroupedMemories => ({
   [MEMORY_TYPE.MESSAGE]: memories.filter((m) => m.memoryType === MEMORY_TYPE.MESSAGE),
 });
 
-const TOGGLE_SX = {
-  root: {
-    height: 28,
-    "& .MuiToggleButton-root": {
-      color: "var(--fg-muted)",
-      borderColor: "var(--border)",
-      fontSize: "var(--font-size-2xs)",
-      fontFamily: "var(--secondary-font)",
-      textTransform: "none" as const,
-      padding: "2px 10px",
-      lineHeight: 1.4,
-      "&.Mui-selected": {
-        color: "var(--base-white)",
-        backgroundColor: "var(--sky-blue-09)",
-        borderColor: "var(--sky-blue-09)",
-        "&:hover": {
-          backgroundColor: "var(--sky-blue)",
-        },
-      },
-      "&:hover": {
-        backgroundColor: "var(--surface-hover)",
-      },
-    },
+const SCOPE_TABS_SX = {
+  minHeight: 28,
+  "& .MuiTab-root": {
+    color: "var(--fg-muted)",
+    fontSize: "var(--font-size-2xs)",
+    fontFamily: "var(--secondary-font)",
+    textTransform: "none" as const,
+    minHeight: 28,
+    padding: "2px 10px",
+    lineHeight: 1.4,
+    minWidth: "auto",
+  },
+  "& .Mui-selected": {
+    color: "var(--base-white) !important",
+  },
+  "& .MuiTabs-indicator": {
+    backgroundColor: "var(--sky-blue)",
+    height: 2,
   },
 } as const;
 
@@ -77,23 +72,19 @@ const LongTermMemoryTab = ({
   const grouped = useMemo(() => groupByType(memories), [memories]);
   const labels = config.memoryLabels.longTermMemory;
 
-  const handleScopeChange = (_: React.MouseEvent<HTMLElement>, newScope: string | null) => {
-    if (newScope !== null) {
-      onScopeChange(newScope as LtScope);
-    }
+  const handleScopeChange = (_: React.SyntheticEvent, newScope: string) => {
+    onScopeChange(newScope as LtScope);
   };
 
   const scopeToggle = (
-    <ToggleButtonGroup
+    <Tabs
       value={scope}
-      exclusive
       onChange={handleScopeChange}
-      size="small"
-      sx={TOGGLE_SX.root}
+      sx={SCOPE_TABS_SX}
     >
-      <ToggleButton value={LT_SCOPE.SESSION}>{SCOPE_LABELS[LT_SCOPE.SESSION]}</ToggleButton>
-      <ToggleButton value={LT_SCOPE.ALL}>{SCOPE_LABELS[LT_SCOPE.ALL]}</ToggleButton>
-    </ToggleButtonGroup>
+      <Tab label={SCOPE_LABELS[LT_SCOPE.SESSION]} value={LT_SCOPE.SESSION} />
+      <Tab label={SCOPE_LABELS[LT_SCOPE.ALL]} value={LT_SCOPE.ALL} />
+    </Tabs>
   );
 
   if (memories.length === 0) {
