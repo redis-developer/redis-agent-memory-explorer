@@ -1,6 +1,10 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
 
+const COPILOTKIT_RUNTIME_URL =
+  process.env.NEXT_PUBLIC_COPILOTKIT_RUNTIME_URL ??
+  "http://localhost:3001/copilotkit";
+
 const WORKING_MEMORY_POLL_INTERVAL_MS = 3000;
 const LT_MEMORY_POLL_AFTER_EXTRACTION_MS = 5000;
 const EXTRACTION_POLL_INTERVAL_MS = 5000;
@@ -82,8 +86,15 @@ const MAX_MEMORY_TEXT_LENGTH = 200;
 const SESSION_ID_PREFIX = "playback";
 const SESSION_ID_PATTERN = /^playback-(.+)-(\d{13,})$/;
 
+const DEFAULT_CHATBOT_TITLE = "Memory Assistant";
+const DEFAULT_CHATBOT_INITIAL =
+  "Ask me anything about the stored memories for this client. I can search across all meetings or focus on a specific session.";
+const DEFAULT_CHATBOT_PLACEHOLDER = "Ask about memories...";
+const DEFAULT_CHATBOT_INSTRUCTIONS = "";
+
 export {
   API_BASE_URL,
+  COPILOTKIT_RUNTIME_URL,
   WORKING_MEMORY_POLL_INTERVAL_MS,
   LT_MEMORY_POLL_AFTER_EXTRACTION_MS,
   EXTRACTION_POLL_INTERVAL_MS,
@@ -107,6 +118,10 @@ export {
   SESSION_ID_PREFIX,
   SESSION_ID_PATTERN,
   MEMORY_TYPE_LABEL,
+  DEFAULT_CHATBOT_TITLE,
+  DEFAULT_CHATBOT_INITIAL,
+  DEFAULT_CHATBOT_PLACEHOLDER,
+  DEFAULT_CHATBOT_INSTRUCTIONS,
 };
 
 export type { MemoryType, HealthStatus, LtScope };

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Space_Grotesk, Space_Mono } from "next/font/google";
 
 import "./globals.css";
+import { CopilotKitProvider } from "./copilotkit-provider";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -26,7 +27,9 @@ const metadata: Metadata = {
 const RootLayout = ({ children }: { children: ReactNode }) => {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${spaceMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <CopilotKitProvider>{children}</CopilotKitProvider>
+      </body>
     </html>
   );
 };

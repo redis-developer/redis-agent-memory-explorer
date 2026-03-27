@@ -1,0 +1,85 @@
+:root {
+  --copilot-kit-background-color: #0d212c;
+  --copilot-kit-input-background-color: #163341;
+  --copilot-kit-secondary-color: #163341;
+  --copilot-kit-separator-color: #163341;
+  --copilot-kit-primary-color: #2e5a6e;
+  --copilot-kit-contrast-color: #ffffff;
+  --copilot-kit-secondary-contrast-color: #c1c8cd;
+  --copilot-kit-response-button-background-color: #2e5a6e;
+  --copilot-kit-response-button-color: #e4e8eb;
+  --copilot-kit-muted-color: #6b7f8e;
+}
+
+.copilotKitSidebarContentWrapper.sidebarExpanded {
+  margin-right: 0 !important;
+}
+
+.copilotKitSidebar .copilotKitWindow {
+  z-index: 50;
+}
+
+.copilotKitChat {
+  background-color: #0d212c !important;
+  color: #c1c8cd !important;
+}
+
+.copilotKitHeader {
+  background-color: #0d212c !important;
+  color: #e4e8eb !important;
+  font-weight: 700 !important;
+}
+
+.copilotKitWindow {
+  background-color: #0d212c !important;
+}
+
+.copilotKitMessage.copilotKitAssistantMessage {
+  color: #c1c8cd !important;
+}
+
+.copilotKitMessageControlButton {
+  color: #6b7f8e !important;
+}
+
+.copilotKitMessageControlButton:hover {
+  color: #e4e8eb !important;
+}
+
+.copilotKitInput > textarea {
+  color: #e4e8eb !important;
+}
+
+.copilotKitInput > textarea::placeholder {
+  color: #6b7f8e !important;
+}
+
+.copilotKitInputControlButton:not([disabled]) {
+  color: #c1c8cd !important;
+}
+
+.copilotKitInputControlButton:not([disabled]):hover {
+  color: #e4e8eb !important;
+}
+
+.copilotKitInputControlButton[disabled] {
+  color: #3a5565 !important;
+}
+
+.copilotKitButton {
+  background: #5c1623 !important;
+  border-color: #a62639 !important;
+  color: #ffffff !important;
+}
+
+.copilotKitButton:hover {
+  background: #7a1d2f !important;
+}
+
+.poweredBy {
+  visibility: hidden !important;
+}
+
+a.copilotKitMarkdownElement {
+  color: #5eb6e4 !important;
+}
