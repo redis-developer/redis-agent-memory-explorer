@@ -49,6 +49,9 @@ const memoryPromptOp = async (
       content = rawContent;
     } else if (Array.isArray(rawContent)) {
       content = rawContent.map((c: Record<string, unknown>) => String(c.text ?? c.content ?? "")).join("\n");
+    } else if (typeof rawContent === "object" && rawContent !== null) {
+      const obj = rawContent as Record<string, unknown>;
+      content = String(obj.text ?? obj.content ?? JSON.stringify(rawContent));
     } else {
       content = String(rawContent ?? "");
     }
