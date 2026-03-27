@@ -114,5 +114,12 @@
       { "label": "2x", "intervalMs": 1000 },
       { "label": "4x", "intervalMs": 500 }
     ]
+  },
+
+  "chatbot": {
+    "title": "Memory Assistant",
+    "initialMessage": "Ask me anything about the stored memories for this client. I can search across all meetings or focus on a specific session.",
+    "placeholder": "Ask about memories...",
+    "instructions": "You are a Memory Assistant that helps explore memories stored in Redis Agent Memory Server for this wealth advisor demo."
   }
 }

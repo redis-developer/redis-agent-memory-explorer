@@ -4,11 +4,12 @@ import { ApiServer } from "cau-api-server";
 import { Logger } from "cau-logger";
 import { AgentMemory } from "cau-redis-agent-memory";
 
-import { LOGGER_CONTEXT } from "./constants";
+import { LOGGER_CONTEXT, COPILOTKIT_ENDPOINT } from "./constants";
 import { routes } from "./routes";
 import { setAppState } from "./app-state";
 import { ENV } from "./config";
 import { DatasetLoaderService } from "./services/dataset-loader.service";
+import { handleCopilotKitLanggraph } from "./agent";
 
 const logger = Logger.create({
   level: "info",
@@ -94,6 +95,16 @@ const server = ApiServer.create({
     await AgentMemory.getInstance().close();
     logger.info("Backend stopped");
   },
+});
+
+server.expressApp.use(COPILOTKIT_ENDPOINT, async (req, res, next) => {
+  req.url = COPILOTKIT_ENDPOINT + (req.url === "/" ? "" : req.url);
+
+  try {
+    await handleCopilotKitLanggraph(req, res);
+  } catch (err) {
+    next(err);
+  }
 });
 
 server.start();

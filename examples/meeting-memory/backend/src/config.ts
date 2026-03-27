@@ -8,6 +8,8 @@ import {
   DEFAULT_MODEL_NAME,
   DEFAULT_CONTEXT_WINDOW_MAX,
   DEFAULT_ALLOWED_ORIGINS,
+  DEFAULT_LANGGRAPH_DEPLOYMENT_URL,
+  DEFAULT_CHATBOT_MODEL,
 } from "./constants";
 
 const parseAllowedOrigins = (raw: string | undefined): string[] => {
@@ -35,6 +37,12 @@ const ENV = {
   ALLOWED_ORIGINS: parseAllowedOrigins(
     process.env.MEETING_MEMORY_ALLOWED_ORIGINS,
   ),
+  LANGGRAPH_DEPLOYMENT_URL:
+    process.env.LANGGRAPH_DEPLOYMENT_URL ?? DEFAULT_LANGGRAPH_DEPLOYMENT_URL,
+  CHATBOT_MODEL:
+    process.env.MEETING_MEMORY_CHATBOT_MODEL ?? DEFAULT_CHATBOT_MODEL,
+  LANGSMITH_API_KEY: process.env.LANGSMITH_API_KEY ?? "",
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "",
 } as const;
 
 export { ENV };
