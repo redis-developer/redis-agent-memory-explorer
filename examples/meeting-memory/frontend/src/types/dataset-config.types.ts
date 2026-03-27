@@ -24,6 +24,13 @@ type SummaryViewConfigEntry = {
   prompt?: string;
 };
 
+type ChatbotConfig = {
+  title: string;
+  initialMessage: string;
+  placeholder: string;
+  instructions: string;
+};
+
 type DatasetConfig = {
   id: string;
   name: string;
@@ -79,6 +86,7 @@ type DatasetConfig = {
     intervalMs: number;
     speeds: Array<{ label: string; intervalMs: number }>;
   };
+  chatbot: ChatbotConfig;
 };
 
 type UseDatasetConfigResult = {
@@ -93,6 +101,7 @@ export type {
   ParticipantConfig,
   MemoryTypeLabel,
   SummaryViewConfigEntry,
+  ChatbotConfig,
   DatasetConfig,
   UseDatasetConfigResult,
 };

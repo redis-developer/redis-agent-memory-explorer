@@ -14,7 +14,9 @@
     "@mui/material": "^6.5.0",
     "@mui/icons-material": "^6.5.0",
     "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0"
+    "@emotion/styled": "^11.14.0",
+    "@copilotkit/react-core": "^1.54.0",
+    "@copilotkit/react-ui": "^1.54.0"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",
