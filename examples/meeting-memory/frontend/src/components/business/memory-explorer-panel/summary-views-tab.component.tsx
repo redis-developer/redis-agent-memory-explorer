@@ -47,6 +47,17 @@ const buildGroupForView = (
   return group;
 };
 
+const hasPartitionForGroup = (
+  viewSummaries: ComputedSummaryData[],
+  group: Record<string, string> | null,
+): boolean => {
+  if (group === null) {
+    return false;
+  }
+  const groupJson = JSON.stringify(group);
+  return viewSummaries.some((s) => JSON.stringify(s.group) === groupJson);
+};
+
 const SummaryViewsTab = (props: SummaryViewsTabProps) => {
   const {
     views,
@@ -77,12 +88,12 @@ const SummaryViewsTab = (props: SummaryViewsTabProps) => {
 
       {views.map((view) => {
         const viewSummaries = summaries.get(view.viewId) ?? [];
-        const hasSummaries = viewSummaries.length > 0;
         const isComputing = computingViewId === view.viewId;
         const isAnyComputing = computingViewId !== null;
         const group = buildGroupForView(view.groupBy ?? [], props);
         const canCompute = group !== null;
-        const computeLabel = hasSummaries ? "Recompute" : "Compute Summary";
+        const currentGroupExists = hasPartitionForGroup(viewSummaries, group);
+        const showComputeButton = canCompute && !currentGroupExists;
 
         return (
           <div key={view.viewId} className="summary-views-tab__view">
@@ -95,38 +106,34 @@ const SummaryViewsTab = (props: SummaryViewsTabProps) => {
             </div>
 
             <div className="summary-views-tab__view-actions">
-              <Button
-                size="small"
-                onClick={() => {
-                  if (canCompute) {
-                    onComputeSummary(view.viewId, group);
+              {showComputeButton && (
+                <Button
+                  size="small"
+                  onClick={() => onComputeSummary(view.viewId, group)}
+                  disabled={isAnyComputing}
+                  variant="contained"
+                  startIcon={
+                    isComputing
+                      ? <CircularProgress size={14} sx={{ color: "var(--base-white)" }} />
+                      : <AutoAwesomeIcon sx={{ fontSize: 14 }} />
                   }
-                }}
-                disabled={!canCompute || isAnyComputing}
-                variant="contained"
-                startIcon={
-                  isComputing ? (
-                    <CircularProgress size={14} sx={{ color: "var(--base-white)" }} />
-                  ) : (
-                    <AutoAwesomeIcon sx={{ fontSize: 14 }} />
-                  )
-                }
-                sx={{
-                  backgroundColor: "var(--sky-blue-09)",
-                  color: "var(--base-white)",
-                  textTransform: "none",
-                  fontSize: "var(--font-size-xs)",
-                  padding: "4px 12px",
-                  "&:hover": { backgroundColor: "var(--sky-blue)" },
-                  "&.Mui-disabled": {
+                  sx={{
                     backgroundColor: "var(--sky-blue-09)",
                     color: "var(--base-white)",
-                    opacity: 0.5,
-                  },
-                }}
-              >
-                {isComputing ? "Computing..." : computeLabel}
-              </Button>
+                    textTransform: "none",
+                    fontSize: "var(--font-size-xs)",
+                    padding: "4px 12px",
+                    "&:hover": { backgroundColor: "var(--sky-blue)" },
+                    "&.Mui-disabled": {
+                      backgroundColor: "var(--sky-blue-09)",
+                      color: "var(--base-white)",
+                      opacity: 0.5,
+                    },
+                  }}
+                >
+                  {isComputing ? "Computing..." : "Compute Summary"}
+                </Button>
+              )}
               {!canCompute && (
                 <span className="summary-views-tab__view-hint">
                   Requires an active session
@@ -134,14 +141,22 @@ const SummaryViewsTab = (props: SummaryViewsTabProps) => {
               )}
             </div>
 
-            {viewSummaries.map((s, idx) => (
-              <ComputedSummaryCard
-                key={`${view.viewId}-${idx}`}
-                summary={s}
-                viewName={view.name}
-                source={view.source}
-              />
-            ))}
+            {viewSummaries.map((s) => {
+              const partitionKey = JSON.stringify(s.group);
+              const isRecomputing = isComputing && JSON.stringify(group) === partitionKey;
+
+              return (
+                <ComputedSummaryCard
+                  key={`${view.viewId}-${partitionKey}`}
+                  summary={s}
+                  viewName={view.name}
+                  source={view.source}
+                  isRecomputing={isRecomputing}
+                  isAnyComputing={isAnyComputing}
+                  onRecompute={() => onComputeSummary(view.viewId, s.group)}
+                />
+              );
+            })}
           </div>
         );
       })}
