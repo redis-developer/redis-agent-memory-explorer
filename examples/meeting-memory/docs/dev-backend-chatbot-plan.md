@@ -480,7 +480,7 @@ The user does **not** need to explicitly say "search this session" or "search al
 
 ### Three Inputs That Drive Routing
 
-**1. Frontend context (automatic):** The frontend passes the active `sessionId` (if any) via CopilotKit's `useCopilotReadable`. CopilotKit injects these as system messages into the conversation before the user's question. The LLM reads the active session ID directly from these messages. If no session is active, the value is `"none"`.
+**1. Frontend context (automatic):** The frontend passes the active `sessionId` (if any) via CopilotKit's `useCopilotReadable`. CopilotKit delivers these to the LangGraph graph via `state.copilotkit.context` (NOT as system messages in `state.messages`). The `invokeReactNode` function extracts them and injects them as `SystemMessage` instances so the LLM can read the active session ID. If no session is active, the value is `"none"`.
 
 **2. User question phrasing (natural language):** The LLM interprets intent:
 
@@ -519,7 +519,7 @@ This way the user always knows whether the answer reflects one meeting or the fu
 
 The system prompt gives the agent context about what it is, what data it has access to, and how to use its tools effectively. It includes the session routing rules above.
 
-**Active session context:** The system prompt does NOT receive the active session ID as a parameter. Instead, the frontend passes `sessionId`, `userId`, and `namespace` via CopilotKit's `useCopilotReadable` hooks, which CopilotKit injects as system messages into the conversation before the user's question. The system prompt tells the LLM to read the active session ID from these injected messages.
+**Active session context:** The system prompt does NOT receive the active session ID as a parameter. Instead, the frontend passes `sessionId`, `userId`, and `namespace` via CopilotKit's `useCopilotReadable` hooks. CopilotKit delivers these to the LangGraph graph via `state.copilotkit.context`. The `invokeReactNode` function extracts them and injects them as `SystemMessage` instances before the conversation messages. The system prompt tells the LLM to read the active session ID from these injected messages.
 
 ```typescript
 const buildSystemPrompt = (config: DatasetConfig): string => {
@@ -612,8 +612,19 @@ import { DatasetLoaderService } from "../services/dataset-loader.service";
 import { ENV } from "../config";
 import { setAppState } from "../app-state";
 
+type CopilotKitReadable = { description: string; value: string };
+
+type CopilotKitState = {
+  context?: CopilotKitReadable[];
+  actions?: unknown[];
+};
+
 const StateAnnotation = Annotation.Root({
   ...MessagesAnnotation.spec,
+  copilotkit: Annotation<CopilotKitState>({
+    reducer: (_, next) => next,
+    default: () => ({}),
+  }),
 });
 
 const ensureInitialized = (datasetConfig: DatasetConfig): void => {
@@ -633,8 +644,9 @@ const ensureInitialized = (datasetConfig: DatasetConfig): void => {
   }
 };
 
-// CopilotKit injects useCopilotReadable values as system messages into state.messages
-// before the user's question. The LLM sees a messages array like:
+// CopilotKit passes useCopilotReadable values via state.copilotkit.context (NOT
+// as system messages in state.messages). We extract them here and inject them as
+// SystemMessages so the LLM sees:
 //
 //   [
 //     SystemMessage (buildSystemPrompt -- routing rules, capabilities),
@@ -643,18 +655,22 @@ const ensureInitialized = (datasetConfig: DatasetConfig): void => {
 //     SystemMessage ("Namespace for memory scoping: wealth-advisor"),
 //     HumanMessage  ("What happened in this meeting?"),
 //   ]
-//
-// The system prompt tells the LLM to read the active session ID from these
-// CopilotKit-injected messages and use it for session-scoped tool calls.
+const buildReadableMessages = (copilotkit: CopilotKitState): SystemMessage[] => {
+  const readables = copilotkit?.context ?? [];
+  return readables.map((r) => new SystemMessage(`${r.description}: ${r.value}`));
+};
+
 const invokeReactNode = async (
   state: typeof StateAnnotation.State,
   reactAgent: ReturnType<typeof createReactAgent>,
   datasetConfig: DatasetConfig,
 ): Promise<{ messages: BaseMessage[] }> => {
   const systemPrompt = buildSystemPrompt(datasetConfig);
+  const readableMessages = buildReadableMessages(state.copilotkit);
 
   const messagesWithSystemPrompt = [
     new SystemMessage(systemPrompt),
+    ...readableMessages,
     ...state.messages,
   ];
 
@@ -696,7 +712,7 @@ export { compiledGraph };
 
 **Note on `createReactAgent`:** LangGraph's prebuilt `createReactAgent` handles the full ReAct loop internally (LLM call -> tool calls -> LLM call with results -> repeat until done). We wrap it as a single node in our graph for simplicity. The graph can be extended later (e.g., add a memory-writing node, a summarization node, etc.).
 
-**Note on session context:** The LLM does NOT need to call a tool to get the active session. CopilotKit's `useCopilotReadable` (called in the frontend `page.tsx`) injects `sessionId`, `userId`, and `namespace` as system messages into `state.messages` automatically. The system prompt instructs the LLM to read the active session ID from these CopilotKit-injected messages. No `extractSessionIdFromMessages` helper or `getActiveContext` tool is needed -- the LLM reads the values directly from its conversation context.
+**Note on session context:** The LLM does NOT need to call a tool to get the active session. CopilotKit's `useCopilotReadable` (called in the frontend `page.tsx`) delivers `sessionId`, `userId`, and `namespace` via `state.copilotkit.context`. The `buildReadableMessages` helper extracts them and converts them to `SystemMessage` instances, which are prepended to the conversation. The system prompt instructs the LLM to read the active session ID from these messages. No `extractSessionIdFromMessages` helper or `getActiveContext` tool is needed -- the LLM reads the values directly from its conversation context.
 
 ---
 
@@ -1045,7 +1061,7 @@ These were open questions during planning. All resolved.
 
 **[Q2] LangGraph dev server:** Dev server is fine for the demo. Added `"dev:langgraph"` script to `package.json`. Two terminals needed: one for LangGraph, one for the main backend.
 
-**[Q3] Session context passing:** The frontend passes the active `sessionId`, `userId`, and `namespace` via CopilotKit's `useCopilotReadable` hooks. CopilotKit injects these as system messages into the conversation before the user's question. The LLM reads the active session ID directly from these injected messages -- no `getActiveContext` tool or `extractSessionIdFromMessages` helper needed. The agent also has `listSessions` to discover sessions dynamically. The system prompt tells the LLM how to find and use the session context from the CopilotKit readables. See "Session vs All-Data Routing" section above.
+**[Q3] Session context passing:** The frontend passes the active `sessionId`, `userId`, and `namespace` via CopilotKit's `useCopilotReadable` hooks. CopilotKit delivers these to the LangGraph graph via `state.copilotkit.context` (not as system messages directly). The `buildReadableMessages` helper in `graph.ts` extracts them and injects them as `SystemMessage` instances before the conversation messages -- no `getActiveContext` tool or `extractSessionIdFromMessages` helper needed. The agent also has `listSessions` to discover sessions dynamically. The system prompt tells the LLM how to find and use the session context from the CopilotKit readables. See "Session vs All-Data Routing" section above.
 
 **[Q4] Model choice:** OpenAI (GPT-4o-mini), reuses the existing `OPENAI_API_KEY`. Configurable via `MEETING_MEMORY_CHATBOT_MODEL` env var.
 
