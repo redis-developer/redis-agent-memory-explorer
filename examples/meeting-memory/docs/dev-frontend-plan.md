@@ -1647,3 +1647,10 @@ To reuse MemoryExplorerPanel on a future chatbot page that searches across sessi
 ```
 
 No transcript, no playback, no toolbar, no playback status props. The panel shows all long-term memories across sessions, supports summary computation, and works independently. Pass a `sessionId` to scope it to one session, or `null` for cross-session exploration.
+
+---
+
+## Related Plans
+
+- [Frontend Chatbot Plan](./dev-frontend-chatbot-plan.md) -- adds a CopilotKit-powered chatbot sidebar (floating overlay, purely additive, zero changes to existing components)
+- [Backend Chatbot Plan](./dev-backend-chatbot-plan.md) -- LangGraph agent with memory tools powering the chatbot

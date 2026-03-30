@@ -1226,3 +1226,10 @@ To run with a different dataset: `MEETING_MEMORY_ACTIVE_DATASET=sdr-advisor npm 
 - The `resetLifecycle` handler only deletes summary views whose `filters.namespace` matches the active dataset (not all views on the server), then re-creates all pre-seeded views with namespace-scoped filters, so the next demo run is ready immediately.
 - Metrics (operation counts, latencies) are tracked client-side. Each API response includes timing info the frontend can aggregate.
 - The backend follows the same code style as the monorepo packages: arrow functions, consolidated exports, separate type imports, kebab-case files, no emojis.
+
+---
+
+## Related Plans
+
+- [Backend Chatbot Plan](./dev-backend-chatbot-plan.md) -- adds a LangGraph agent with memory tools + CopilotKit `/copilotkit` endpoint (purely additive, zero changes to existing routes or handlers)
+- [Frontend Chatbot Plan](./dev-frontend-chatbot-plan.md) -- CopilotKit sidebar UI for the chatbot
