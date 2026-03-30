@@ -208,6 +208,15 @@ type ForgetLifecycleInput = {
   dryRun?: boolean;
 };
 
+// --- CopilotKit (LangGraph state) ---
+
+type CopilotKitReadable = { description: string; value: string };
+
+type CopilotKitState = {
+  context?: CopilotKitReadable[];
+  actions?: unknown[];
+};
+
 // --- App state (set at startup, read by handlers) ---
 
 type AppState = {
@@ -223,6 +232,8 @@ export type {
   SummaryViewConfigEntry,
   DatasetConfig,
   DatasetSummary,
+  CopilotKitReadable,
+  CopilotKitState,
   TranscriptChunk,
   TranscriptMeeting,
   TranscriptData,

@@ -1,5 +1,5 @@
 import type { BaseMessage } from "@langchain/core/messages";
-import type { DatasetConfig } from "../types";
+import type { CopilotKitState, DatasetConfig } from "../types";
 
 import {
   MessagesAnnotation,
@@ -21,6 +21,10 @@ import { setAppState } from "../app-state";
 
 const StateAnnotation = Annotation.Root({
   ...MessagesAnnotation.spec,
+  copilotkit: Annotation<CopilotKitState>({
+    reducer: (_, next) => next,
+    default: () => ({}),
+  }),
 });
 
 const ensureInitialized = (datasetConfig: DatasetConfig): void => {
@@ -41,8 +45,9 @@ const ensureInitialized = (datasetConfig: DatasetConfig): void => {
   }
 };
 
-// CopilotKit injects useCopilotReadable values as system messages into state.messages
-// before the user's question. The LLM sees a messages array like:
+// CopilotKit passes useCopilotReadable values via state.copilotkit.context (NOT
+// as system messages in state.messages). We extract them here and inject them as
+// SystemMessages so the LLM sees:
 //
 //   [
 //     SystemMessage (buildSystemPrompt -- routing rules, capabilities),
@@ -51,18 +56,22 @@ const ensureInitialized = (datasetConfig: DatasetConfig): void => {
 //     SystemMessage ("Namespace for memory scoping: wealth-advisor"),
 //     HumanMessage  ("What happened in this meeting?"),
 //   ]
-//
-// The system prompt tells the LLM to read the active session ID from these
-// CopilotKit-injected messages and use it for session-scoped tool calls.
+const buildReadableMessages = (copilotkit: CopilotKitState): SystemMessage[] => {
+  const readables = copilotkit?.context ?? [];
+  return readables.map((r) => new SystemMessage(`${r.description}: ${r.value}`));
+};
+
 const invokeReactNode = async (
   state: typeof StateAnnotation.State,
   reactAgent: ReturnType<typeof createReactAgent>,
   datasetConfig: DatasetConfig,
 ): Promise<{ messages: BaseMessage[] }> => {
   const systemPrompt = buildSystemPrompt(datasetConfig);
+  const readableMessages = buildReadableMessages(state.copilotkit);
 
   const messagesWithSystemPrompt = [
     new SystemMessage(systemPrompt),
+    ...readableMessages,
     ...state.messages,
   ];
 

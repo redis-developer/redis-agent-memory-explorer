@@ -383,7 +383,7 @@ useCopilotReadable({
 });
 ```
 
-CopilotKit injects these readables as system messages into the conversation sent to the backend. The LLM sees them in `state.messages` before the user's question:
+CopilotKit delivers these readables to the LangGraph graph via `state.copilotkit.context` (NOT as system messages in `state.messages`). The backend's `buildReadableMessages` helper in `graph.ts` extracts them and converts them to `SystemMessage` instances, so the LLM sees:
 
 ```
 SystemMessage ("Active session ID for the current meeting playback: playback-2026-02-26-google-meet-...")
@@ -392,7 +392,7 @@ SystemMessage ("Namespace for memory scoping: wealth-advisor")
 HumanMessage  ("What happened in this meeting?")
 ```
 
-The backend system prompt tells the LLM to read the active session ID from these CopilotKit-injected messages and use it for session-scoped tool calls. No `getActiveContext` tool or backend-side message parsing is needed -- the LLM reads the values directly from its conversation context.
+The backend system prompt tells the LLM to read the active session ID from these injected messages and use it for session-scoped tool calls. No `getActiveContext` tool or backend-side message parsing is needed -- the LLM reads the values directly from its conversation context.
 
 The value updates reactively -- when `sessionId` changes (play starts, session loaded, reset), the agent's context updates automatically on the next message.
 
