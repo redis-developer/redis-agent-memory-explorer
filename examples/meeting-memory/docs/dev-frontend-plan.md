@@ -1654,3 +1654,4 @@ No transcript, no playback, no toolbar, no playback status props. The panel show
 
 - [Frontend Chatbot Plan](./dev-frontend-chatbot-plan.md) -- adds a CopilotKit-powered chatbot sidebar (floating overlay, purely additive, zero changes to existing components)
 - [Backend Chatbot Plan](./dev-backend-chatbot-plan.md) -- LangGraph agent with memory tools powering the chatbot
+- [Live Suggestions Plan](./dev-live-suggestions-brainstorm.md) -- push-based AI copilot that surfaces real-time suggestions during transcript playback (new AI Copilot tab + persistent banner)

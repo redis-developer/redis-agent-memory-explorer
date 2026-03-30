@@ -1233,3 +1233,4 @@ To run with a different dataset: `MEETING_MEMORY_ACTIVE_DATASET=sdr-advisor npm 
 
 - [Backend Chatbot Plan](./dev-backend-chatbot-plan.md) -- adds a LangGraph agent with memory tools + CopilotKit `/copilotkit` endpoint (purely additive, zero changes to existing routes or handlers)
 - [Frontend Chatbot Plan](./dev-frontend-chatbot-plan.md) -- CopilotKit sidebar UI for the chatbot
+- [Live Suggestions Plan](./dev-live-suggestions-brainstorm.md) -- push-based AI copilot with suggestion endpoint + in-memory store (new `generateSuggestion` + `listSuggestions` routes)
