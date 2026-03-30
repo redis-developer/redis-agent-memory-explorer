@@ -106,7 +106,7 @@ examples/meeting-memory/backend/
 │   ├── app-state.ts                      # UNCHANGED
 │   ├── handlers/                         # UNCHANGED (all existing handlers)
 │   │
-│   ├── agent/                            # NEW: LangGraph agent + CopilotKit wiring
+│   ├── chatbot-agent/                    # NEW: LangGraph agent + CopilotKit wiring (originally agent/, renamed for clarity)
 │   │   ├── graph.ts                      # LangGraph StateGraph with ReAct agent + memory tools
 │   │   ├── tools.ts                      # LangChain StructuredTool definitions wrapping AgentMemory
 │   │   ├── copilotkit-langgraph.ts       # CopilotRuntime + LangGraphAgent + Express handler
