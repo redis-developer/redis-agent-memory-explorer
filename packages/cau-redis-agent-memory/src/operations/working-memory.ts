@@ -71,6 +71,10 @@ const listSessionsOp = async (
  *
  * See: https://github.com/redis/agent-memory-server/issues/185
  */
+const isNotFoundError = (error: unknown): boolean => {
+  return error instanceof Error && error.message.includes("failed (404)");
+};
+
 const getWorkingMemoryOp = async (
   client: MemoryAPIClient,
   sessionId: string,
@@ -83,17 +87,24 @@ const getWorkingMemoryOp = async (
   let response: SdkWorkingMemoryResponse | null;
 
   if (shouldUseRawClient) {
-    response = await rawGet<SdkWorkingMemoryResponse>(
-      rawConfig!,
-      `/v1/working-memory/${encodeURIComponent(sessionId)}`,
-      {
-        namespace: options?.namespace,
-        user_id: options?.userId,
-        model_name: options?.modelName,
-        context_window_max: options?.contextWindowMax,
-        recent_messages_limit: options?.recentMessagesLimit,
-      },
-    );
+    try {
+      response = await rawGet<SdkWorkingMemoryResponse>(
+        rawConfig!,
+        `/v1/working-memory/${encodeURIComponent(sessionId)}`,
+        {
+          namespace: options?.namespace,
+          user_id: options?.userId,
+          model_name: options?.modelName,
+          context_window_max: options?.contextWindowMax,
+          recent_messages_limit: options?.recentMessagesLimit,
+        },
+      );
+    } catch (error) {
+      if (isNotFoundError(error)) {
+        return null;
+      }
+      throw error;
+    }
   } else {
     response = await client.getWorkingMemory(sessionId, {
       namespace: options?.namespace,
@@ -180,13 +191,15 @@ const putWorkingMemoryOp = async (
  * which does not pass `user_id`. When `user_id` is part of the Redis
  * key the GET always misses, causing duplicate session creation.
  *
- * The server auto-creates a transient working memory on GET for
- * non-existent sessions (returns 200, not 404), setting
- * `unsaved: true`. We issue a raw GET with `user_id`, then persist
- * transient sessions via PUT so subsequent GETs see `unsaved: null`.
+ * We issue a raw GET with `user_id` first. The server may respond in
+ * two ways for non-existent sessions depending on version:
+ * - 200 with `unsaved: true` (auto-created transient session)
+ * - 404 with session-not-found detail
  *
- * When rawConfig is not available, falls back to the SDK's
- * getOrCreateWorkingMemory (userId may not be scoped correctly).
+ * Both cases are treated as "session does not exist" and trigger a
+ * PUT to create/persist the session. When rawConfig is not available,
+ * falls back to the SDK's getOrCreateWorkingMemory (userId may not
+ * be scoped correctly).
  */
 const getOrCreateWorkingMemoryOp = async (
   client: MemoryAPIClient,
@@ -200,19 +213,29 @@ const getOrCreateWorkingMemoryOp = async (
   let created: boolean;
 
   if (hasRawConfig) {
-    const getResponse = await rawGet<SdkWorkingMemoryResponse>(
-      rawConfig!,
-      `/v1/working-memory/${encodeURIComponent(sessionId)}`,
-      {
-        namespace: options?.namespace,
-        user_id: options?.userId,
-        model_name: options?.modelName,
-        context_window_max: options?.contextWindowMax,
-      },
-    );
+    let getResponse: SdkWorkingMemoryResponse | null = null;
 
-    const isUnsaved = getResponse.unsaved === true;
-    if (isUnsaved) {
+    try {
+      getResponse = await rawGet<SdkWorkingMemoryResponse>(
+        rawConfig!,
+        `/v1/working-memory/${encodeURIComponent(sessionId)}`,
+        {
+          namespace: options?.namespace,
+          user_id: options?.userId,
+          model_name: options?.modelName,
+          context_window_max: options?.contextWindowMax,
+        },
+      );
+    } catch (error) {
+      if (!isNotFoundError(error)) {
+        throw error;
+      }
+    }
+
+    const isNewSession =
+      getResponse === null || getResponse.unsaved === true;
+
+    if (isNewSession) {
       const newPayload: WorkingMemoryPayload = {
         messages: [],
         memories: [],
@@ -222,7 +245,7 @@ const getOrCreateWorkingMemoryOp = async (
       memory = await putWorkingMemoryOp(client, sessionId, newPayload, options);
       created = true;
     } else {
-      memory = mapSdkWorkingMemoryToResult(getResponse);
+      memory = mapSdkWorkingMemoryToResult(getResponse!);
       created = false;
     }
   } else {

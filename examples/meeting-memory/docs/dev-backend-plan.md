@@ -613,17 +613,26 @@ In short: **View = recipe, Computed Summary = the cooked dish.**
 
 Our demo API names reflect this: `createSummaryView` / `listSummaryViews` / `getSummaryView` / `deleteSummaryView` manage the recipe, while `computeSummary` and `getComputedSummaries` deal with the actual generated text.
 
-**Strategy: pre-seeded views from dataset config + on-the-fly flexibility**
+**Strategy: pre-seeded views from dataset config + on-the-fly flexibility + namespace scoping**
 
-Summary views are defined in the dataset config (`memoryLabels.summaryViews.views` array). At startup, the backend creates all of them, giving the demo multiple ready-to-use views out of the box:
+Summary views are defined in the dataset config (`memoryLabels.summaryViews.views` array). At startup, the backend creates all of them, giving the demo multiple ready-to-use views out of the box.
 
-1. **Pre-seeded views** -- At startup (`onAppStart`), the backend iterates `config.memoryLabels.summaryViews.views` and creates each one via `AgentMemory.createSummaryView()`. If a view with the same name already exists (e.g., server restarted), it is skipped. The frontend calls `listSummaryViews` to discover all available views and renders them uniformly -- no special "default" concept.
+**Namespace scoping:** The Agent Memory Server's summary view CRUD operations (`listSummaryViews`, `getSummaryView`, `createSummaryView`, `deleteSummaryView`) are **server-global** -- they have no built-in namespace parameter. To support multiple datasets sharing the same AMS instance, the backend applies namespace scoping at two levels:
 
-2. **On-the-fly creation** -- The `createSummaryView` API remains available so the presenter can demonstrate flexibility: "We can also create custom views grouped by topic, by session, or by time window."
+- **View creation**: Every view is created with `filters: { namespace, user_id }` auto-injected from the active dataset config. The `filters` field is stored on the view definition and both (a) tells the AMS which memories to include when computing summaries and (b) serves as a namespace tag for client-side filtering.
+- **View listing**: After calling `listSummaryViews()`, the result is filtered to `view.filters.namespace === activeNamespace`. This ensures each dataset only sees its own views.
+- **Partition listing**: `listSummaryViewPartitions(viewId)` is called with `{ namespace, userId }` as `PartitionListFilters`, ensuring computed summaries are scoped to the active dataset.
+- **Lifecycle reset**: Only views whose `filters.namespace` matches the active dataset are deleted during reset. Other datasets' views are untouched.
+
+The `dataset.config.json` does **not** contain explicit `namespace`/`userId` in each view entry -- those values are already at the config's top level (`config.namespace`, `config.userId`) and are auto-injected by the backend code at view creation time.
+
+1. **Pre-seeded views** -- At startup (`onAppStart`), the backend iterates `config.memoryLabels.summaryViews.views` and creates each one via `AgentMemory.createSummaryView()` with `filters: { namespace, user_id }` auto-injected. If a view with the same name already exists for this namespace (matched by `view.filters.namespace`), it is skipped. The frontend calls `listSummaryViews` to discover all available views and renders them uniformly -- no special "default" concept.
+
+2. **On-the-fly creation** -- The `createSummaryView` API remains available so the presenter can demonstrate flexibility: "We can also create custom views grouped by topic, by session, or by time window." The handler auto-injects `filters: { namespace, user_id }` from the active dataset config.
 
 3. **Compute summaries** -- Summaries are **NOT auto-computed**. After long-term memories are extracted, the frontend explicitly triggers `computeSummary` (the "Compute Summary" button). This generates the AI narrative by calling the Agent Memory Server's LLM-powered summarisation. The same API is used for first compute and recompute (e.g., after a second transcript session adds more memories).
 
-4. **Fetch computed summaries** -- `getComputedSummaries` is the key API the frontend calls to **read** previously generated summary text.
+4. **Fetch computed summaries** -- `getComputedSummaries` is the key API the frontend calls to **read** previously generated summary text. It passes `{ namespace, userId }` to `listSummaryViewPartitions` to ensure only the active dataset's partitions are returned.
 
 **Dataset config view definitions:**
 
@@ -645,15 +654,17 @@ Each view entry supports all `CreateSummaryViewInput` fields: `name`, `source`, 
 ```typescript
 const viewConfigs = datasetConfig.memoryLabels.summaryViews.views;
 const existingViews = await AgentMemory.getInstance().listSummaryViews();
+const ownViews = existingViews.filter((v) => v.filters?.namespace === namespace);
 
 for (const config of viewConfigs) {
-  const alreadyExists = existingViews.find((v) => v.name === config.name);
+  const alreadyExists = ownViews.find((v) => v.name === config.name);
   if (!alreadyExists) {
+    const scopedFilters = { ...config.filters, namespace, user_id: userId };
     await AgentMemory.getInstance().createSummaryView({
       name: config.name,
       source: config.source,
       groupBy: config.groupBy,
-      filters: config.filters,
+      filters: scopedFilters,
       timeWindowDays: config.timeWindowDays,
       continuous: config.continuous,
       prompt: config.prompt,
@@ -776,7 +787,7 @@ Response `data`:
 }
 ```
 
-Implementation: maps to `listSummaryViewPartitions(viewId)` on the `AgentMemory` client (internal terminology: "partitions").
+Implementation: maps to `listSummaryViewPartitions(viewId, { namespace, userId })` on the `AgentMemory` client (internal terminology: "partitions"). The `namespace` and `userId` filters ensure only partitions for the active dataset are returned.
 
 **`POST /api/deleteSummaryView`**
 
@@ -839,8 +850,8 @@ Steps:
 2. Delete each session via `deleteWorkingMemory(sessionId, { namespace: NAMESPACE, userId: USER_ID })`
 3. Search all long-term memories in namespace via `searchLongTermMemory({ namespace: { eq: NAMESPACE }, limit: 100 })`
 4. Delete all found memories via `deleteLongTermMemories(ids)`
-5. Delete all summary views via `listSummaryViews()` + `deleteSummaryView(viewId)` for matching views
-6. **Re-create all pre-seeded summary views** from `config.memoryLabels.summaryViews.views` (same as `onAppStart`) so they're ready for the next run
+5. Delete summary views **scoped to this namespace only** via `listSummaryViews()`, filter by `view.filters.namespace === NAMESPACE`, then `deleteSummaryView(viewId)` for each. Other datasets' views are untouched.
+6. **Re-create all pre-seeded summary views** from `config.memoryLabels.summaryViews.views` with `filters: { namespace, user_id }` auto-injected (same as `onAppStart`) so they're ready for the next run
 
 Response `data`:
 
@@ -1208,9 +1219,10 @@ To run with a different dataset: `MEETING_MEMORY_ACTIVE_DATASET=sdr-advisor npm 
 - **Structured logging via `cau-logger`** -- every request gets a child logger with `requestId` bound. All handler log calls include the request context automatically.
 - **All APIs are POST-only** with dot-notation paths. No URL params (`:id`), no query strings. All parameters go in the JSON request body.
 - **`userId` and `namespace` are never sent by the frontend** -- they are derived from the active dataset config on every request. This prevents data leakage across datasets.
+- **Summary views are namespace-scoped.** The AMS summary view CRUD is server-global (no built-in namespace parameter), so the backend applies scoping at two levels: (1) all views are created with `filters: { namespace, user_id }` auto-injected from the dataset config, and (2) all view listing calls filter by `view.filters.namespace`. Partition listing calls pass `{ namespace, userId }` as `PartitionListFilters`. The `dataset.config.json` does **not** contain redundant namespace/userId in each view entry -- those are auto-injected from the top-level `config.namespace` and `config.userId`.
 - **Summary views are pre-seeded from the dataset config at startup** so the demo has multiple views ready to compute summaries without any creation step. On-the-fly creation via the API is also supported for showing flexibility.
 - No LLM calls are made directly by the backend. The Agent Memory Server handles extraction (via `longTermMemoryStrategy`) and summarization (via summary views) using its own configured model (`FAST_MODEL` env var on the Python server).
 - The `appendWorkingMemory` handler is the only "smart" handler -- it reads current working memory, appends, and writes back. Everything else is a direct pass-through to `AgentMemory`.
-- The `resetLifecycle` handler re-creates all pre-seeded summary views after wiping everything, so the next demo run is ready immediately.
+- The `resetLifecycle` handler only deletes summary views whose `filters.namespace` matches the active dataset (not all views on the server), then re-creates all pre-seeded views with namespace-scoped filters, so the next demo run is ready immediately.
 - Metrics (operation counts, latencies) are tracked client-side. Each API response includes timing info the frontend can aggregate.
 - The backend follows the same code style as the monorepo packages: arrow functions, consolidated exports, separate type imports, kebab-case files, no emojis.
