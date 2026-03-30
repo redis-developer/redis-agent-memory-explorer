@@ -117,20 +117,16 @@ const computeSummaryHandler: RouteHandler = async (input, { logger }) => {
   };
 };
 
-const getComputedSummariesHandler: RouteHandler = async (
-  input,
-  { logger },
-) => {
+const getComputedSummariesHandler: RouteHandler = async (input, { logger }) => {
   const { viewId } = input as GetComputedSummariesInput;
-  const { namespace, userId } = getAppState();
 
-  logger.info("Fetching computed summaries", { viewId, namespace });
+  logger.info("Fetching computed summaries", { viewId });
 
+  // Namespace scoping is enforced at the view level (views are filtered by
+  // namespace in listSummaryViewsHandler). Partitions inherit the view's scope,
+  // so no additional namespace/userId filter is needed here.
   const partitions =
-    await AgentMemory.getInstance().listSummaryViewPartitions(viewId, {
-      namespace,
-      userId,
-    });
+    await AgentMemory.getInstance().listSummaryViewPartitions(viewId);
 
   const summaries = partitions.map((p) => ({
     group: p.group,
