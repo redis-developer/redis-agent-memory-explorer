@@ -31,23 +31,31 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   if (hasMemories) {
     await memory.deleteLongTermMemories(memoryIds);
   }
-  // 3. Delete all summary views
+  // 3. Delete summary views belonging to this namespace only
   const existingViews = await memory.listSummaryViews();
+  const ownViews = existingViews.filter(
+    (v) => v.filters?.namespace === namespace,
+  );
   let viewsDeleted = 0;
-  for (const view of existingViews) {
+  for (const view of ownViews) {
     await memory.deleteSummaryView(view.id);
     viewsDeleted += 1;
   }
-  // 4. Re-create summary view definition
+  // 4. Re-create summary view definitions with namespace scoping
 
   const viewConfigs = datasetConfig!.memoryLabels.summaryViews.views;
   let viewsCreated = 0;
   for (const config of viewConfigs) {
+    const scopedFilters = {
+      ...config.filters,
+      namespace,
+      user_id: userId,
+    };
     await memory.createSummaryView({
       name: config.name,
       source: config.source,
       groupBy: config.groupBy,
-      filters: config.filters,
+      filters: scopedFilters,
       timeWindowDays: config.timeWindowDays,
       continuous: config.continuous,
       prompt: config.prompt,

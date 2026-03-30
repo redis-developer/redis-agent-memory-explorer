@@ -172,17 +172,24 @@ const getComputedSummariesTool = new DynamicStructuredTool({
       ),
   }),
   func: async ({ viewName }) => {
+    const { namespace, userId } = getAppState();
     const agentMemoryInst = AgentMemory.getInstance();
-    const views = await agentMemoryInst.listSummaryViews();
+    const allViews = await agentMemoryInst.listSummaryViews();
+    const ownViews = allViews.filter(
+      (v) => v.filters?.namespace === namespace,
+    );
 
-    let targetViews = views;
+    let targetViews = ownViews;
     if (viewName) {
-      targetViews = views.filter((v) => v.name === viewName);
+      targetViews = ownViews.filter((v) => v.name === viewName);
     }
 
     const summaries = [];
     for (const view of targetViews) {
-      const partitions = await agentMemoryInst.listSummaryViewPartitions(view.id);
+      const partitions = await agentMemoryInst.listSummaryViewPartitions(
+        view.id,
+        { namespace, userId },
+      );
       summaries.push({ viewName: view.name, viewId: view.id, partitions });
     }
 
@@ -231,8 +238,11 @@ const listSummaryViewsTool = new DynamicStructuredTool({
     "List all available summary view definitions. Each view is a recipe for how to summarize long-term memories (e.g., grouped by user, by session, by topic). Use this to discover what views exist before fetching computed summaries with getComputedSummaries, or before getting a single view's full definition with getSummaryView.",
   schema: z.object({}),
   func: async () => {
+    const { namespace } = getAppState();
     const agentMemoryInst = AgentMemory.getInstance();
-    const views = await agentMemoryInst.listSummaryViews();
+    const allViews = await agentMemoryInst.listSummaryViews();
+    const views = allViews.filter((v) => v.filters?.namespace === namespace);
+
     const mapped = views.map((v) => ({
       viewId: v.id,
       name: v.name,

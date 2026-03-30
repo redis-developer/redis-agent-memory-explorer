@@ -11,6 +11,7 @@ import type {
 import { AgentMemory } from "cau-redis-agent-memory";
 
 import { SUPPORTED_GROUP_BY_FIELDS } from "../constants";
+import { getAppState } from "../app-state";
 
 const validateGroupBy = (groupBy?: string[]): void => {
   const hasGroupBy = groupBy !== undefined && groupBy.length > 0;
@@ -32,15 +33,18 @@ const validateGroupBy = (groupBy?: string[]): void => {
 const createSummaryViewHandler: RouteHandler = async (input, { logger }) => {
   const { name, source, groupBy, timeWindowDays } =
     input as CreateSummaryViewInput;
+  const { namespace, userId } = getAppState();
 
   validateGroupBy(groupBy);
 
-  logger.info("Creating summary view", { name, source, groupBy });
+  logger.info("Creating summary view", { name, source, groupBy, namespace });
 
+  const scopedFilters = { namespace, user_id: userId };
   const view = await AgentMemory.getInstance().createSummaryView({
     name,
     source,
     groupBy,
+    filters: scopedFilters,
     timeWindowDays,
   });
 
@@ -54,7 +58,9 @@ const createSummaryViewHandler: RouteHandler = async (input, { logger }) => {
 };
 
 const listSummaryViewsHandler: RouteHandler = async (_input, { logger }) => {
-  const views = await AgentMemory.getInstance().listSummaryViews();
+  const { namespace } = getAppState();
+  const allViews = await AgentMemory.getInstance().listSummaryViews();
+  const views = allViews.filter((v) => v.filters?.namespace === namespace);
 
   const mapped = views.map((v) => ({
     viewId: v.id,
@@ -63,7 +69,7 @@ const listSummaryViewsHandler: RouteHandler = async (_input, { logger }) => {
     groupBy: v.groupBy,
   }));
 
-  logger.info("Listing summary views", { count: mapped.length });
+  logger.info("Listing summary views", { count: mapped.length, namespace });
 
   return { views: mapped };
 };
@@ -116,11 +122,15 @@ const getComputedSummariesHandler: RouteHandler = async (
   { logger },
 ) => {
   const { viewId } = input as GetComputedSummariesInput;
+  const { namespace, userId } = getAppState();
 
-  logger.info("Fetching computed summaries", { viewId });
+  logger.info("Fetching computed summaries", { viewId, namespace });
 
   const partitions =
-    await AgentMemory.getInstance().listSummaryViewPartitions(viewId);
+    await AgentMemory.getInstance().listSummaryViewPartitions(viewId, {
+      namespace,
+      userId,
+    });
 
   const summaries = partitions.map((p) => ({
     group: p.group,

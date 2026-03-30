@@ -19,12 +19,17 @@ const logger = Logger.create({
 
 const ensureSummaryViews = async (
   viewConfigs: SummaryViewConfigEntry[],
+  namespace: string,
+  userId: string,
 ): Promise<void> => {
   const memory = AgentMemory.getInstance();
   const existingViews = await memory.listSummaryViews();
+  const ownViews = existingViews.filter(
+    (v) => v.filters?.namespace === namespace,
+  );
 
   for (const config of viewConfigs) {
-    const matchingView = existingViews.find((v) => v.name === config.name);
+    const matchingView = ownViews.find((v) => v.name === config.name);
     const isExisting = matchingView !== undefined;
 
     if (isExisting) {
@@ -33,11 +38,16 @@ const ensureSummaryViews = async (
         id: matchingView.id,
       });
     } else {
+      const scopedFilters = {
+        ...config.filters,
+        namespace,
+        user_id: userId,
+      };
       const created = await memory.createSummaryView({
         name: config.name,
         source: config.source,
         groupBy: config.groupBy,
-        filters: config.filters,
+        filters: scopedFilters,
         timeWindowDays: config.timeWindowDays,
         continuous: config.continuous,
         prompt: config.prompt,
@@ -66,7 +76,11 @@ const initializeApp = async (): Promise<void> => {
     baseUrl: ENV.AGENT_MEMORY_BASE_URL,
   });
 
-  await ensureSummaryViews(datasetConfig.memoryLabels.summaryViews.views);
+  await ensureSummaryViews(
+    datasetConfig.memoryLabels.summaryViews.views,
+    namespace,
+    userId,
+  );
 
   setAppState({
     datasetConfig,
