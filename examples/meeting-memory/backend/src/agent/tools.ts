@@ -188,7 +188,6 @@ const getComputedSummariesTool = new DynamicStructuredTool({
     for (const view of targetViews) {
       const partitions = await agentMemoryInst.listSummaryViewPartitions(
         view.id,
-        { namespace, userId },
       );
       summaries.push({ viewName: view.name, viewId: view.id, partitions });
     }

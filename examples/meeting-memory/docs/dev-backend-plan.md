@@ -621,7 +621,7 @@ Summary views are defined in the dataset config (`memoryLabels.summaryViews.view
 
 - **View creation**: Every view is created with `filters: { namespace, user_id }` auto-injected from the active dataset config. The `filters` field is stored on the view definition and both (a) tells the AMS which memories to include when computing summaries and (b) serves as a namespace tag for client-side filtering.
 - **View listing**: After calling `listSummaryViews()`, the result is filtered to `view.filters.namespace === activeNamespace`. This ensures each dataset only sees its own views.
-- **Partition listing**: `listSummaryViewPartitions(viewId)` is called with `{ namespace, userId }` as `PartitionListFilters`, ensuring computed summaries are scoped to the active dataset.
+- **Partition listing**: No additional namespace/userId filter is needed. Partitions inherit the view's scope -- since only namespace-scoped views are returned by view listing, all partitions within those views are inherently within the correct namespace.
 - **Lifecycle reset**: Only views whose `filters.namespace` matches the active dataset are deleted during reset. Other datasets' views are untouched.
 
 The `dataset.config.json` does **not** contain explicit `namespace`/`userId` in each view entry -- those values are already at the config's top level (`config.namespace`, `config.userId`) and are auto-injected by the backend code at view creation time.
@@ -787,7 +787,7 @@ Response `data`:
 }
 ```
 
-Implementation: maps to `listSummaryViewPartitions(viewId, { namespace, userId })` on the `AgentMemory` client (internal terminology: "partitions"). The `namespace` and `userId` filters ensure only partitions for the active dataset are returned.
+Implementation: maps to `listSummaryViewPartitions(viewId)` on the `AgentMemory` client (internal terminology: "partitions"). No additional namespace/userId filter is needed because partitions inherit the view's scope (views are already namespace-filtered by `listSummaryViewsHandler`).
 
 **`POST /api/deleteSummaryView`**
 
@@ -1219,7 +1219,7 @@ To run with a different dataset: `MEETING_MEMORY_ACTIVE_DATASET=sdr-advisor npm 
 - **Structured logging via `cau-logger`** -- every request gets a child logger with `requestId` bound. All handler log calls include the request context automatically.
 - **All APIs are POST-only** with dot-notation paths. No URL params (`:id`), no query strings. All parameters go in the JSON request body.
 - **`userId` and `namespace` are never sent by the frontend** -- they are derived from the active dataset config on every request. This prevents data leakage across datasets.
-- **Summary views are namespace-scoped.** The AMS summary view CRUD is server-global (no built-in namespace parameter), so the backend applies scoping at two levels: (1) all views are created with `filters: { namespace, user_id }` auto-injected from the dataset config, and (2) all view listing calls filter by `view.filters.namespace`. Partition listing calls pass `{ namespace, userId }` as `PartitionListFilters`. The `dataset.config.json` does **not** contain redundant namespace/userId in each view entry -- those are auto-injected from the top-level `config.namespace` and `config.userId`.
+- **Summary views are namespace-scoped.** The AMS summary view CRUD is server-global (no built-in namespace parameter), so the backend applies scoping at two levels: (1) all views are created with `filters: { namespace, user_id }` auto-injected from the dataset config, and (2) all view listing calls filter by `view.filters.namespace`. Partitions inherit the view's scope, so no additional namespace filter is needed when listing partitions. The `dataset.config.json` does **not** contain redundant namespace/userId in each view entry -- those are auto-injected from the top-level `config.namespace` and `config.userId`.
 - **Summary views are pre-seeded from the dataset config at startup** so the demo has multiple views ready to compute summaries without any creation step. On-the-fly creation via the API is also supported for showing flexibility.
 - No LLM calls are made directly by the backend. The Agent Memory Server handles extraction (via `longTermMemoryStrategy`) and summarization (via summary views) using its own configured model (`FAST_MODEL` env var on the Python server).
 - The `appendWorkingMemory` handler is the only "smart" handler -- it reads current working memory, appends, and writes back. Everything else is a direct pass-through to `AgentMemory`.

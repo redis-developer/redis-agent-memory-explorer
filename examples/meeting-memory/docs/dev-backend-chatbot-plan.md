@@ -173,7 +173,7 @@ The graph ID `"memoryAgent"` is referenced by `copilotkit-langgraph.ts` when con
 
 ## Memory Tools (`agent/tools.ts`)
 
-Eight LangChain `StructuredTool` instances wrapping `AgentMemory` methods. Each tool reads `namespace` and `userId` from `appState` (same as existing handlers). Summary view tools apply namespace scoping: views are filtered by `view.filters.namespace`, and partition listing passes `{ namespace, userId }` as `PartitionListFilters`. See the backend plan's "Namespace scoping" section for details on why this is needed (AMS summary view CRUD is server-global).
+Eight LangChain `StructuredTool` instances wrapping `AgentMemory` methods. Each tool reads `namespace` and `userId` from `appState` (same as existing handlers). Summary view tools apply namespace scoping: views are filtered by `view.filters.namespace`. Partitions inherit the view's scope, so no additional namespace filter is needed when listing partitions. See the backend plan's "Namespace scoping" section for details on why this is needed (AMS summary view CRUD is server-global).
 
 ### Tool 1: `searchMemories`
 
@@ -312,9 +312,9 @@ const listSessionsTool = new DynamicStructuredTool({
 
 ### Tool 5: `getComputedSummaries`
 
-Fetch the **computed summary text** (the "cooked dish") from one or all summary views. This is the AI-generated narrative produced by `runSummaryViewPartition` / `computeSummary`. Maps to `AgentMemory.listSummaryViewPartitions(viewId, { namespace, userId })`.
+Fetch the **computed summary text** (the "cooked dish") from one or all summary views. This is the AI-generated narrative produced by `runSummaryViewPartition` / `computeSummary`. Maps to `AgentMemory.listSummaryViewPartitions(viewId)`.
 
-**Namespace scoping:** Views are filtered by `view.filters.namespace` to only return views belonging to the active dataset. Partition listing passes `{ namespace, userId }` as `PartitionListFilters` to ensure only the active dataset's computed summaries are returned.
+**Namespace scoping:** Views are filtered by `view.filters.namespace` to only return views belonging to the active dataset. Partitions inherit the view's scope (the view's `filters: { namespace, user_id }` already restricts which memories are summarized), so no additional namespace filter is needed when listing partitions.
 
 ```typescript
 const getComputedSummariesTool = new DynamicStructuredTool({
@@ -1078,7 +1078,7 @@ These were open questions during planning. All resolved.
 - The chatbot is **purely additive** -- zero changes to existing routes, handlers, or services. All existing demo functionality (transcript playback, memory exploration, summary views) works exactly as before.
 - **Session routing is automatic.** The LLM agent decides whether to search the current session or all data based on the user's question phrasing, the active session context from the frontend, and system prompt rules. The response always states the scope so the user knows the source. See "Session vs All-Data Routing" section for full details.
 - The `memoryPrompt` feature from AMS is the chatbot's most powerful tool. It sends a query to AMS, which retrieves working memory context + relevant long-term memories and returns a hydrated messages array. This means the LLM gets rich context without multiple round trips.
-- All memory tools respect the dataset's `namespace` and `userId` via `getAppState()` -- no cross-dataset data leakage. Summary view tools (`listSummaryViews`, `getComputedSummaries`) apply client-side namespace filtering on the view list (`view.filters.namespace`) and pass `{ namespace, userId }` to partition listing, since the AMS summary view CRUD is server-global.
+- All memory tools respect the dataset's `namespace` and `userId` via `getAppState()` -- no cross-dataset data leakage. Summary view tools (`listSummaryViews`, `getComputedSummaries`) apply client-side namespace filtering on the view list (`view.filters.namespace`). Partitions inherit the view's scope, so no additional filter is needed. The AMS summary view CRUD is server-global, which is why view-level scoping is essential.
 - The system prompt is built dynamically from `datasetConfig` and includes the active `sessionId` when provided by the frontend. Switching datasets (`ACTIVE_DATASET` env var) automatically updates the chatbot's context.
 - **Two processes required:** The LangGraph dev server (`npm run dev:langgraph`) and the main backend (`npm run dev`). Both read from the same `.env` and connect to the same AMS.
 - **Separate-process init:** The LangGraph dev server runs `graph.ts` in its own Node.js process. It initializes its own `AgentMemory` singleton and loads the dataset config from disk. Both processes connect to the same AMS instance.
