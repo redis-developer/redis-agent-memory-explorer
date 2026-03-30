@@ -2,18 +2,28 @@
 
 import type { ComputedSummaryData } from "@/types/memory.types";
 
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import RefreshIcon from "@mui/icons-material/Refresh";
+
 import "./computed-summary-card.component.css";
 
 type ComputedSummaryCardProps = {
   summary: ComputedSummaryData;
   viewName: string;
   source: string;
+  isRecomputing: boolean;
+  isAnyComputing: boolean;
+  onRecompute: () => void;
 };
 
 const ComputedSummaryCard = ({
   summary,
   viewName,
   source,
+  isRecomputing,
+  isAnyComputing,
+  onRecompute,
 }: ComputedSummaryCardProps) => {
   const computedDate = new Date(summary.computedAt).toLocaleString();
   const groupEntries = Object.entries(summary.group);
@@ -21,7 +31,32 @@ const ComputedSummaryCard = ({
   return (
     <div className="computed-summary-card">
       <div className="computed-summary-card__header">
-        <h4 className="computed-summary-card__title">{viewName}</h4>
+        <div className="computed-summary-card__header-row">
+          <h4 className="computed-summary-card__title">{viewName}</h4>
+          <Button
+            size="small"
+            onClick={onRecompute}
+            disabled={isAnyComputing}
+            variant="outlined"
+            startIcon={
+              isRecomputing
+                ? <CircularProgress size={12} sx={{ color: "var(--sky-blue)" }} />
+                : <RefreshIcon sx={{ fontSize: 12 }} />
+            }
+            sx={{
+              borderColor: "var(--sky-blue-09)",
+              color: "var(--sky-blue)",
+              textTransform: "none",
+              fontSize: "var(--font-size-2xs)",
+              padding: "2px 8px",
+              minWidth: "auto",
+              "&:hover": { borderColor: "var(--sky-blue)", backgroundColor: "color-mix(in srgb, var(--sky-blue) 10%, transparent)" },
+              "&.Mui-disabled": { borderColor: "var(--sky-blue-09)", color: "var(--sky-blue)", opacity: 0.4 },
+            }}
+          >
+            {isRecomputing ? "Recomputing..." : "Recompute"}
+          </Button>
+        </div>
         <div className="computed-summary-card__meta">
           <span>Source: {source}</span>
           {groupEntries.map(([key, value]) => (

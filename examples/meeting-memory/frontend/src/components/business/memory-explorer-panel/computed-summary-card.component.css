@@ -10,13 +10,20 @@
     border-bottom: 1px solid color-mix(in srgb, var(--sky-blue) 30%, transparent);
   }
 
+  .computed-summary-card__header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-2xs);
+  }
+
   .computed-summary-card__title {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-bold);
     color: var(--sky-blue);
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    margin: 0 0 var(--space-2xs) 0;
+    margin: 0;
   }
 
   .computed-summary-card__meta {

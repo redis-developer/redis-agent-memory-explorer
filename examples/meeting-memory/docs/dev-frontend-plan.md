@@ -800,22 +800,24 @@ Single long-term memory card used within LongTermMemoryTab.
 
 #### Sub-component: SummaryViewsTab (`summary-views-tab.component.tsx`)
 
-Displays all summary views in a uniform flat list. All pre-seeded views from the dataset config are available immediately, each with its own compute/recompute button.
+Displays all summary views in a uniform flat list. All pre-seeded views from the dataset config are available immediately. Each view can have **multiple computed partitions** (one per group value, e.g. one per session for `groupBy: session_id`).
 
 **Data source:** `useSummaryViews()` internal hook.
 
 **Workflow:**
 
 1. The backend pre-creates all summary views defined in `config.memoryLabels.summaryViews.views` at startup. The frontend discovers them via `POST /api/listSummaryViews`.
-2. When the user opens the Summary Views tab, all views are rendered uniformly -- each with a header (name, source, groupBy) and a **"Compute Summary"** button.
-3. Clicking "Compute Summary" calls `POST /api/computeSummary { viewId, group: { user_id: userId } }` and shows a loading spinner. This triggers the LLM to generate the narrative.
-4. Once computed, the summary is displayed inline as a `ComputedSummaryCard`. The button changes to **"Recompute"** so the presenter can re-trigger (e.g., after a second transcript session adds more memories).
-5. A **"Refresh"** button appears alongside "Recompute" to fetch the latest cached summaries.
-6. The `createSummaryView` API remains available for on-the-fly custom views if needed.
+2. When the user opens the Summary Views tab, all views are rendered uniformly -- each with a header (name, source, groupBy).
+3. A view-level **"Compute Summary"** button appears only when the current group (determined by the active session/user) does **not** already have a computed partition. For example, if "Session Recap" (groupBy: `session_id`) has a partition for Oct 28 but the active session is Feb 26, the button appears so the user can compute for the new session.
+4. Clicking "Compute Summary" calls `POST /api/computeSummary { viewId, group }` and shows a loading spinner. This triggers the LLM to generate the narrative.
+5. Once computed, the summary appears as a `ComputedSummaryCard`. Each card has its own **per-card "Recompute"** button so partitions can be independently re-triggered (e.g., after more memories are added to that session).
+6. If the current group already has a partition, no view-level button is shown -- only per-card Recompute buttons on existing partitions.
+7. All computed partitions are shown regardless of which session is active -- the tab is an overview of all summaries.
+8. The `createSummaryView` API remains available for on-the-fly custom views if needed.
 
 #### Sub-component: ComputedSummaryCard (`computed-summary-card.component.tsx`)
 
-Display for a single computed summary.
+Display for a single computed summary. Each card includes a **per-card "Recompute" button** (top-right of the card header) that re-triggers computation for that specific partition's group. This allows independent recomputation -- e.g., recomputing the Oct 28 session recap without affecting the Feb 26 recap.
 
 ```
 SUMMARY: {view.name}
@@ -1567,7 +1569,7 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 9. **Memories appear** -- MemoryExplorerPanel's LT polling detects results, tabs become active
 10. **Click Long-Term Memory tab** -- memories appear grouped by type (section labels from `config.memoryLabels.longTermMemory`)
 11. **Narrate** -- "These facts were auto-extracted: Maya's retirement, James's bond fund preference, the REIT rebalance decision. Each tagged with topics and entities."
-12. **Click Summary Views tab** -- multiple pre-seeded views are visible, each with a "Compute Summary" button. Click any to trigger LLM summarization. After computing, "Recompute" button stays visible.
+12. **Click Summary Views tab** -- multiple pre-seeded views are visible. If the current session doesn't have a computed summary yet, a "Compute Summary" button appears. Click it to trigger LLM summarization. After computing, a per-card "Recompute" button stays visible on each partition. Multiple sessions' recaps are shown side by side.
 13. **Narrate** -- "This summary condenses all extracted memories into one coherent narrative. Computed by Redis in under 2 seconds."
 14. **Click Redis tab** -- "8 memories extracted, 1 summary computed, 12 working memory polls. Average latency: 42 milliseconds. All powered by Redis."
 15. **Click "Clear All Memories & Restart"** -- confirm dialog, everything resets, clean slate for next demo or next dataset
