@@ -9,7 +9,7 @@ import { routes } from "./routes";
 import { setAppState } from "./app-state";
 import { ENV } from "./config";
 import { DatasetLoaderService } from "./services/dataset-loader.service";
-import { handleCopilotKitLanggraph } from "./agent";
+import { handleCopilotKitLanggraph } from "./chatbot-agent";
 
 const logger = Logger.create({
   level: "info",
@@ -61,8 +61,9 @@ const ensureSummaryViews = async (
 };
 
 const initializeApp = async (): Promise<void> => {
-  const datasetConfig =
-    DatasetLoaderService.loadDatasetConfig(ENV.ACTIVE_DATASET);
+  const datasetConfig = DatasetLoaderService.loadDatasetConfig(
+    ENV.ACTIVE_DATASET,
+  );
   const { namespace, userId } = datasetConfig;
 
   AgentMemory.create({
