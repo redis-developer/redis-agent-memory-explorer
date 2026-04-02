@@ -124,7 +124,7 @@
     ]
   },
   "liveSuggestions": {
-    "title": "AI Copilot",
+    "title": "Live Suggestions",
     "description": "Real-time AI suggestions during transcript playback.",
     "bannerLabel": "AI Insight",
     "topicsTitle": "Detected Topics",
