@@ -24,13 +24,6 @@
     gap: var(--space-3xs);
   }
 
-  .ai-copilot-tab__empty {
-    font-size: var(--font-size-xs);
-    color: var(--fg-muted);
-    text-align: center;
-    padding: var(--space-md) 0;
-  }
-
   .ai-copilot-tab__status {
     display: flex;
     align-items: center;
