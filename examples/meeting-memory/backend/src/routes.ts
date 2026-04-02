@@ -32,6 +32,10 @@ import {
   resetLifecycleHandler,
   forgetLifecycleHandler,
 } from "./handlers/lifecycle.handlers";
+import {
+  generateSuggestionHandler,
+  listSuggestionsHandler,
+} from "./handlers/suggestion.handlers";
 
 const routes: RouteDefinition[] = [
   // Dataset
@@ -67,6 +71,10 @@ const routes: RouteDefinition[] = [
   { path: "/getComputedSummaries", handler: getComputedSummariesHandler },
   { path: "/deleteSummaryView", handler: deleteSummaryViewHandler },
   { path: "/getTask", handler: getTaskHandler },
+
+  // Live Suggestions (AI Copilot)
+  { path: "/generateSuggestion", handler: generateSuggestionHandler },
+  { path: "/listSuggestions", handler: listSuggestionsHandler },
 
   // Lifecycle
   { path: "/resetLifecycle", handler: resetLifecycleHandler },

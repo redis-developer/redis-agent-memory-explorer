@@ -116,6 +116,55 @@
     ]
   },
 
+  "liveSuggestions": {
+    "title": "AI Copilot",
+    "description": "Real-time AI suggestions during transcript playback.",
+    "bannerLabel": "AI Insight",
+    "topicsTitle": "Detected Topics",
+    "insightsTitle": "Live Insights",
+    "waitingMessage": "Listening to transcript...",
+    "noSuggestionsMessage": "No insights yet. Play a transcript to see live AI suggestions.",
+    "triggerEveryNChunks": 5,
+    "suggestionTypes": [
+      {
+        "id": "lifeEvent",
+        "label": "Life Event Detected",
+        "description": "Client mentions a significant personal change (retirement, marriage, health, etc.)",
+        "enabled": true
+      },
+      {
+        "id": "topicRecall",
+        "label": "Topic Recall",
+        "description": "Conversation touches a topic from past sessions (long-term memory match)",
+        "enabled": true
+      },
+      {
+        "id": "questionAnswer",
+        "label": "Question Answer",
+        "description": "Client asks a factual question the AI can help answer",
+        "enabled": true
+      },
+      {
+        "id": "agendaReminder",
+        "label": "Agenda Reminder",
+        "description": "Pre-seeded topic not yet discussed -- nudge to bring it up",
+        "enabled": true
+      },
+      {
+        "id": "sentimentShift",
+        "label": "Sentiment Shift",
+        "description": "Tone or content suggests anxiety, excitement, or concern",
+        "enabled": true
+      },
+      {
+        "id": "actionItem",
+        "label": "Action Item",
+        "description": "A decision is made or a follow-up is identified",
+        "enabled": true
+      }
+    ]
+  },
+
   "chatbot": {
     "title": "Memory Assistant",
     "initialMessage": "Ask me anything about the stored memories for this client. I can search across all meetings or focus on a specific session.",

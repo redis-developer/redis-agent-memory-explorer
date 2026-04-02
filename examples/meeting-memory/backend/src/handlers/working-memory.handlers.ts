@@ -5,6 +5,7 @@ import type {
   GetWorkingMemoryInput,
   DeleteWorkingMemoryInput,
   ListWorkingMemorySessionsInput,
+  DetectedTopic,
 } from "../types";
 
 import { AgentMemory, ExtractionStrategy } from "cau-redis-agent-memory";
@@ -13,9 +14,14 @@ import {
   SESSION_ID_PREFIX,
   DEFAULT_LIST_LIMIT,
   DEFAULT_LIST_OFFSET,
+  DetectedTopicStatus,
+  DetectedTopicSource,
 } from "../constants";
 import { getAppState } from "../app-state";
 import { ENV } from "../config";
+import { TranscriptChunkStore } from "../services/transcript-chunk-store";
+import { TopicStore } from "../services/topic-store";
+import { TranscriptLoaderService } from "../services/transcript-loader.service";
 
 const buildSessionId = (transcriptId: string): string => {
   return `${SESSION_ID_PREFIX}-${transcriptId}-${Date.now()}`;
@@ -29,6 +35,25 @@ const formatChunkAsMessage = (chunk: AppendWorkingMemoryInput["chunk"]): {
     role: "user",
     content: `[${chunk.timestamp}] ${chunk.speaker}: ${chunk.text}`,
   };
+};
+
+const seedTopicsFromTranscript = async (
+  sessionId: string,
+  transcriptId: string,
+): Promise<void> => {
+  const transcript = TranscriptLoaderService.loadTranscript(
+    ENV.ACTIVE_DATASET,
+    transcriptId,
+  );
+  const topics = transcript.meeting.summary.topics ?? [];
+  const seededTopics: DetectedTopic[] = topics.map((name) => ({
+    name,
+    status: DetectedTopicStatus.PENDING,
+    detectedAtChunkIndex: null,
+    detectedAtTimestamp: null,
+    source: DetectedTopicSource.PRE_SEEDED,
+  }));
+  await TopicStore.initialize(sessionId, seededTopics);
 };
 
 const createWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
@@ -47,6 +72,10 @@ const createWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
       userId,
       namespace,
     });
+
+  await seedTopicsFromTranscript(sessionId, transcriptId);
+  await TranscriptChunkStore.initialize(sessionId);
+  logger.info("Pre-seeded detected topics and initialized chunk store", { sessionId });
 
   return { sessionId, created, memory };
 };
@@ -88,6 +117,8 @@ const appendWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
     payload,
     { namespace, modelName: ENV.MODEL_NAME, contextWindowMax: ENV.CONTEXT_WINDOW_MAX },
   );
+
+  await TranscriptChunkStore.append(sessionId, chunk);
 
   const latencyMs = Date.now() - startMs;
 

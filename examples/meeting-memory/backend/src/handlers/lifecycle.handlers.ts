@@ -5,6 +5,9 @@ import { AgentMemory } from "cau-redis-agent-memory";
 
 import { SEARCH_ALL_LIMIT } from "../constants";
 import { getAppState } from "../app-state";
+import { SuggestionStore } from "../services/suggestion-store";
+import { TopicStore } from "../services/topic-store";
+import { TranscriptChunkStore } from "../services/transcript-chunk-store";
 
 const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   const { namespace, userId, datasetConfig } = getAppState();
@@ -62,6 +65,11 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
     });
     viewsCreated += 1;
   }
+
+  // 5. Clear all copilot stores (suggestions, topics, raw chunks)
+  await SuggestionStore.clearAll();
+  await TopicStore.clearAll();
+  await TranscriptChunkStore.clearAll();
 
   logger.info("Lifecycle reset complete", {
     sessionsDeleted,

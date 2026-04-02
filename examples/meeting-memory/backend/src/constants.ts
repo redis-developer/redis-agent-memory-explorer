@@ -34,6 +34,36 @@ const COPILOTKIT_GRAPH_ID = "memoryAgent";
 const DEFAULT_LANGGRAPH_DEPLOYMENT_URL = "http://localhost:2024";
 const DEFAULT_CHATBOT_MODEL = "gpt-4o-mini";
 
+const COPILOT_KEY_PREFIX = "copilot";
+const COPILOT_SUGGESTIONS_PREFIX = "suggestions";
+const COPILOT_TOPICS_PREFIX = "topics";
+const COPILOT_CHUNKS_PREFIX = "chunks";
+const COPILOT_KEY_SEPARATOR = ":";
+
+const SUGGESTION_CHUNK_WINDOW = 10;
+const QUERY_EXTRACTION_MODEL = "gpt-4o-mini";
+const QUERY_EXTRACTION_MAX_TOKENS = 100;
+
+const REDIS_JSON_ROOT_PATH = "$";
+
+const DEFAULT_RATE_LIMIT_MAX = 8000;
+
+const DEFAULT_REDIS_URL = "redis://localhost:6379";
+
+const DetectedTopicStatus = {
+  PENDING: "pending",
+  DISCUSSED: "discussed",
+  NEW: "new",
+  QUESTION: "question",
+} as const;
+type DetectedTopicStatus = (typeof DetectedTopicStatus)[keyof typeof DetectedTopicStatus];
+
+const DetectedTopicSource = {
+  PRE_SEEDED: "pre-seeded",
+  AI_DETECTED: "ai-detected",
+} as const;
+type DetectedTopicSource = (typeof DetectedTopicSource)[keyof typeof DetectedTopicSource];
+
 export {
   CONFIG_FILENAME,
   TRANSCRIPTS_SUBDIR,
@@ -61,4 +91,17 @@ export {
   COPILOTKIT_GRAPH_ID,
   DEFAULT_LANGGRAPH_DEPLOYMENT_URL,
   DEFAULT_CHATBOT_MODEL,
+  COPILOT_KEY_PREFIX,
+  COPILOT_SUGGESTIONS_PREFIX,
+  COPILOT_TOPICS_PREFIX,
+  COPILOT_CHUNKS_PREFIX,
+  COPILOT_KEY_SEPARATOR,
+  SUGGESTION_CHUNK_WINDOW,
+  QUERY_EXTRACTION_MODEL,
+  QUERY_EXTRACTION_MAX_TOKENS,
+  DEFAULT_RATE_LIMIT_MAX,
+  REDIS_JSON_ROOT_PATH,
+  DEFAULT_REDIS_URL,
+  DetectedTopicStatus,
+  DetectedTopicSource,
 };
