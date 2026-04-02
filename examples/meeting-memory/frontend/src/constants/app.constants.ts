@@ -32,6 +32,7 @@ const HEALTH_STATUS = {
 type HealthStatus = (typeof HEALTH_STATUS)[keyof typeof HEALTH_STATUS];
 
 const DEMO_TAB = {
+  AI_COPILOT: "ai-copilot",
   WORKING_MEMORY: "working-memory",
   LONG_TERM_MEMORY: "long-term-memory",
   SUMMARY_VIEWS: "summary-views",
@@ -76,6 +77,21 @@ const LT_SCOPE = {
 } as const;
 type LtScope = (typeof LT_SCOPE)[keyof typeof LT_SCOPE];
 
+const DETECTED_TOPIC_STATUS = {
+  PENDING: "pending",
+  DISCUSSED: "discussed",
+  NEW: "new",
+  QUESTION: "question",
+} as const;
+type DetectedTopicStatus = (typeof DETECTED_TOPIC_STATUS)[keyof typeof DETECTED_TOPIC_STATUS];
+
+const DETECTED_TOPIC_SOURCE = {
+  PRE_SEEDED: "pre-seeded",
+  AI_DETECTED: "ai-detected",
+} as const;
+type DetectedTopicSource = (typeof DETECTED_TOPIC_SOURCE)[keyof typeof DETECTED_TOPIC_SOURCE];
+
+const DEFAULT_TRIGGER_EVERY_N_CHUNKS = 5;
 const SEARCH_ALL_LIMIT = 100;
 const LAST_MESSAGES_COUNT = 5;
 const AUTO_SCROLL_THRESHOLD_PX = 80;
@@ -93,6 +109,8 @@ const DEFAULT_CHATBOT_PLACEHOLDER = "Ask about memories...";
 const DEFAULT_CHATBOT_INSTRUCTIONS = "";
 
 export {
+  DETECTED_TOPIC_STATUS,
+  DETECTED_TOPIC_SOURCE,
   API_BASE_URL,
   COPILOTKIT_RUNTIME_URL,
   WORKING_MEMORY_POLL_INTERVAL_MS,
@@ -122,6 +140,7 @@ export {
   DEFAULT_CHATBOT_INITIAL,
   DEFAULT_CHATBOT_PLACEHOLDER,
   DEFAULT_CHATBOT_INSTRUCTIONS,
+  DEFAULT_TRIGGER_EVERY_N_CHUNKS,
 };
 
-export type { MemoryType, HealthStatus, LtScope };
+export type { MemoryType, HealthStatus, LtScope, DetectedTopicStatus, DetectedTopicSource };

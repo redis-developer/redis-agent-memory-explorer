@@ -57,7 +57,9 @@ const WorkingMemoryTab = ({
   const isContextFull = rawContextPercent >= CONTEXT_THRESHOLD.FULL || rawUntilSummarization >= CONTEXT_THRESHOLD.FULL;
   const tokenCount = lastAppendResult?.tokens ?? data.tokens ?? 0;
   const contextColor = getContextColor(rawContextPercent);
-  const messageCount = lastAppendResult?.messageCount ?? data.messages?.length ?? 0;
+  const appendCount = lastAppendResult?.messageCount ?? 0;
+  const dataCount = data.messages?.length ?? 0;
+  const messageCount = Math.max(appendCount, dataCount);
   const contextSummary = lastAppendResult?.context ?? data.context;
   const hasSummary = contextSummary !== null && contextSummary !== undefined;
   const lastMessages = data.messages?.slice(-LAST_MESSAGES_COUNT) ?? [];

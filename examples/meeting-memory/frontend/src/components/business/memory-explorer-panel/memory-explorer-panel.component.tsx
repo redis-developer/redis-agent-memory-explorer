@@ -3,12 +3,12 @@
 import type { DatasetConfig } from "@/types/dataset-config.types";
 import type { AppendResult } from "@/types/memory.types";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 
-import { DEMO_TAB } from "@/constants/app.constants";
+import { DEMO_TAB, DEFAULT_TRIGGER_EVERY_N_CHUNKS } from "@/constants/app.constants";
 
 import { WorkingMemoryTab } from "./working-memory-tab.component";
 import { LongTermMemoryTab } from "./long-term-memory-tab.component";
@@ -17,6 +17,7 @@ import { RedisMetricsTab } from "./redis-metrics-tab.component";
 import { useWorkingMemory } from "./use-working-memory";
 import { useLongTermMemory } from "./use-long-term-memory";
 import { useSummaryViews } from "./use-summary-views";
+import { AiCopilotTab, SuggestionBanner, useLiveSuggestions } from "./ai-copilot";
 
 import "./memory-explorer-panel.component.css";
 
@@ -26,6 +27,9 @@ type MemoryExplorerPanelProps = {
   sessionId: string | null;
   datasetConfig: DatasetConfig;
   lastAppendResult?: AppendResult | null;
+  currentChunkIndex?: number;
+  isPlaying?: boolean;
+  isPlaybackComplete?: boolean;
 };
 
 const MemoryExplorerPanel = ({
@@ -34,8 +38,15 @@ const MemoryExplorerPanel = ({
   sessionId,
   datasetConfig,
   lastAppendResult,
+  currentChunkIndex = 0,
+  isPlaying = false,
+  isPlaybackComplete = false,
 }: MemoryExplorerPanelProps) => {
-  const [activeTab, setActiveTab] = useState<string>(DEMO_TAB.WORKING_MEMORY);
+  const liveSuggestionsConfig = datasetConfig.liveSuggestions;
+  const hasLiveSuggestions = liveSuggestionsConfig !== undefined;
+
+  const defaultTab = hasLiveSuggestions ? DEMO_TAB.AI_COPILOT : DEMO_TAB.WORKING_MEMORY;
+  const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const hasSession = sessionId !== null;
 
   const prevSessionIdRef = useRef(sessionId);
@@ -44,13 +55,34 @@ const MemoryExplorerPanel = ({
   const longTermMemory = useLongTermMemory(sessionId);
   const summaryViews = useSummaryViews();
 
+  const triggerEveryN = liveSuggestionsConfig?.triggerEveryNChunks ?? DEFAULT_TRIGGER_EVERY_N_CHUNKS;
+
+  const liveSuggestions = useLiveSuggestions({
+    sessionId,
+    currentChunkIndex,
+    isPlaying,
+    triggerEveryNChunks: triggerEveryN,
+  });
+
   useEffect(() => {
     const sessionChanged = prevSessionIdRef.current !== sessionId;
     prevSessionIdRef.current = sessionId;
     if (sessionChanged) {
       summaryViews.resetAndRefresh();
+
+      const shouldAutoSwitch = hasLiveSuggestions && sessionId !== null;
+      if (shouldAutoSwitch) {
+        setActiveTab(DEMO_TAB.AI_COPILOT);
+      }
     }
   }, [sessionId]);
+
+  const [scrollToTopSignal, setScrollToTopSignal] = useState(0);
+
+  const handleViewSuggestionDetails = useCallback(() => {
+    setActiveTab(DEMO_TAB.AI_COPILOT);
+    setScrollToTopSignal((prev) => prev + 1);
+  }, []);
 
   const tabLabels = datasetConfig.memoryLabels;
 
@@ -64,6 +96,15 @@ const MemoryExplorerPanel = ({
 
   return (
     <div className="memory-explorer-panel">
+      {hasLiveSuggestions && (
+        <SuggestionBanner
+          suggestion={liveSuggestions.latestSuggestion}
+          bannerLabel={liveSuggestionsConfig.bannerLabel}
+          noSuggestionsMessage={liveSuggestionsConfig.noSuggestionsMessage}
+          onViewDetails={handleViewSuggestionDetails}
+        />
+      )}
+
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
@@ -88,6 +129,9 @@ const MemoryExplorerPanel = ({
           },
         }}
       >
+        {hasLiveSuggestions && (
+          <Tab label={liveSuggestionsConfig.title} value={DEMO_TAB.AI_COPILOT} />
+        )}
         <Tab label={tabLabels.workingMemory.title} value={DEMO_TAB.WORKING_MEMORY} />
         <Tab label={tabLabels.longTermMemory.title} value={DEMO_TAB.LONG_TERM_MEMORY} />
         <Tab label={tabLabels.summaryViews.title} value={DEMO_TAB.SUMMARY_VIEWS} />
@@ -95,6 +139,18 @@ const MemoryExplorerPanel = ({
       </Tabs>
 
       <div className="memory-explorer-panel__content">
+        {activeTab === DEMO_TAB.AI_COPILOT && (
+          <AiCopilotTab
+            suggestions={liveSuggestions.suggestions}
+            detectedTopics={liveSuggestions.detectedTopics}
+            isGenerating={liveSuggestions.isGenerating}
+            isPlaying={isPlaying}
+            isComplete={isPlaybackComplete}
+            labels={liveSuggestionsConfig!}
+            scrollToTopSignal={scrollToTopSignal}
+          />
+        )}
+
         {activeTab === DEMO_TAB.WORKING_MEMORY && (
           <WorkingMemoryTab
             data={workingMemory.data}
