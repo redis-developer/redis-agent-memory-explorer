@@ -116,10 +116,7 @@ const DemoPage = () => {
           <div className="demo-page__logo">
             <img src="/redis-logo.svg" alt="Redis" height={28} />
           </div>
-          <div className="demo-page__title-group">
-            <h1 className="demo-page__title">{config.branding.title}</h1>
-            <p className="demo-page__subtitle">{config.branding.subtitle}</p>
-          </div>
+          <h1 className="demo-page__title">{config.branding.title}</h1>
         </header>
 
         <div className="demo-page__panels">
@@ -147,7 +144,7 @@ const DemoPage = () => {
         </div>
 
         <footer className="demo-page__footer">
-          <span>{config.branding.footerText}</span>
+          <span>{config.branding.subtitle}</span>
         </footer>
       </main>
     </CopilotSidebar>
