@@ -44,12 +44,14 @@ const AiCopilotTab = ({
   const hasSuggestions = suggestions.length > 0;
   const reversedSuggestions = [...suggestions].reverse();
 
-  let statusText = labels.noSuggestionsMessage;
+  let statusText = "";
   if (isPlaying) {
     statusText = labels.waitingMessage;
   }
-  if (isComplete && hasSuggestions) {
-    statusText = `Playback complete -- ${suggestions.length} insight${suggestions.length !== 1 ? "s" : ""} generated`;
+  if (isComplete) {
+    statusText = hasSuggestions
+      ? `Playback complete -- ${suggestions.length} insight${suggestions.length !== 1 ? "s" : ""} generated`
+      : labels.noSuggestionsMessage;
   }
 
   return (
@@ -59,7 +61,7 @@ const AiCopilotTab = ({
       <div className="ai-copilot-tab__insights" ref={insightsRef}>
         <h3 className="ai-copilot-tab__insights-title">{labels.insightsTitle}</h3>
 
-        {hasSuggestions ? (
+        {hasSuggestions && (
           <div className="ai-copilot-tab__cards">
             {reversedSuggestions.map((suggestion, idx) => (
               <SuggestionCard
@@ -70,8 +72,6 @@ const AiCopilotTab = ({
               />
             ))}
           </div>
-        ) : (
-          <p className="ai-copilot-tab__empty">{labels.noSuggestionsMessage}</p>
         )}
       </div>
 

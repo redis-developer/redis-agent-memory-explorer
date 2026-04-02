@@ -11,6 +11,7 @@
 .suggestion-banner--empty {
   background: var(--bg-surface);
   border: 1px dashed var(--border);
+  justify-content: center;
 
   .suggestion-banner__placeholder {
     font-size: var(--font-size-xs);
