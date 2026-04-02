@@ -1,71 +1,30 @@
 import type { LiveSuggestion } from "../types";
 
-import { RedisDb } from "cau-redis";
+import { COPILOT_SUGGESTIONS_PREFIX } from "../constants";
 
-import {
-  COPILOT_KEY_PREFIX,
-  COPILOT_SUGGESTIONS_PREFIX,
-  COPILOT_KEY_SEPARATOR,
-} from "../constants";
-import { getAppState } from "../app-state";
+import { getItems, setItems, clearItems, clearAllItems } from "./redis-json-store";
 
-const buildKey = (sessionId?: string): string => {
-  const { namespace, userId } = getAppState();
-
-  const parts = [
-    COPILOT_KEY_PREFIX,
-    COPILOT_SUGGESTIONS_PREFIX,
-    namespace,
-    userId,
-    sessionId, //optional , not passed during clearAll
-  ].filter(Boolean) as string[];
-
-  return parts.join(COPILOT_KEY_SEPARATOR);
-};
+const ENTITY_PREFIX = COPILOT_SUGGESTIONS_PREFIX;
 
 const add = async (
   sessionId: string,
   suggestion: LiveSuggestion,
 ): Promise<void> => {
-  const key = buildKey(sessionId);
-  const redis = RedisDb.getInstance();
-  const existing = await redis.jsonGet<LiveSuggestion[]>({ key });
-  const current = existing ?? [];
+  const current = await getItems<LiveSuggestion>(ENTITY_PREFIX, sessionId);
   const updated = [...current, suggestion];
-  await redis.jsonSet({ key, value: updated });
+  await setItems(ENTITY_PREFIX, sessionId, updated);
 };
 
 const list = async (sessionId: string): Promise<LiveSuggestion[]> => {
-  const key = buildKey(sessionId);
-  const redis = RedisDb.getInstance();
-  const result = await redis.jsonGet<LiveSuggestion[]>({ key });
-
-  return result ?? [];
+  return getItems<LiveSuggestion>(ENTITY_PREFIX, sessionId);
 };
 
 const clear = async (sessionId: string): Promise<void> => {
-  const key = buildKey(sessionId);
-  const redis = RedisDb.getInstance();
-  await redis.del({ keys: [key] });
+  await clearItems(ENTITY_PREFIX, sessionId);
 };
 
 const clearAll = async (): Promise<void> => {
-  const prefix = buildKey();
-  const redis = RedisDb.getInstance();
-  let cursor = 0;
-  let hasMore = true;
-  while (hasMore) {
-    const result = await redis.scan({
-      cursor,
-      pattern: `${prefix}*`,
-      count: 100,
-    });
-    cursor = result.cursor;
-    hasMore = cursor !== 0;
-    for (const key of result.keys) {
-      await redis.del({ keys: [key] });
-    }
-  }
+  await clearAllItems(ENTITY_PREFIX);
 };
 
 const SuggestionStore = { add, list, clear, clearAll };
