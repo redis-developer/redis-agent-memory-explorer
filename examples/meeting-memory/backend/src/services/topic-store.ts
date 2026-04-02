@@ -34,14 +34,27 @@ const mergeUpdates = async (
     const isExisting = existingIdx >= 0;
 
     if (isExisting) {
+      const prev = current[existingIdx];
+      const isFirstDetection = prev.detectedAtChunkIndex === null;
+
+      const history = isFirstDetection
+        ? prev.history
+        : [
+            ...prev.history,
+            {
+              chunkIndex,
+              timestamp: update.detectedAtTimestamp,
+              status: update.status,
+            },
+          ];
+
       current[existingIdx] = {
-        ...current[existingIdx],
+        ...prev,
         status: update.status,
-        detectedAtChunkIndex:
-          current[existingIdx].detectedAtChunkIndex ?? chunkIndex,
+        detectedAtChunkIndex: prev.detectedAtChunkIndex ?? chunkIndex,
         detectedAtTimestamp:
-          current[existingIdx].detectedAtTimestamp ??
-          update.detectedAtTimestamp,
+          prev.detectedAtTimestamp ?? update.detectedAtTimestamp,
+        history,
       };
     } else {
       current.push({
@@ -50,6 +63,7 @@ const mergeUpdates = async (
         detectedAtChunkIndex: chunkIndex,
         detectedAtTimestamp: update.detectedAtTimestamp,
         source: DetectedTopicSource.AI_DETECTED,
+        history: [],
       });
     }
   }

@@ -52,6 +52,7 @@ const seedTopicsFromTranscript = async (
     detectedAtChunkIndex: null,
     detectedAtTimestamp: null,
     source: DetectedTopicSource.PRE_SEEDED,
+    history: [],
   }));
   await TopicStore.initialize(sessionId, seededTopics);
 };
