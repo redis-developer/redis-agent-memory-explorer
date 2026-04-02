@@ -276,8 +276,6 @@ const TranscriptPanel = ({
         onStop={handleStop}
         onReset={() => setShowResetDialog(true)}
         isResetting={isResetting}
-        serverOk={serverOk}
-        isHealthChecking={isHealthChecking}
       />
 
       <TranscriptFeed
@@ -291,13 +289,17 @@ const TranscriptPanel = ({
       <PlaybackControls
         currentChunk={playback.currentIndex}
         totalChunks={playback.totalChunks}
-        isComplete={playback.isComplete}
+        playbackStatus={playback.status}
+        statusText={datasetConfig.statusLabels[playback.status] ?? playback.status}
+        serverOk={serverOk}
+        isHealthChecking={isHealthChecking}
+        isResetting={isResetting}
       />
 
       <ConfirmDialog
         open={showResetDialog}
         title="Clear All Memories & Restart"
-        message="This will delete all working memory, long-term memories, and summary views for this dataset. Continue?"
+        message="This will delete all live suggestions, working memory, long-term memories, and summary views for this dataset. Continue?"
         confirmLabel={datasetConfig.toolbar.resetLabel}
         onConfirm={handleResetConfirm}
         onCancel={() => setShowResetDialog(false)}

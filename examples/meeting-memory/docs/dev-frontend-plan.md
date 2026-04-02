@@ -37,7 +37,7 @@ The frontend consumes the backend's **POST-only REST API** defined in [dev-backe
 │  │  │  │  Toolbar (sub)       │  │  │    namespace,                │ │  │
 │  │  │  │  transcript picker,  │  │  │    datasetConfig             │ │  │
 │  │  │  │  play/stop/reset,    │  │  │                               │ │  │
-│  │  │  │  speed, status chip  │  │  │                               │ │  │
+│  │  │  │  speed (single row)  │  │  │                               │ │  │
 │  │  │  └──────────────────────┘  │  │  Owns hooks internally:      │ │  │
 │  │  │  ┌──────────────────────┐  │  │  - useWorkingMemory          │ │  │
 │  │  │  │  TranscriptFeed (sub)│  │  │  - useLongTermMemory         │ │  │
@@ -46,7 +46,8 @@ The frontend consumes the backend's **POST-only REST API** defined in [dev-backe
 │  │  │  └──────────────────────┘  │  │  Sub-components:             │ │  │
 │  │  │  ┌──────────────────────┐  │  │  - WorkingMemoryTab          │ │  │
 │  │  │  │  PlaybackControls    │  │  │  - LongTermMemoryTab         │ │  │
-│  │  │  │  progress bar, count │  │  │  - SummaryViewsTab           │ │  │
+│  │  │  │  health, progress,   │  │  │  - SummaryViewsTab           │ │  │
+│  │  │  │  count, status chip  │  │  │                               │ │  │
 │  │  │  └──────────────────────┘  │  │  - RedisMetricsTab           │ │  │
 │  │  │                            │  │                               │ │  │
 │  │  │  Owns hooks internally:    │  │  Zero knowledge of           │ │  │
@@ -342,42 +343,37 @@ const SESSION_ID_PATTERN = /^playback-(.+)-(\d{13,})$/;
 
 ```
 All titles, labels, and descriptions below are read from `config.*` -- never hardcoded.
+Both panels have a symmetrical 2-row header (title row + controls/tabs row) and aligned footers.
 
-┌──────────────────────────────────────────────────────────────────────────┐
-│                          DemoPage (thin orchestrator)                     │
-│                                                                          │
-│  ┌─────────────────────────────┐ ┌──────────────────────────────────────┐│
-│  │ ╔═ TranscriptPanel ═══════╗ │ │ ╔═ MemoryExplorerPanel ════════════╗ ││
-│  │ ║                         ║ │ │ ║                                  ║ ││
-│  │ ║ {config.branding.title} ║ │ │ ║                                  ║ ││
-│  │ ║ [Health: OK]            ║ │ │ ║  ┌────────────────────────────┐  ║ ││
-│  │ ║ ┌───────────────────┐   ║ │ │ ║  │ [{config.memoryLabels      │  ║ ││
-│  │ ║ │ Toolbar (sub)     │   ║ │ │ ║  │   .workingMemory.title}]   │  ║ ││
-│  │ ║ │ [Select Meeting ▾]│   ║ │ │ ║  │ [{config.memoryLabels      │  ║ ││
-│  │ ║ │ [1x ▾] [▶] [🗑]  │   ║ │ │ ║  │   .longTermMemory.title}]  │  ║ ││
-│  │ ║ │ Status: Playing   │   ║ │ │ ║  │ [{config.memoryLabels      │  ║ ││
-│  │ ║ └───────────────────┘   ║ │ │ ║  │   .summaryViews.title}]    │  ║ ││
-│  │ ║                         ║ │ │ ║  │ [{config.memoryLabels      │  ║ ││
-│  │ ║ {config.transcriptPanel ║ │ │ ║  │   .metrics.title}]         │  ║ ││
-│  │ ║  .title}                ║ │ │ ║  └────────────────────────────┘  ║ ││
-│  │ ║                         ║ │ │ ║                                  ║ ││
-│  │ ║ ┌───────────────────┐   ║ │ │ ║  ┌────────────────────────────┐  ║ ││
-│  │ ║ │ 00:00:05          │   ║ │ │ ║  │                            │  ║ ││
-│  │ ║ │ RM: Sarah         │   ║ │ │ ║  │  (active tab content)     │  ║ ││
-│  │ ║ │ Hi James...       │   ║ │ │ ║  │                            │  ║ ││
-│  │ ║ ├───────────────────┤   ║ │ │ ║  │  {config.memoryLabels     │  ║ ││
-│  │ ║ │ 00:00:10          │   ║ │ │ ║  │   .[activeTab]            │  ║ ││
-│  │ ║ │ Client: James     │   ║ │ │ ║  │   .description}           │  ║ ││
-│  │ ║ │ Hey Sarah...      │   ║ │ │ ║  │                            │  ║ ││
-│  │ ║ │ ▼ auto-scrolling  │   ║ │ │ ║  └────────────────────────────┘  ║ ││
-│  │ ║ └───────────────────┘   ║ │ │ ║                                  ║ ││
-│  │ ║ Chunks: 12/56 | 22%    ║ │ │ ║                                  ║ ││
-│  │ ║                         ║ │ │ ║                                  ║ ││
-│  │ ╚═════════════════════════╝ │ │ ╚══════════════════════════════════╝ ││
-│  └─────────────────────────────┘ └──────────────────────────────────────┘│
-│                                                                          │
-│  {config.branding.footerText}                                            │
-└──────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ [Redis logo] {config.branding.title}                                (44px header)│
+├──────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌────────────────────────────────┐  ┌──────────────────────────────────────────┐│
+│  │ {config.transcriptPanel.title} │  │ [AI Insight banner]           (40px row) ││
+│  │ [session dropdown ▾]  (40px)   │  │                                          ││
+│  ├────────────────────────────────┤  ├──────────────────────────────────────────┤│
+│  │ [Select Meeting ▾] [1x ▾]     │  │ [AI Copilot] [Working Memory]            ││
+│  │ [▶] [■] [Clear All] (40px)    │  │ [Long-Term] [Summary] [Redis]  (40px)   ││
+│  ├────────────────────────────────┤  ├──────────────────────────────────────────┤│
+│  │                                │  │                                          ││
+│  │  ┌──────────────────────────┐  │  │  (active tab content, scrollable)       ││
+│  │  │ 00:17:38 Sarah Chen (RM) │  │  │                                          ││
+│  │  │ It's essentially a...    │  │  │  Detected Topics, Suggestion Cards,     ││
+│  │  ├──────────────────────────┤  │  │  Memory Cards, Summary Views, etc.      ││
+│  │  │ 00:17:55 James (Client)  │  │  │                                          ││
+│  │  │ Will do. Alright...      │  │  │                                          ││
+│  │  │ ▼ auto-scrolling         │  │  │                                          ││
+│  │  └──────────────────────────┘  │  │                                          ││
+│  │                                │  │                                          ││
+│  ├────────────────────────────────┤  ├──────────────────────────────────────────┤│
+│  │ [● Connected] [===prog===]    │  │ Playback complete -- 12 insights         ││
+│  │ [12/56 chunks] [PLAYING]      │  │ generated                      (36px)    ││
+│  │                       (36px)   │  │                                          ││
+│  └────────────────────────────────┘  └──────────────────────────────────────────┘│
+│                                                                                  │
+│                        {config.branding.subtitle}                   (28px footer) │
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -406,19 +402,32 @@ Note: `userId` and `namespace` are read from `datasetConfig.userId` and `dataset
 
 ```tsx
 <main className="demo-page">
-  <TranscriptPanel
-    datasetConfig={config}
-    onSessionCreated={setSessionId}
-    onReset={handleReset}
-  />
-  <MemoryExplorerPanel
-    userId={config.userId}
-    namespace={config.namespace}
-    sessionId={sessionId}
-    datasetConfig={config}
-  />
+  <header className="demo-page__header">
+    <img src="/redis-logo.svg" alt="Redis" height={28} />
+    <h1 className="demo-page__title">{config.branding.title}</h1>
+  </header>
+
+  <div className="demo-page__panels">
+    <TranscriptPanel
+      datasetConfig={config}
+      onSessionCreated={setSessionId}
+      onReset={handleReset}
+    />
+    <MemoryExplorerPanel
+      userId={config.userId}
+      namespace={config.namespace}
+      sessionId={sessionId}
+      datasetConfig={config}
+    />
+  </div>
+
+  <footer className="demo-page__footer">
+    <span>{config.branding.subtitle}</span>
+  </footer>
 </main>
 ```
+
+The header is a single-line row (44px) with the Redis logo and app title. The subtitle ("Powered by Redis Agent Memory Server") is shown in the footer (28px) instead of the header, keeping the header compact. The CopilotKit sidebar header height is pinned to match `--toolbar-height` so both align horizontally when the sidebar is open.
 
 ---
 
@@ -538,18 +547,17 @@ Only two callbacks. No playback status or metrics leak outside. The parent only 
 
 #### Sub-component: Toolbar (`toolbar.component.tsx`)
 
-Top horizontal bar within TranscriptPanel. **All labels from `datasetConfig.toolbar` and `datasetConfig.statusLabels`.**
+Single-row horizontal controls bar within TranscriptPanel, set to `--panel-header-height` (40px) to align with the right panel's tab bar. Health indicator and status chip have been moved to PlaybackControls (footer) to keep the toolbar compact. **All labels from `datasetConfig.toolbar`.**
 
-| Element                   | Config source                                                   | Type                          | Behavior                                                                                                                                                  |
-| ------------------------- | --------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Transcript dropdown       | `config.toolbar.transcriptDropdownLabel`                        | MUI Select                    | Lists available transcripts                                                                                                                               |
-| Session picker dropdown   | `config.toolbar.sessionDropdownLabel`                           | MUI Select                    | Lists existing working memory sessions (from `POST /api/listWorkingMemorySessions`). Only renders when sessions exist. Separated from transcript dropdown by "or" label. Selecting a session loads the full transcript + sets completed state + populates MemoryExplorerPanel. |
-| Speed dropdown            | `config.toolbar.speedLabel`, `config.playbackDefaults.speeds[]` | MUI Select                    | Speed options from config                                                                                                                                 |
-| Play button               | `config.toolbar.playLabel`                                      | MUI IconButton (PlayArrow)    | Starts playback, disabled while playing                                                                                                                   |
-| Stop button               | `config.toolbar.stopLabel`                                      | MUI IconButton (Stop)         | Stops playback mid-stream, keeps data                                                                                                                     |
-| Clear All button          | `config.toolbar.resetLabel`                                     | MUI Button (DeleteSweep, red) | **Prominently styled.** Triggers `POST /api/resetLifecycle` via parent. Shows ConfirmDialog first.                                                        |
-| Status chip               | `config.statusLabels[playbackStatus]`                           | MUI Chip                      | Config-driven text per status                                                                                                                             |
-| Health indicator          | --                                                              | StatusDot (core)              | Green/red based on `GET /health`                                                                                                                          |
+| Element                 | Config source                                                   | Type                          | Behavior                                                                                                                                                  |
+| ----------------------- | --------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Transcript dropdown     | `config.toolbar.transcriptDropdownLabel`                        | MUI Select                    | Lists available transcripts                                                                                                                               |
+| Speed dropdown          | `config.toolbar.speedLabel`, `config.playbackDefaults.speeds[]` | MUI Select                    | Speed options from config                                                                                                                                 |
+| Play button             | `config.toolbar.playLabel`                                      | MUI IconButton (PlayArrow)    | Starts playback, disabled while playing                                                                                                                   |
+| Stop button             | `config.toolbar.stopLabel`                                      | MUI IconButton (Stop)         | Stops playback mid-stream, keeps data                                                                                                                     |
+| Clear All button        | `config.toolbar.resetLabel`                                     | MUI Button (DeleteSweep, red) | **Prominently styled.** Triggers `POST /api/resetLifecycle` via parent. Shows ConfirmDialog first.                                                        |
+
+Note: The session picker dropdown is in the transcript panel header row (above the toolbar), not in the toolbar itself.
 
 **Clear All button details:**
 
@@ -599,18 +607,28 @@ A single transcript message bubble.
 
 #### Sub-component: PlaybackControls (`playback-controls.component.tsx`)
 
-Progress indicator at the bottom of the transcript panel.
+Footer bar at the bottom of the transcript panel. Combines the health indicator, progress bar, chunk count, and status chip in a single horizontal row at `--panel-footer-height` (36px). This aligns with the right panel's footer.
 
 **Props (internal):**
 
 - `currentChunk: number`
 - `totalChunks: number`
-- `status: PlaybackStatus`
+- `playbackStatus: PlaybackStatusValue`
+- `statusText: string` -- config-driven label from `config.statusLabels[playbackStatus]`
+- `serverOk: boolean`
+- `isHealthChecking: boolean`
+- `isResetting: boolean`
 
-**Visual:**
+**Visual (single horizontal row):**
 
-- MUI LinearProgress bar showing completion percentage
-- Text: "12 / 56 chunks" or "Playback complete"
+```
+[● Connected] [========= progress bar =========] [12/56 chunks] [PLAYING]
+```
+
+- Health indicator (StatusDot + "Connected"/"Disconnected") on the far left
+- MUI LinearProgress fills the middle (flex: 1)
+- Chunk count as a monospace label
+- Status chip on the far right with color-coding per state (idle/playing/completed/error)
 
 #### Internal Hook: `useTranscriptPlayback`
 
@@ -1329,8 +1347,10 @@ Based on the [Redis Visual Identity Guide](../../.cursor/skills/redis-visual-gui
   --transition-slow: 400ms ease;
 
   /* ── Layout ── */
-  --toolbar-height: 64px;
-  --footer-height: 40px;
+  --toolbar-height: 44px;
+  --footer-height: 28px;
+  --panel-header-height: 40px;
+  --panel-footer-height: 36px;
   --panel-gap: var(--space-xs);
   --transcript-panel-width: 55%;
   --memory-panel-width: 45%;
@@ -1582,7 +1602,7 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 | ------------------------------ | ------------------------------------------ | ------------------------------------- |
 | Transcript chunks streaming in | TranscriptPanel > TranscriptFeed           | Smooth fade-up animation, auto-scroll |
 | Context summary appearing      | MemoryExplorerPanel > WorkingMemorySummary | Highlighted card with subtle glow     |
-| "Extracting..." status         | TranscriptPanel > Toolbar (status chip)    | Pulsing animation                     |
+| "Extracting..." status         | TranscriptPanel > PlaybackControls (status chip) | Color-coded chip in footer bar  |
 | Long-term memories populating  | MemoryExplorerPanel > LongTermMemoryTab    | Cards animate in one by one           |
 | Summary generated              | MemoryExplorerPanel > ComputedSummaryCard  | Large card, prominent text            |
 | Metrics dashboard              | MemoryExplorerPanel > RedisMetricsTab      | Clean grid, numbers count up          |

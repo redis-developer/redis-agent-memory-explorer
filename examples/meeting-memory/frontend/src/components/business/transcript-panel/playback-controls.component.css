@@ -1,29 +1,62 @@
 .playback-controls {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-2xs);
+  align-items: center;
+  gap: var(--space-3xs);
   padding: 0 var(--space-xs);
   height: var(--panel-footer-height);
   border-top: 1px solid var(--border);
   flex-shrink: 0;
 
-  .playback-controls__info {
+  .playback-controls__health {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: var(--space-2xs);
+    flex-shrink: 0;
+  }
+
+  .playback-controls__health-label {
+    font-size: var(--font-size-2xs);
+    color: var(--fg-muted);
+  }
+
+  .playback-controls__progress {
+    flex: 1;
+    min-width: 0;
   }
 
   .playback-controls__count {
     font-family: var(--secondary-font);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-2xs);
     color: var(--fg-muted);
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
-  .playback-controls__percentage {
-    font-family: var(--secondary-font);
-    font-size: var(--font-size-xs);
-    color: var(--fg-body);
-    font-weight: var(--font-weight-medium);
+  .playback-controls__status-chip {
+    font-family: var(--secondary-font) !important;
+    font-size: var(--font-size-2xs) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: var(--border-radius-pill) !important;
+    background-color: var(--dusk-90) !important;
+    color: var(--fg-body) !important;
+    border: none !important;
+    height: 20px !important;
+    flex-shrink: 0;
+
+    &.playback-controls__status-chip--playing {
+      background-color: color-mix(in srgb, var(--color-episodic) 15%, transparent) !important;
+      color: var(--color-episodic) !important;
+    }
+
+    &.playback-controls__status-chip--completed {
+      background-color: color-mix(in srgb, var(--sky-blue) 15%, transparent) !important;
+      color: var(--sky-blue) !important;
+    }
+
+    &.playback-controls__status-chip--error {
+      background-color: color-mix(in srgb, var(--hyper-05) 15%, transparent) !important;
+      color: var(--hyper-05) !important;
+    }
   }
 }
