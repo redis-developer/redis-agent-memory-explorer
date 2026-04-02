@@ -8,7 +8,7 @@ import { COPILOTKIT_RUNTIME_URL } from "@/constants/app.constants";
 
 const CopilotKitProvider = ({ children }: { children: ReactNode }) => {
   return (
-    <CopilotKit runtimeUrl={COPILOTKIT_RUNTIME_URL} showDevConsole={false}>
+    <CopilotKit runtimeUrl={COPILOTKIT_RUNTIME_URL} showDevConsole={false} enableInspector={false}>
       {children}
     </CopilotKit>
   );
