@@ -18,6 +18,10 @@ import type {
   LtSearchResponse,
   ResetResult,
 } from "@/types/api.types";
+import type {
+  GenerateSuggestionResponse,
+  ListSuggestionsResponse,
+} from "@/types/suggestion.types";
 
 import { API_BASE_URL } from "@/constants/app.constants";
 
@@ -38,6 +42,8 @@ const API_PATH = {
   GET_COMPUTED_SUMMARIES: "/api/getComputedSummaries",
   DELETE_SUMMARY_VIEW: "/api/deleteSummaryView",
   GET_TASK: "/api/getTask",
+  GENERATE_SUGGESTION: "/api/generateSuggestion",
+  LIST_SUGGESTIONS: "/api/listSuggestions",
   RESET_LIFECYCLE: "/api/resetLifecycle",
   HEALTH: "/health",
 } as const;
@@ -160,6 +166,20 @@ const fetchTask = (
     taskId,
   });
 
+const generateSuggestion = (
+  sessionId: string,
+  chunkIndex: number,
+): Promise<GenerateSuggestionResponse> =>
+  apiPost<GenerateSuggestionResponse>(API_PATH.GENERATE_SUGGESTION, {
+    sessionId,
+    chunkIndex,
+  });
+
+const listSuggestions = (
+  sessionId: string,
+): Promise<ListSuggestionsResponse> =>
+  apiPost<ListSuggestionsResponse>(API_PATH.LIST_SUGGESTIONS, { sessionId });
+
 const resetDemo = (): Promise<ResetResult> =>
   apiPost<ResetResult>(API_PATH.RESET_LIFECYCLE);
 
@@ -185,6 +205,8 @@ export {
   fetchComputedSummaries,
   deleteSummaryView,
   fetchTask,
+  generateSuggestion,
+  listSuggestions,
   resetDemo,
   fetchHealth,
 };

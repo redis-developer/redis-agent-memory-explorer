@@ -27,6 +27,9 @@ const DemoPage = () => {
   const { config, isLoading, error, retry } = useDatasetConfig();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [lastAppendResult, setLastAppendResult] = useState<AppendResult | null>(null);
+  const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaybackComplete, setIsPlaybackComplete] = useState(false);
 
   useCopilotReadable({
     description: "Active session ID for the current meeting playback",
@@ -50,11 +53,23 @@ const DemoPage = () => {
   const handleReset = useCallback(() => {
     setSessionId(null);
     setLastAppendResult(null);
+    setCurrentChunkIndex(0);
+    setIsPlaying(false);
+    setIsPlaybackComplete(false);
   }, []);
 
   const handleAppendResult = useCallback((result: AppendResult) => {
     setLastAppendResult(result);
   }, []);
+
+  const handlePlaybackStateChange = useCallback(
+    (chunkIndex: number, playing: boolean, complete: boolean) => {
+      setCurrentChunkIndex(chunkIndex);
+      setIsPlaying(playing);
+      setIsPlaybackComplete(complete);
+    },
+    [],
+  );
 
   if (isLoading) {
     return (
@@ -114,6 +129,7 @@ const DemoPage = () => {
               onSessionCreated={handleSessionCreated}
               onReset={handleReset}
               onAppendResult={handleAppendResult}
+              onPlaybackStateChange={handlePlaybackStateChange}
             />
           </div>
           <div className="demo-page__panel demo-page__panel--explorer">
@@ -123,6 +139,9 @@ const DemoPage = () => {
               sessionId={sessionId}
               datasetConfig={config}
               lastAppendResult={lastAppendResult}
+              currentChunkIndex={currentChunkIndex}
+              isPlaying={isPlaying}
+              isPlaybackComplete={isPlaybackComplete}
             />
           </div>
         </div>

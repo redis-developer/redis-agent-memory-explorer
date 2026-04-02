@@ -1,0 +1,100 @@
+.detected-topics {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  padding: var(--space-3xs) var(--space-xs);
+  margin-bottom: var(--space-xs);
+
+  .detected-topics__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    margin-bottom: var(--space-3xs);
+  }
+
+  .detected-topics__title {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+  }
+
+  .detected-topics__chevron {
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
+    transition: transform 0.2s ease;
+    transform: rotate(-90deg);
+  }
+
+  .detected-topics__chevron--open {
+    transform: rotate(0deg);
+  }
+
+  .detected-topics__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    max-height: 120px;
+    overflow-y: auto;
+  }
+
+  .detected-topics__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3xs);
+    font-size: var(--font-size-rg);
+    color: var(--fg-body);
+  }
+
+  .detected-topics__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: var(--font-size-rg);
+    flex-shrink: 0;
+  }
+
+  .detected-topics__item--discussed .detected-topics__icon {
+    color: #4caf50;
+  }
+
+  .detected-topics__item--new .detected-topics__icon {
+    color: var(--sky-blue);
+  }
+
+  .detected-topics__item--question .detected-topics__icon {
+    color: var(--yellow);
+  }
+
+  .detected-topics__item--pending .detected-topics__icon {
+    color: var(--fg-muted);
+  }
+
+  .detected-topics__name {
+    flex: 1;
+  }
+
+  .detected-topics__timestamp {
+    font-family: var(--secondary-font);
+    font-size: var(--font-size-2xs);
+    color: var(--fg-muted);
+  }
+
+  .detected-topics__empty {
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
+    margin: 0;
+  }
+}

@@ -56,6 +56,7 @@ type TranscriptPanelProps = {
   onSessionCreated: (sessionId: string) => void;
   onReset: () => void;
   onAppendResult?: (result: AppendResult) => void;
+  onPlaybackStateChange?: (chunkIndex: number, isPlaying: boolean, isComplete: boolean) => void;
 };
 
 const TranscriptPanel = ({
@@ -63,6 +64,7 @@ const TranscriptPanel = ({
   onSessionCreated,
   onReset,
   onAppendResult,
+  onPlaybackStateChange,
 }: TranscriptPanelProps) => {
   const [transcripts, setTranscripts] = useState<TranscriptSummary[]>([]);
   const [selectedTranscriptId, setSelectedTranscriptId] = useState<string | null>(null);
@@ -109,6 +111,12 @@ const TranscriptPanel = ({
       onAppendResult(playback.lastAppendResult);
     }
   }, [playback.lastAppendResult, onAppendResult]);
+
+  useEffect(() => {
+    if (onPlaybackStateChange) {
+      onPlaybackStateChange(playback.currentIndex, playback.isPlaying, playback.isComplete);
+    }
+  }, [playback.currentIndex, playback.isPlaying, playback.isComplete, onPlaybackStateChange]);
 
   const loadTranscriptList = useCallback(() => {
     if (transcriptsLoaded) return;
