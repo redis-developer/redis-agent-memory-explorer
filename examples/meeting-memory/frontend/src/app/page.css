@@ -44,24 +44,12 @@
     flex-shrink: 0;
   }
 
-  .demo-page__title-group {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
   .demo-page__title {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-bold);
     color: var(--fg-default);
     margin: 0;
-    line-height: 1.2;
-  }
-
-  .demo-page__subtitle {
-    font-size: var(--font-size-xs);
-    color: var(--fg-muted);
-    margin: 0;
+    line-height: 1;
   }
 
   .demo-page__panels {

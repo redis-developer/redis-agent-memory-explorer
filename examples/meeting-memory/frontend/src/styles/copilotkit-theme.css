@@ -30,6 +30,10 @@
   background-color: #0d212c !important;
   color: #e4e8eb !important;
   font-weight: 700 !important;
+  height: var(--toolbar-height) !important;
+  min-height: var(--toolbar-height) !important;
+  max-height: var(--toolbar-height) !important;
+  box-sizing: border-box !important;
 }
 
 .copilotKitWindow {

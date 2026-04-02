@@ -14,7 +14,7 @@
   }
 
   .transcript-panel__title {
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-bold);
     color: var(--fg-default);
     margin: 0;
