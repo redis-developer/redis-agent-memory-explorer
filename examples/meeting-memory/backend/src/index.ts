@@ -2,9 +2,14 @@ import type { SummaryViewConfigEntry } from "./types";
 
 import { ApiServer } from "cau-api-server";
 import { Logger } from "cau-logger";
+import { RedisDb } from "cau-redis";
 import { AgentMemory } from "cau-redis-agent-memory";
 
-import { LOGGER_CONTEXT, COPILOTKIT_ENDPOINT } from "./constants";
+import {
+  LOGGER_CONTEXT,
+  COPILOTKIT_ENDPOINT,
+  DEFAULT_RATE_LIMIT_MAX,
+} from "./constants";
 import { routes } from "./routes";
 import { setAppState } from "./app-state";
 import { ENV } from "./config";
@@ -73,6 +78,7 @@ const initializeApp = async (): Promise<void> => {
   });
 
   await AgentMemory.getInstance().healthCheck();
+
   logger.info("Agent Memory Server connected", {
     baseUrl: ENV.AGENT_MEMORY_BASE_URL,
   });
@@ -89,6 +95,10 @@ const initializeApp = async (): Promise<void> => {
     userId,
   });
 
+  const redis = RedisDb.create({ url: ENV.REDIS_URL });
+  await redis.connect();
+  logger.info("Redis connected for copilot stores", { url: ENV.REDIS_URL });
+
   logger.info("Backend ready", {
     dataset: ENV.ACTIVE_DATASET,
     namespace,
@@ -102,12 +112,20 @@ const server = ApiServer.create({
   config: {
     PORT: ENV.PORT,
     ALLOWED_ORIGINS: ENV.ALLOWED_ORIGINS,
+    RATE_LIMIT_MAX: DEFAULT_RATE_LIMIT_MAX,
   },
   logger,
   routes,
   onAppStart: initializeApp,
   onAppStop: async () => {
     await AgentMemory.getInstance().close();
+
+    const redisDbInst = RedisDb.getInstance();
+    const isRedisConnected = redisDbInst.isConnected();
+    if (isRedisConnected) {
+      await redisDbInst.close();
+    }
+
     logger.info("Backend stopped");
   },
 });

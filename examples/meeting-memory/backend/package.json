@@ -10,6 +10,7 @@
   "dependencies": {
     "cau-api-server": "*",
     "cau-logger": "*",
+    "cau-redis": "*",
     "cau-redis-agent-memory": "*",
     "@copilotkit/runtime": "^1.54.0",
     "@langchain/langgraph": "^1.2.0",

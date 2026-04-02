@@ -2,6 +2,7 @@ import type {
   MemoryType,
   SummaryViewSource,
 } from "cau-redis-agent-memory";
+import type { DetectedTopicStatus, DetectedTopicSource } from "./constants";
 
 // --- Dataset Config (matches dataset.config.json schema) ---
 
@@ -58,6 +59,7 @@ type DatasetConfig = {
       description: string;
     };
   };
+  liveSuggestions?: LiveSuggestionsConfig;
   transcriptPanel: {
     title: string;
     playingLabel: string;
@@ -208,6 +210,78 @@ type ForgetLifecycleInput = {
   dryRun?: boolean;
 };
 
+// --- Live Suggestions ---
+
+type SuggestionTypeConfig = {
+  id: string;
+  label: string;
+  description: string;
+  enabled: boolean;
+};
+
+type LiveSuggestionsConfig = {
+  title: string;
+  description: string;
+  bannerLabel: string;
+  topicsTitle: string;
+  insightsTitle: string;
+  waitingMessage: string;
+  noSuggestionsMessage: string;
+  triggerEveryNChunks: number;
+  suggestionTypes: SuggestionTypeConfig[];
+};
+
+type DetectedTopic = {
+  name: string;
+  status: DetectedTopicStatus;
+  detectedAtChunkIndex: number | null;
+  detectedAtTimestamp: string | null;
+  source: DetectedTopicSource;
+};
+
+type LiveSuggestion = {
+  id: string;
+  type: string;
+  title: string;
+  summary: string;
+  details: string[];
+  chunkIndex: number;
+  timestamp: string;
+  relatedTopics: string[];
+  createdAt: string;
+};
+
+type TopicUpdate = {
+  name: string;
+  status: DetectedTopicStatus;
+  detectedAtTimestamp: string | null;
+};
+
+type SuggestionLlmResponse = {
+  suggestion: {
+    type: string;
+    title: string;
+    summary: string;
+    details: string[];
+    relatedTopics: string[];
+  } | null;
+  topicUpdates: TopicUpdate[];
+};
+
+type GenerateSuggestionInput = {
+  sessionId: string;
+  chunkIndex: number;
+};
+
+type GenerateSuggestionResult = {
+  suggestion: LiveSuggestion | null;
+  detectedTopics: DetectedTopic[];
+};
+
+type ListSuggestionsInput = {
+  sessionId: string;
+};
+
 // --- CopilotKit (LangGraph state) ---
 
 type CopilotKitReadable = { description: string; value: string };
@@ -232,6 +306,15 @@ export type {
   SummaryViewConfigEntry,
   DatasetConfig,
   DatasetSummary,
+  SuggestionTypeConfig,
+  LiveSuggestionsConfig,
+  DetectedTopic,
+  LiveSuggestion,
+  TopicUpdate,
+  SuggestionLlmResponse,
+  GenerateSuggestionInput,
+  GenerateSuggestionResult,
+  ListSuggestionsInput,
   CopilotKitReadable,
   CopilotKitState,
   TranscriptChunk,
