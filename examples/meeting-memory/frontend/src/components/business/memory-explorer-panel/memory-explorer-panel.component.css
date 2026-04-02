@@ -11,6 +11,6 @@
   .memory-explorer-panel__content {
     flex: 1;
     overflow-y: auto;
-    padding: var(--space-xs);
+    padding: var(--space-xs) var(--space-xs) 0;
   }
 }

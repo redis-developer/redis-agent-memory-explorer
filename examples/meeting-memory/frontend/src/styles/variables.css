@@ -99,6 +99,8 @@
   --toolbar-height: 44px;
   --footer-height: 28px;
   --panel-gap: var(--space-xs);
+  --panel-header-height: 40px;
+  --panel-footer-height: 36px;
   --transcript-panel-width: 55%;
   --memory-panel-width: 45%;
 }

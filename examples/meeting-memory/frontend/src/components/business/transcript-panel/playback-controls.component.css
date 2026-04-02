@@ -1,11 +1,12 @@
 .playback-controls {
-  padding: var(--space-3xs) var(--space-xs);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-2xs);
+  padding: 0 var(--space-xs);
+  height: var(--panel-footer-height);
   border-top: 1px solid var(--border);
   flex-shrink: 0;
-
-  .playback-controls__progress {
-    margin-bottom: var(--space-2xs);
-  }
 
   .playback-controls__info {
     display: flex;
