@@ -231,12 +231,19 @@ type LiveSuggestionsConfig = {
   suggestionTypes: SuggestionTypeConfig[];
 };
 
+type TopicMention = {
+  chunkIndex: number;
+  timestamp: string | null;
+  status: DetectedTopicStatus;
+};
+
 type DetectedTopic = {
   name: string;
   status: DetectedTopicStatus;
   detectedAtChunkIndex: number | null;
   detectedAtTimestamp: string | null;
   source: DetectedTopicSource;
+  history: TopicMention[];
 };
 
 type LiveSuggestion = {
@@ -308,6 +315,7 @@ export type {
   DatasetSummary,
   SuggestionTypeConfig,
   LiveSuggestionsConfig,
+  TopicMention,
   DetectedTopic,
   LiveSuggestion,
   TopicUpdate,

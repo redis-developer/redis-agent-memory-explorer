@@ -206,14 +206,23 @@ Topics come from two sources:
 ### Topic Data Shape
 
 ```typescript
+type TopicMention = {
+  chunkIndex: number;
+  timestamp: string | null;
+  status: "pending" | "discussed" | "new" | "question";
+};
+
 type DetectedTopic = {
   name: string;
   status: "pending" | "discussed" | "new" | "question";
   detectedAtChunkIndex: number | null;
   detectedAtTimestamp: string | null;
   source: "pre-seeded" | "ai-detected";
+  history: TopicMention[];
 };
 ```
+
+`detectedAt*` fields capture the **first** detection (via nullish coalescing). `history` captures every **subsequent** re-mention (appended only when `detectedAtChunkIndex` is already non-null). Pre-seeded topics start with `history: []`; the first real detection fills `detectedAt*` but does not push to `history`.
 
 Pre-seeded topics start with `status: "pending"`, `detectedAtChunkIndex: null`, `source: "pre-seeded"`. The AI updates their status and timestamp when it detects them in the conversation.
 
