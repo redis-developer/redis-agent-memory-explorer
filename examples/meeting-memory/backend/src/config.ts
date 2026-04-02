@@ -11,6 +11,7 @@ import {
   DEFAULT_LANGGRAPH_DEPLOYMENT_URL,
   DEFAULT_CHATBOT_MODEL,
   DEFAULT_REDIS_URL,
+  DEFAULT_QUERY_EXTRACTION_MODEL,
 } from "./constants";
 
 const parseAllowedOrigins = (raw: string | undefined): string[] => {
@@ -45,6 +46,8 @@ const ENV = {
   LANGSMITH_API_KEY: process.env.LANGSMITH_API_KEY ?? "",
   OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "",
   REDIS_URL: process.env.REDIS_URL ?? DEFAULT_REDIS_URL,
+  QUERY_EXTRACTION_MODEL:
+    process.env.MEETING_MEMORY_QUERY_EXTRACTION_MODEL ?? DEFAULT_QUERY_EXTRACTION_MODEL,
 } as const;
 
 export { ENV };
