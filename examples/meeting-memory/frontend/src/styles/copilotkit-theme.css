@@ -17,6 +17,8 @@
 
 .copilotKitSidebar .copilotKitWindow {
   z-index: 50;
+  border-left: 1px solid #2e5a6e;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.6);
 }
 
 .copilotKitChat {
