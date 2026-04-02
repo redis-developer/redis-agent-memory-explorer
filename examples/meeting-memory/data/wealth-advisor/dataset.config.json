@@ -4,14 +4,12 @@
   "description": "AI-powered meeting memory for bank relationship managers and high-net-worth clients.",
   "namespace": "wealth-advisor",
   "userId": "sarah-chen",
-
   "branding": {
     "title": "Wealth Advisor Memory Explorer",
-    "subtitle": "Powered by Redis Agent Memory Server",
+    "subtitle": "Powered by Redis Agent Memory",
     "footerText": "Redis Released 2026 -- Wealth Advisor Memory Demo",
     "accentColor": "#dc382c"
   },
-
   "roles": {
     "rm": {
       "label": "Relationship Manager",
@@ -22,7 +20,6 @@
       "shortLabel": "Client"
     }
   },
-
   "participants": {
     "rm": {
       "name": "Sarah Chen",
@@ -35,7 +32,6 @@
       "organization": "Meridian Technologies"
     }
   },
-
   "memoryLabels": {
     "workingMemory": {
       "title": "Working Memory",
@@ -65,12 +61,16 @@
         {
           "name": "Client Memory Summary",
           "source": "long_term",
-          "groupBy": ["user_id"]
+          "groupBy": [
+            "user_id"
+          ]
         },
         {
           "name": "Session Recap",
           "source": "long_term",
-          "groupBy": ["session_id"],
+          "groupBy": [
+            "session_id"
+          ],
           "prompt": "Summarize the key discussion points, decisions made, and action items from this meeting session."
         }
       ]
@@ -80,13 +80,11 @@
       "description": "Real-time operational stats from the agent memory server."
     }
   },
-
   "transcriptPanel": {
     "title": "Meeting Transcript",
     "playingLabel": "Live Call Simulation",
     "completedLabel": "Call Ended"
   },
-
   "toolbar": {
     "transcriptDropdownLabel": "Select Meeting",
     "sessionDropdownLabel": "Load Existing Session",
@@ -95,7 +93,6 @@
     "resetLabel": "Clear All Memories & Restart",
     "speedLabel": "Playback Speed"
   },
-
   "statusLabels": {
     "idle": "Select a meeting to begin",
     "loading": "Loading transcript...",
@@ -105,17 +102,27 @@
     "ready-to-explore": "Ready to explore memories",
     "error": "Error"
   },
-
   "playbackDefaults": {
     "intervalMs": 2000,
     "speeds": [
-      { "label": "0.5x", "intervalMs": 4000 },
-      { "label": "1x", "intervalMs": 2000 },
-      { "label": "2x", "intervalMs": 1000 },
-      { "label": "4x", "intervalMs": 500 }
+      {
+        "label": "0.5x",
+        "intervalMs": 4000
+      },
+      {
+        "label": "1x",
+        "intervalMs": 2000
+      },
+      {
+        "label": "2x",
+        "intervalMs": 1000
+      },
+      {
+        "label": "4x",
+        "intervalMs": 500
+      }
     ]
   },
-
   "liveSuggestions": {
     "title": "AI Copilot",
     "description": "Real-time AI suggestions during transcript playback.",
@@ -164,7 +171,6 @@
       }
     ]
   },
-
   "chatbot": {
     "title": "Memory Assistant",
     "initialMessage": "Ask me anything about the stored memories for this client. I can search across all meetings or focus on a specific session.",

@@ -2,11 +2,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3xs) var(--space-xs);
-  border-radius: var(--border-radius);
-  margin-bottom: var(--space-3xs);
-  min-height: 40px;
+  padding: 0 var(--space-xs);
+  height: var(--panel-header-height);
   transition: all var(--transition-normal);
+  flex-shrink: 0;
 }
 
 .suggestion-banner--empty {
