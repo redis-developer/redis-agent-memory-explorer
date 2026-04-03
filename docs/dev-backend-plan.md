@@ -28,7 +28,7 @@ Also check examples in `examples/redis-agent-memory/` for `cau-redis-agent-memor
 ## Data Directory Convention
 
 ```
-examples/meeting-memory/data/
+data/
 ├── wealth-advisor/                  # One folder per dataset
 │   ├── dataset.config.json          # All labels, branding, namespace, userId, roles
 │   └── transcripts/
@@ -128,7 +128,7 @@ The backend reads this config at startup and serves it to the frontend via `POST
 ## Project Structure
 
 ```
-examples/meeting-memory/backend/
+backend/
 ├── src/
 │   ├── index.ts                        # ApiServer.create(), Logger.create(), AgentMemory.create()
 │   ├── config.ts                       # ENV constants (ports, URLs, datasets)

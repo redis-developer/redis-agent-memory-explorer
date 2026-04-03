@@ -832,7 +832,7 @@ Important:
 The existing `agent/` folder is renamed to `chatbot-agent/` (it contains the CopilotKit + LangGraph chatbot wiring). The new suggestion agent lives in its own `suggestion-agent/` folder.
 
 ```
-examples/meeting-memory/backend/src/
+backend/src/
 ├── chatbot-agent/                          # RENAMED from agent/
 │   ├── graph.ts                            # (unchanged)
 │   ├── tools.ts                            # (unchanged)
@@ -871,7 +871,7 @@ examples/meeting-memory/backend/src/
 All AI Copilot sub-components and hooks live in a new `ai-copilot/` subfolder under `memory-explorer-panel/`. This keeps them grouped and avoids cluttering the parent folder.
 
 ```
-examples/meeting-memory/frontend/src/
+frontend/src/
 ├── components/
 │   └── business/
 │       └── memory-explorer-panel/

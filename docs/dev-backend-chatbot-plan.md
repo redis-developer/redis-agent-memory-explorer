@@ -96,7 +96,7 @@ We use **Option B** from the CopilotKit demo reference (REST API + Custom Tools)
 ## Project Structure (Changes Only)
 
 ```
-examples/meeting-memory/backend/
+backend/
 ├── src/
 │   ├── index.ts                          # MODIFIED: mount /copilotkit after ApiServer.create()
 │   ├── config.ts                         # MODIFIED: add LANGGRAPH_DEPLOYMENT_URL, GOOGLE_API_KEY
@@ -891,12 +891,10 @@ Two processes are needed (two terminals):
 
 ```bash
 # Terminal 1: LangGraph dev server (graph + tools)
-cd examples/meeting-memory/backend
 npm run dev:langgraph
 
 # Terminal 2: Main backend server (existing REST API + CopilotKit endpoint)
-cd examples/meeting-memory/backend
-npm run dev
+npm run dev:api
 ```
 
 The LangGraph dev server runs the graph at `http://127.0.0.1:2024`. The main backend connects to it via `CopilotRuntime` + `LangGraphAgent`. The frontend talks only to the main backend (port 3001).
@@ -1057,7 +1055,7 @@ Response: "The **current session's working memory** contains:
 
 These were open questions during planning. All resolved.
 
-**[Q1] `cau-api-server` middleware ordering:** Resolved -- no changes to `cau-api-server` needed. The package registers routes + 404 in `start()` (via `mountRouterAndErrorHandlers`), not `create()`. Middleware added via `server.expressApp.use()` between `create()` and `start()` is registered before routes and the 404 catch-all. This is a documented pattern in the [cau-api-server README](../../../packages/cau-api-server/README.md).
+**[Q1] `cau-api-server` middleware ordering:** Resolved -- no changes to `cau-api-server` needed. The package registers routes + 404 in `start()` (via `mountRouterAndErrorHandlers`), not `create()`. Middleware added via `server.expressApp.use()` between `create()` and `start()` is registered before routes and the 404 catch-all. This is a documented pattern in the [cau-api-server README](../packages/cau-api-server/README.md).
 
 **[Q2] LangGraph dev server:** Dev server is fine for the demo. Added `"dev:langgraph"` script to `package.json`. Two terminals needed: one for LangGraph, one for the main backend.
 

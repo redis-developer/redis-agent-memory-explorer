@@ -137,7 +137,7 @@ Best for a demo: the chatbot is a "reveal" moment. The presenter shows the trans
 ## Project Structure (Changes Only)
 
 ```
-examples/meeting-memory/frontend/
+frontend/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx                            # MODIFIED: wrap with CopilotKit provider

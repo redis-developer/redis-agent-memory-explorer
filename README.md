@@ -47,7 +47,7 @@ Edit `backend/.env` and fill in your API keys:
 | ------------------------------- | ------------------------------ | ----------------------- |
 | `MEETING_MEMORY_PORT`           | Backend API port               | `3001`                  |
 | `AGENT_MEMORY_BASE_URL`         | Redis Agent Memory Server URL  | `http://localhost:8000` |
-| `MEETING_MEMORY_DATA_DIR`       | Path to transcript data        | `../data`               |
+| `MEETING_MEMORY_DATA_DIR`       | Path to transcript data (relative to `backend/src/`) | `../../data`    |
 | `MEETING_MEMORY_ACTIVE_DATASET` | Active dataset folder name     | `wealth-advisor`        |
 | `OPENAI_API_KEY`                | OpenAI API key                 | —                       |
 | `LANGGRAPH_DEPLOYMENT_URL`      | LangGraph local dev server URL | `http://localhost:2024` |

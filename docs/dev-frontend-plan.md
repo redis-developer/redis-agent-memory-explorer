@@ -115,7 +115,7 @@ The page owns **small bridge state** (`sessionId`, `lastAppendResult`, `currentC
 ## Project Structure
 
 ```
-examples/meeting-memory/frontend/
+frontend/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx                          # Root layout (fonts, metadata, global styles)
