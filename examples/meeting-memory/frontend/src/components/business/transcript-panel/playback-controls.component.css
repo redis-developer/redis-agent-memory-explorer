@@ -49,6 +49,11 @@
       color: var(--color-episodic) !important;
     }
 
+    &.playback-controls__status-chip--paused {
+      background-color: color-mix(in srgb, var(--color-episodic) 15%, transparent) !important;
+      color: var(--color-episodic) !important;
+    }
+
     &.playback-controls__status-chip--completed {
       background-color: color-mix(in srgb, var(--sky-blue) 15%, transparent) !important;
       color: var(--sky-blue) !important;

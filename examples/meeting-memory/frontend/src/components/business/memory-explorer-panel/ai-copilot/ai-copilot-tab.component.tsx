@@ -18,7 +18,7 @@ type AiCopilotTabProps = {
   suggestions: LiveSuggestion[];
   detectedTopics: DetectedTopic[];
   isGenerating: boolean;
-  isPlaying: boolean;
+  isActive: boolean;
   isComplete: boolean;
   labels: LiveSuggestionsConfig;
   scrollToTopSignal: number;
@@ -28,7 +28,7 @@ const AiCopilotTab = ({
   suggestions,
   detectedTopics,
   isGenerating,
-  isPlaying,
+  isActive,
   isComplete,
   labels,
   scrollToTopSignal,
@@ -45,7 +45,7 @@ const AiCopilotTab = ({
   const reversedSuggestions = [...suggestions].reverse();
 
   let statusText = "";
-  if (isPlaying) {
+  if (isActive) {
     statusText = labels.waitingMessage;
   }
   if (isComplete) {
@@ -68,7 +68,7 @@ const AiCopilotTab = ({
                 key={suggestion.id}
                 suggestion={suggestion}
                 suggestionTypes={labels.suggestionTypes}
-                isNew={idx === 0 && isPlaying}
+                isNew={idx === 0 && isActive}
               />
             ))}
           </div>

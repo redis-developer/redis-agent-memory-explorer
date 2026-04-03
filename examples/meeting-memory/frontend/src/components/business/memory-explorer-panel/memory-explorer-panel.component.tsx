@@ -28,7 +28,6 @@ type MemoryExplorerPanelProps = {
   datasetConfig: DatasetConfig;
   lastAppendResult?: AppendResult | null;
   currentChunkIndex?: number;
-  isPlaying?: boolean;
   isPlaybackComplete?: boolean;
 };
 
@@ -39,7 +38,6 @@ const MemoryExplorerPanel = ({
   datasetConfig,
   lastAppendResult,
   currentChunkIndex = 0,
-  isPlaying = false,
   isPlaybackComplete = false,
 }: MemoryExplorerPanelProps) => {
   const liveSuggestionsConfig = datasetConfig.liveSuggestions;
@@ -60,7 +58,7 @@ const MemoryExplorerPanel = ({
   const liveSuggestions = useLiveSuggestions({
     sessionId,
     currentChunkIndex,
-    isPlaying,
+    isPlaybackComplete: isPlaybackComplete,
     triggerEveryNChunks: triggerEveryN,
   });
 
@@ -144,7 +142,7 @@ const MemoryExplorerPanel = ({
             suggestions={liveSuggestions.suggestions}
             detectedTopics={liveSuggestions.detectedTopics}
             isGenerating={liveSuggestions.isGenerating}
-            isPlaying={isPlaying}
+            isActive={currentChunkIndex > 0 && !isPlaybackComplete}
             isComplete={isPlaybackComplete}
             labels={liveSuggestionsConfig!}
             scrollToTopSignal={scrollToTopSignal}

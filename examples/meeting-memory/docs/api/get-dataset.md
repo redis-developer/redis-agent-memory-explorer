@@ -57,7 +57,8 @@ Returns the active dataset configuration. First call the frontend makes on page 
     "toolbar": {
       "transcriptDropdownLabel": "Select Meeting",
       "playLabel": "Play Transcript",
-      "stopLabel": "Stop",
+      "pauseLabel": "Pause",
+      "nextLabel": "Next Message",
       "resetLabel": "Clear All Memories & Restart",
       "speedLabel": "Playback Speed"
     },
@@ -65,6 +66,7 @@ Returns the active dataset configuration. First call the frontend makes on page 
       "idle": "Select a meeting to begin",
       "loading": "Loading transcript...",
       "playing": "Playing",
+      "paused": "Paused",
       "completed": "Transcript complete",
       "extracting": "Extracting long-term memories...",
       "ready-to-explore": "Ready to explore memories",

@@ -12,7 +12,7 @@ import {
 type UseLiveSuggestionsInput = {
   sessionId: string | null;
   currentChunkIndex: number;
-  isPlaying: boolean;
+  isPlaybackComplete: boolean;
   triggerEveryNChunks: number;
 };
 
@@ -27,7 +27,7 @@ type UseLiveSuggestionsResult = {
 const useLiveSuggestions = ({
   sessionId,
   currentChunkIndex,
-  isPlaying,
+  isPlaybackComplete,
   triggerEveryNChunks,
 }: UseLiveSuggestionsInput): UseLiveSuggestionsResult => {
   const [suggestions, setSuggestions] = useState<LiveSuggestion[]>([]);
@@ -80,7 +80,7 @@ const useLiveSuggestions = ({
 
   useEffect(() => {
     const hasNoSession = sessionId === null;
-    if (hasNoSession || !isPlaying) {
+    if (hasNoSession || isPlaybackComplete) {
       return;
     }
 
@@ -91,6 +91,7 @@ const useLiveSuggestions = ({
       return;
     }
 
+    const prevTriggeredIndex = lastTriggeredIndexRef.current;
     lastTriggeredIndexRef.current = currentChunkIndex;
     isGeneratingRef.current = true;
     setIsGenerating(true);
@@ -98,6 +99,9 @@ const useLiveSuggestions = ({
 
     generateSuggestion(sessionId, currentChunkIndex)
       .then((result) => {
+        if (!result) {
+          return;
+        }
         const hasSuggestion = result.suggestion !== null;
         if (hasSuggestion) {
           setSuggestions((prev) => [...prev, result.suggestion!]);
@@ -105,14 +109,15 @@ const useLiveSuggestions = ({
         setDetectedTopics(result.detectedTopics);
       })
       .catch((err: Error) => {
+        lastTriggeredIndexRef.current = prevTriggeredIndex;
         setError(err.message);
         console.error("Suggestion generation failed:", err.message);
       })
       .finally(() => {
-        setIsGenerating(false);
         isGeneratingRef.current = false;
+        setIsGenerating(false);
       });
-  }, [sessionId, currentChunkIndex, isPlaying, triggerEveryNChunks]);
+  }, [sessionId, currentChunkIndex, isPlaybackComplete, triggerEveryNChunks, isGenerating]);
 
   const latestSuggestion = suggestions.length > 0
     ? suggestions[suggestions.length - 1]

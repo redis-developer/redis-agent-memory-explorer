@@ -43,6 +43,7 @@ const PLAYBACK_STATUS = {
   IDLE: "idle",
   LOADING: "loading",
   PLAYING: "playing",
+  PAUSED: "paused",
   COMPLETED: "completed",
   ERROR: "error",
 } as const;

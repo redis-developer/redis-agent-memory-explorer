@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add **push-based live suggestions** to the Meeting Memory demo, inspired by Screen 3 from [plan.md](./plan.md). During transcript playback, the AI periodically analyzes recent chunks and surfaces contextual suggestions -- detected topics, life events, action items, and contextual insights -- without the user asking. This creates the "AI copilot listening in" experience.
+Add **push-based live suggestions** to the Meeting Memory demo, inspired by Screen 3 from [plan.md](./plan.md). Whenever the transcript advances (continuous play or **Next** / step-one-chunk), the AI periodically analyzes recent chunks and surfaces contextual suggestions -- detected topics, life events, action items, and contextual insights -- without the user asking. Generation is **blocked only when playback is complete** (`isPlaybackComplete`), not merely when the user pauses. This creates the "AI copilot listening in" experience.
 
 The chatbot (CopilotKit sidebar) is **pull-based** -- the user asks, the agent answers. Live suggestions are **push-based** -- the AI detects something noteworthy and surfaces it automatically. These are complementary, independent systems.
 
@@ -335,7 +335,7 @@ Add a `liveSuggestions` section:
 
 **Key config values:**
 
-- `triggerEveryNChunks` -- how often to call the suggestion endpoint (default: 5). At 2s/chunk playback speed, this means one LLM analysis every ~10 seconds.
+- `triggerEveryNChunks` -- how often to call the suggestion endpoint (default: 5). At 2s per chunk (whether from interval play or **Next**), this means one LLM analysis every ~10 seconds while the transcript is not yet complete.
 - `suggestionTypes` -- object array defining all suggestion types. Each entry has `id` (used in LLM responses and `LiveSuggestion.type`), `label` (display text for badges/chips), `description` (fed into the system prompt to instruct the LLM), and `enabled` (toggle per dataset). The system prompt and frontend rendering are built dynamically from this array -- no hardcoded type keys in code.
 - All display strings (`title`, `bannerLabel`, etc.) are config-driven as per the project convention.
 
@@ -347,7 +347,7 @@ Add a `liveSuggestions` section:
 
 #### `POST /api/generateSuggestion`
 
-Called by the frontend every N chunks during playback. The frontend sends only the session ID and current chunk index -- **all data is retrieved from Redis on the backend** (raw transcript chunks, detected topics, memory context). This keeps payloads minimal and makes the backend the single source of truth.
+Called by the frontend every N chunks while the transcript is still advancing and playback is not complete. The frontend sends only the session ID and current chunk index -- **all data is retrieved from Redis on the backend** (raw transcript chunks, detected topics, memory context). This keeps payloads minimal and makes the backend the single source of truth.
 
 The backend:
 
@@ -916,13 +916,20 @@ type UseLiveSuggestionsResult = {
   isGenerating: boolean;
   error: string | null;
 };
+
+type UseLiveSuggestionsInput = {
+  sessionId: string | null;
+  currentChunkIndex: number;
+  isPlaybackComplete: boolean;
+  triggerEveryNChunks: number;
+};
 ```
 
 **Behavior:**
 
-1. Receives `chunkIndex` (from playback), `sessionId`, `isPlaying`, and `triggerEveryNChunks` as inputs. **Does NOT receive transcript `chunks` array** -- raw chunks are stored in Redis by the backend during `appendWorkingMemory`.
+1. Receives `chunkIndex` (from playback), `sessionId`, `isPlaybackComplete`, and `triggerEveryNChunks` as inputs. **Does NOT receive transcript `chunks` array** -- raw chunks are stored in Redis by the backend during `appendWorkingMemory`.
 2. Tracks the last chunk index that triggered a suggestion call
-3. When `chunkIndex - lastTriggeredIndex >= triggerEveryNChunks` AND `isPlaying`:
+3. When `chunkIndex - lastTriggeredIndex >= triggerEveryNChunks` AND **not** `isPlaybackComplete` (paused mid-stream still advances chunks, so suggestions keep firing until the transcript is finished):
    - Call `POST /api/generateSuggestion` with `{ sessionId, chunkIndex }` (minimal payload)
    - On response: append suggestion to local array (if non-null), **replace** local `detectedTopics` with the full state from the response (no merge logic)
 4. On session load (existing session): call `POST /api/listSuggestions` to populate the full tab state (suggestions + detected topics) in one call
@@ -934,26 +941,28 @@ Topics are **initialized on the backend** during `createWorkingMemory` (pre-seed
 
 ### Wiring: How the Trigger Flows
 
-The frontend already has `chunkIndex` (from `useTranscriptPlayback` inside TranscriptPanel) and `lastAppendResult` flowing to MemoryExplorerPanel. For live suggestions, we need `chunkIndex` and `isPlaying` to flow to `useLiveSuggestions`. Since raw chunks are stored in Redis by the backend (during `appendWorkingMemory`), the frontend does **NOT** need to pass the `chunks` array -- only the chunk index and playback state.
+The frontend already has `chunkIndex` (from `useTranscriptPlayback` inside TranscriptPanel) and `lastAppendResult` flowing to MemoryExplorerPanel. For live suggestions, `chunkIndex` and **`isPlaybackComplete`** must reach `useLiveSuggestions` (inverted from an older `isPlaying` guard: suggestions no longer require continuous play). Since raw chunks are stored in Redis by the backend (during `appendWorkingMemory`), the frontend does **NOT** need to pass the `chunks` array -- only the chunk index and completion flag.
 
 ```
 DemoPage
   │
-  ├── State: sessionId, lastAppendResult
-  │   NEW: currentChunkIndex, isPlaying
+  ├── State: sessionId, lastAppendResult, currentChunkIndex, isPlaybackComplete
   │
   ├──► TranscriptPanel
-  │     callbacks: onSessionCreated, onReset, onAppendResult
-  │     NEW callback: onChunkPlayed(chunkIndex)
+  │     callbacks: onSessionCreated, onReset, onAppendResult,
+  │                onPlaybackStateChange(chunkIndex, isPlaying, isComplete)
   │
   └──► MemoryExplorerPanel
-        props: sessionId, lastAppendResult, datasetConfig
-        NEW props: currentChunkIndex, isPlaying
+        props: sessionId, lastAppendResult, datasetConfig,
+               currentChunkIndex, isPlaybackComplete
         │
-        └── useLiveSuggestions(sessionId, currentChunkIndex, isPlaying, config)
+        └── useLiveSuggestions({
+              sessionId,
+              currentChunkIndex,
+              isPlaybackComplete,
+              triggerEveryNChunks,
+            })
 ```
-
-**Alternative:** Instead of bridging through DemoPage, `useLiveSuggestions` could derive `chunkIndex` from `lastAppendResult` (which already flows). If `lastAppendResult` contains a chunk counter or similar, no new prop is needed. Evaluate at implementation time.
 
 ### Sub-component: SuggestionBanner (`suggestion-banner.component.tsx`)
 
@@ -995,7 +1004,7 @@ type AiCopilotTabProps = {
 
 1. **Detected Topics** section (top) -- renders `DetectedTopics` sub-component
 2. **Live Insights** section (below) -- scrollable list of `SuggestionCard` sub-components, newest first
-3. **Status indicator** at the bottom: "Listening to transcript..." (during playback) or "Playback complete -- N insights generated" (after)
+3. **Status indicator** at the bottom: "Listening to transcript..." while chunks can still advance (play or step, not yet complete) or "Playback complete -- N insights generated" once `isPlaybackComplete` is true
 
 ### Sub-component: DetectedTopics (`detected-topics.component.tsx`)
 
@@ -1095,7 +1104,8 @@ TranscriptPanel                DemoPage              MemoryExplorerPanel        
   │                               │──────────────────────>│                              │
   │                               │                       │                              │
   │                               │                       │ useLiveSuggestions:           │
-  │                               │                       │ session loaded (not playing)  │
+  │                               │                       │ session loaded (complete /    │
+  │                               │                       │  preloaded transcript)       │
   │                               │                       │ → fetch full tab state        │
   │                               │                       │                              │
   │                               │                       │ POST /api/listSuggestions    │
@@ -1149,7 +1159,7 @@ TranscriptPanel                DemoPage              MemoryExplorerPanel        
 | 11    | Frontend: `ai-copilot-tab.component.tsx`                                                          | Tab content                   |
 | 12    | Frontend: `suggestion-banner.component.tsx`                                                       | Persistent banner             |
 | 13    | Frontend: Wire into `memory-explorer-panel.component.tsx` (add tab, add banner, auto-switch)      | Integration                   |
-| 14    | Frontend: Bridge `currentChunkIndex` / `isPlaying` from TranscriptPanel through DemoPage          | Playback → suggestions wiring |
+| 14    | Frontend: Bridge `currentChunkIndex` / `isPlaybackComplete` from TranscriptPanel through DemoPage   | Playback → suggestions wiring |
 | 15    | Frontend: Auto-activate AI Copilot tab on session load (existing session dropdown)                | Session load support          |
 | 16    | Test end-to-end + tune `triggerEveryNChunks` and system prompt                                    | Polish                        |
 
@@ -1181,7 +1191,7 @@ When "Clear All Memories & Restart" is clicked:
 - **Detected topics are backend-managed and hybrid.** Pre-seeded from transcript metadata at session creation, then dynamically updated by the LLM. The backend merges all topic updates. The LLM can confirm pre-seeded topics as "discussed" or add entirely new topics with "new" status.
 - **The LLM should prefer quality over quantity.** The system prompt instructs the LLM to return `null` if nothing noteworthy happened in the recent segment. Not every trigger needs to produce a suggestion.
 - **Banner is the "never miss it" mechanism.** Even if the presenter is on the Working Memory tab watching tokens grow, the banner above the tabs shows the latest suggestion. "View Details" navigates to the AI Copilot tab.
-- **The frontend `useLiveSuggestions` hook is a thin client.** It only decides _when_ to call `generateSuggestion` (based on chunk index and trigger interval) and stores the response for rendering. No topic seeding, no topic merging, no chunk collection -- all of that lives on the backend. On session load, one `listSuggestions` call gives it the complete tab state.
+- **The frontend `useLiveSuggestions` hook is a thin client.** It only decides _when_ to call `generateSuggestion` (based on chunk index, trigger interval, and **`!isPlaybackComplete`**) and stores the response for rendering. No topic seeding, no topic merging, no chunk collection -- all of that lives on the backend. On session load, one `listSuggestions` call gives it the complete tab state.
 - The frontend follows the same code style as the rest of the app: arrow functions, consolidated exports, separate type imports, kebab-case files, PascalCase components, CSS-per-component, no emojis in code.
 
 ---

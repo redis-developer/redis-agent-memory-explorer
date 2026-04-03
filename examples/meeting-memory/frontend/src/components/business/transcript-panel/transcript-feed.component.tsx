@@ -15,7 +15,7 @@ type TranscriptFeedProps = {
   roles: Record<string, RoleConfig>;
   participants: Record<string, ParticipantConfig>;
   accentColor: string;
-  isPlaying: boolean;
+  isPlaybackComplete: boolean;
 };
 
 const TranscriptFeed = ({
@@ -23,7 +23,7 @@ const TranscriptFeed = ({
   roles,
   participants,
   accentColor,
-  isPlaying,
+  isPlaybackComplete,
 }: TranscriptFeedProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
@@ -72,7 +72,7 @@ const TranscriptFeed = ({
             role={chunk.role}
             roleLabel={roleConfig?.shortLabel ?? chunk.role}
             text={chunk.text}
-            isNew={isNew && isPlaying}
+            isNew={isNew && !isPlaybackComplete}
             accentColor={accentColor}
           />
         );

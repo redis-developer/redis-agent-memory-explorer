@@ -39,7 +39,7 @@
     gap: var(--space-2xs);
   }
 
-  .toolbar__play-btn {
+  .toolbar__play-pause-btn {
     color: var(--color-episodic) !important;
 
     &:disabled {
@@ -48,7 +48,7 @@
     }
   }
 
-  .toolbar__stop-btn {
+  .toolbar__next-btn {
     color: var(--fg-body) !important;
 
     &:disabled {

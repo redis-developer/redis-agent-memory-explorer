@@ -89,7 +89,8 @@
     "transcriptDropdownLabel": "Select Meeting",
     "sessionDropdownLabel": "Load Existing Session",
     "playLabel": "Play Transcript",
-    "stopLabel": "Stop",
+    "pauseLabel": "Pause",
+    "nextLabel": "Next Message",
     "resetLabel": "Clear All Memories & Restart",
     "speedLabel": "Playback Speed"
   },
@@ -97,6 +98,7 @@
     "idle": "Select a meeting to begin",
     "loading": "Loading transcript...",
     "playing": "Playing",
+    "paused": "Paused",
     "completed": "Transcript complete",
     "extracting": "Extracting long-term memories...",
     "ready-to-explore": "Ready to explore memories",

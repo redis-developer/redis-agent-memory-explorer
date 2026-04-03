@@ -12,7 +12,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import { AgentMemory } from "cau-redis-agent-memory";
 
-import { SUGGESTION_CHUNK_WINDOW } from "../constants";
+import { SUGGESTION_CHUNK_WINDOW, DetectedTopicStatus } from "../constants";
 import { ENV } from "../config";
 import { getAppState } from "../app-state";
 import { buildSuggestionSystemPrompt } from "./system-prompt";
@@ -34,9 +34,10 @@ const parseLlmResponse = (content: string): SuggestionLlmResponse => {
     cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
   }
 
-  const parsed = JSON.parse(cleaned) as SuggestionLlmResponse;
-  const suggestion = parsed.suggestion ?? null;
-  const topicUpdates = parsed.topicUpdates ?? [];
+  const parsed = JSON.parse(cleaned);
+  const isValidObject = parsed !== null && typeof parsed === "object";
+  const suggestion = isValidObject ? (parsed.suggestion ?? null) : null;
+  const topicUpdates = isValidObject ? (parsed.topicUpdates ?? []) : [];
 
   return { suggestion, topicUpdates };
 };
@@ -141,14 +142,33 @@ const persistSuggestion = async (
   return liveSuggestion;
 };
 
+// Reconciles LLM-reported topic updates with the stored topic state.
+//
+// Two sources of topic signals come from the LLM response:
+//   1. `parsed.topicUpdates` -- explicit status changes the LLM reported
+//      (e.g., "Bond funds" moved to "question").
+//   2. `parsed.suggestion.relatedTopics` -- topic names the suggestion
+//      references but the LLM may not have included in topicUpdates.
+//
+// We treat relatedTopics as implicit "discussed" signals: if a suggestion
+// mentions a topic that isn't already in topicUpdates, we synthesize a
+// TopicUpdate for it so the topic store marks it as discussed.
+//
+// All updates are then forwarded to TopicStore.mergeUpdates, which handles:
+//   - first-detection: fills detectedAt* fields (nullish coalescing)
+//   - re-mention: appends to the topic's history array
+//   - new topics: creates them with source "ai-detected"
 const persistTopicUpdates = async (
   sessionId: string,
   parsed: SuggestionLlmResponse,
   chunkIndex: number,
   recentChunks: TranscriptChunk[],
 ): Promise<DetectedTopic[]> => {
+  // Use the last chunk's transcript timestamp as the detection time
   const lastChunkTimestamp =
     recentChunks[recentChunks.length - 1]?.timestamp ?? null;
+
+  // Source 1: explicit topic updates from the LLM, stamped with chunk time
   const topicUpdates: TopicUpdate[] = (parsed.topicUpdates ?? []).map(
     (update) => ({
       ...update,
@@ -156,7 +176,23 @@ const persistTopicUpdates = async (
     }),
   );
 
-  return TopicStore.mergeUpdates(sessionId, topicUpdates, chunkIndex);
+  // Source 2: relatedTopics from the suggestion that the LLM didn't
+  // explicitly include in topicUpdates -- treated as "discussed"
+  const relatedTopics: string[] = parsed.suggestion?.relatedTopics ?? [];
+  const updatedNames = new Set(topicUpdates.map((u) => u.name.toLowerCase()));
+
+  const missingTopics: TopicUpdate[] = relatedTopics
+    .filter((name) => !updatedNames.has(name.toLowerCase()))
+    .map((name) => ({
+      name,
+      status: DetectedTopicStatus.DISCUSSED,
+      detectedAtTimestamp: lastChunkTimestamp,
+    }));
+
+  // Merge both sources and persist via TopicStore
+  const mergedUpdates = [...topicUpdates, ...missingTopics];
+
+  return TopicStore.mergeUpdates(sessionId, mergedUpdates, chunkIndex);
 };
 
 const generateSuggestion = async (
