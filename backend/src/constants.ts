@@ -9,7 +9,7 @@ const SESSION_ID_PREFIX = "playback";
 
 const DEFAULT_PORT = 3001;
 const DEFAULT_AGENT_MEMORY_BASE_URL = "http://localhost:8000";
-const DEFAULT_DATA_DIR = "../../data";
+const DEFAULT_DATA_DIR = "../data";
 const DEFAULT_ACTIVE_DATASET = "wealth-advisor";
 const DEFAULT_MODEL_NAME = "gpt-4o-mini";
 const DEFAULT_CONTEXT_WINDOW_MAX = 1500;
