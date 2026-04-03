@@ -11,7 +11,8 @@ import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import CircularProgress from "@mui/material/CircularProgress";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import StopIcon from "@mui/icons-material/Stop";
+import PauseIcon from "@mui/icons-material/Pause";
+import SkipNextIcon from "@mui/icons-material/SkipNext";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 
 import { PLAYBACK_STATUS, SPEED_SELECT_MIN_WIDTH } from "@/constants/app.constants";
@@ -26,8 +27,10 @@ type ToolbarProps = {
   playbackSpeed: number;
   onSpeedChange: (intervalMs: number) => void;
   playbackStatus: PlaybackStatusValue;
+  isComplete: boolean;
   onPlay: () => void;
-  onStop: () => void;
+  onPause: () => void;
+  onNext: () => void;
   onReset: () => void;
   isResetting: boolean;
 };
@@ -51,12 +54,18 @@ const Toolbar = ({
   playbackSpeed,
   onSpeedChange,
   playbackStatus,
+  isComplete,
   onPlay,
-  onStop,
+  onPause,
+  onNext,
   onReset,
   isResetting,
 }: ToolbarProps) => {
   const isPlaying = playbackStatus === PLAYBACK_STATUS.PLAYING;
+  const hasTranscript = selectedTranscriptId !== null;
+  const canStep = hasTranscript && !isPlaying && !isComplete && !isResetting;
+  const playPauseLabel = isPlaying ? config.toolbar.pauseLabel : config.toolbar.playLabel;
+  const playPauseDisabled = !hasTranscript || isComplete || isResetting;
 
   return (
     <div className="toolbar">
@@ -98,28 +107,28 @@ const Toolbar = ({
       </Select>
 
       <div className="toolbar__buttons">
-        <Tooltip title={config.toolbar.playLabel}>
+        <Tooltip title={playPauseLabel}>
           <span>
             <IconButton
-              onClick={onPlay}
-              disabled={isPlaying || !selectedTranscriptId || isResetting}
-              className="toolbar__play-btn"
+              onClick={isPlaying ? onPause : onPlay}
+              disabled={playPauseDisabled}
+              className="toolbar__play-pause-btn"
               size="small"
             >
-              <PlayArrowIcon />
+              {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
             </IconButton>
           </span>
         </Tooltip>
 
-        <Tooltip title={config.toolbar.stopLabel}>
+        <Tooltip title={config.toolbar.nextLabel}>
           <span>
             <IconButton
-              onClick={onStop}
-              disabled={!isPlaying || isResetting}
-              className="toolbar__stop-btn"
+              onClick={onNext}
+              disabled={!canStep}
+              className="toolbar__next-btn"
               size="small"
             >
-              <StopIcon />
+              <SkipNextIcon />
             </IconButton>
           </span>
         </Tooltip>

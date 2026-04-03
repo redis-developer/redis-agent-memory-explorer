@@ -4,7 +4,7 @@ import type { DatasetConfig } from "@/types/dataset-config.types";
 import type { TranscriptData, TranscriptSummary } from "@/types/transcript.types";
 import type { AppendResult } from "@/types/memory.types";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, type MutableRefObject } from "react";
 
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
@@ -17,7 +17,7 @@ import {
   listWorkingMemorySessions,
   resetDemo,
 } from "@/services/api.service";
-import { PLAYBACK_STATUS, SESSION_ID_PATTERN } from "@/constants/app.constants";
+import { SESSION_ID_PATTERN } from "@/constants/app.constants";
 
 import { Toolbar } from "./toolbar.component";
 import { TranscriptFeed } from "./transcript-feed.component";
@@ -29,19 +29,20 @@ import "./transcript-panel.component.css";
 
 const formatSessionLabel = (sessionId: string): string => {
   const match = SESSION_ID_PATTERN.exec(sessionId);
-  if (!match) {
-    return sessionId;
+
+  let label = sessionId;
+  if (match) {
+    const transcriptId = match[1];
+    const timestamp = parseInt(match[2], 10);
+    const date = new Date(timestamp);
+    const timeStr = date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    label = `${transcriptId} (${timeStr})`;
   }
 
-  const transcriptId = match[1];
-  const timestamp = parseInt(match[2], 10);
-  const date = new Date(timestamp);
-  const timeStr = date.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  return `${transcriptId} (${timeStr})`;
+  return label;
 };
 
 const parseTranscriptIdFromSessionId = (sessionId: string): string | null => {
@@ -81,6 +82,7 @@ const TranscriptPanel = ({
   const hasSessions = sessions.length > 0;
 
   const pendingPlayRef = useRef(false);
+  const pendingNextRef = useRef(false);
   const pendingLoadAllRef = useRef(false);
 
   const { serverOk, isChecking: isHealthChecking } = useBackendHealth();
@@ -92,18 +94,28 @@ const TranscriptPanel = ({
   );
 
   useEffect(() => {
-    if (!pendingPlayRef.current || !sessionId) return;
-    pendingPlayRef.current = false;
-    playback.start();
+    const shouldStart = pendingPlayRef.current && sessionId;
+    if (shouldStart) {
+      pendingPlayRef.current = false;
+      playback.start();
+    }
   }, [sessionId, playback.start]);
 
   useEffect(() => {
-    if (!pendingLoadAllRef.current) return;
-    const hasChunks = (transcriptData?.chunks?.length ?? 0) > 0;
-    if (!hasChunks) return;
+    const shouldAdvance = pendingNextRef.current && sessionId;
+    if (shouldAdvance) {
+      pendingNextRef.current = false;
+      playback.next();
+    }
+  }, [sessionId, playback.next]);
 
-    pendingLoadAllRef.current = false;
-    playback.loadAll();
+  useEffect(() => {
+    const hasChunks = (transcriptData?.chunks?.length ?? 0) > 0;
+    const shouldLoadAll = pendingLoadAllRef.current && hasChunks;
+    if (shouldLoadAll) {
+      pendingLoadAllRef.current = false;
+      playback.loadAll();
+    }
   }, [transcriptData, playback]);
 
   useEffect(() => {
@@ -119,15 +131,16 @@ const TranscriptPanel = ({
   }, [playback.currentIndex, playback.isPlaying, playback.isComplete, onPlaybackStateChange]);
 
   const loadTranscriptList = useCallback(() => {
-    if (transcriptsLoaded) return;
-    fetchTranscripts()
-      .then((res) => {
-        setTranscripts(res.transcripts);
-        setTranscriptsLoaded(true);
-      })
-      .catch((err: Error) => {
-        console.error("Failed to load transcripts:", err.message);
-      });
+    if (!transcriptsLoaded) {
+      fetchTranscripts()
+        .then((res) => {
+          setTranscripts(res.transcripts);
+          setTranscriptsLoaded(true);
+        })
+        .catch((err: Error) => {
+          console.error("Failed to load transcripts:", err.message);
+        });
+    }
   }, [transcriptsLoaded]);
 
   const loadSessionList = useCallback(() => {
@@ -165,49 +178,72 @@ const TranscriptPanel = ({
   const handleLoadSession = useCallback(
     (selectedSessionId: string) => {
       const transcriptId = parseTranscriptIdFromSessionId(selectedSessionId);
-      if (!transcriptId) return;
 
-      playback.reset();
-      setSessionId(selectedSessionId);
-      onSessionCreated(selectedSessionId);
-      setSelectedTranscriptId(transcriptId);
+      if (transcriptId) {
+        playback.reset();
+        setSessionId(selectedSessionId);
+        onSessionCreated(selectedSessionId);
+        setSelectedTranscriptId(transcriptId);
 
-      fetchTranscript(transcriptId)
-        .then((data) => {
-          setTranscriptData(data);
-          pendingLoadAllRef.current = true;
-        })
-        .catch((err: Error) => {
-          console.error("Failed to load transcript for session:", err.message);
-        });
+        fetchTranscript(transcriptId)
+          .then((data) => {
+            setTranscriptData(data);
+            pendingLoadAllRef.current = true;
+          })
+          .catch((err: Error) => {
+            console.error("Failed to load transcript for session:", err.message);
+          });
+      }
     },
     [playback, onSessionCreated],
   );
 
+  const createSessionThen = useCallback(
+    (pendingRef: MutableRefObject<boolean>) => {
+      if (selectedTranscriptId && transcriptData) {
+        createWorkingMemory(selectedTranscriptId)
+          .then((res) => {
+            setSessionId(res.sessionId);
+            onSessionCreated(res.sessionId);
+            pendingRef.current = true;
+          })
+          .catch((err: Error) => {
+            console.error("Failed to create session:", err.message);
+          });
+      }
+    },
+    [selectedTranscriptId, transcriptData, onSessionCreated],
+  );
+
   const handlePlay = useCallback(() => {
-    const hasNoTranscript = !selectedTranscriptId || !transcriptData;
-    if (hasNoTranscript) return;
+    const hasTranscript = selectedTranscriptId !== null && transcriptData !== null;
 
-    const hasExistingSession = sessionId !== null;
-    if (hasExistingSession) {
-      playback.start();
-      return;
+    if (hasTranscript) {
+      const hasExistingSession = sessionId !== null;
+      if (hasExistingSession) {
+        playback.start();
+      } else {
+        createSessionThen(pendingPlayRef);
+      }
     }
+  }, [selectedTranscriptId, transcriptData, sessionId, playback, createSessionThen]);
 
-    createWorkingMemory(selectedTranscriptId)
-      .then((res) => {
-        setSessionId(res.sessionId);
-        onSessionCreated(res.sessionId);
-        pendingPlayRef.current = true;
-      })
-      .catch((err: Error) => {
-        console.error("Failed to create session:", err.message);
-      });
-  }, [selectedTranscriptId, transcriptData, sessionId, playback, onSessionCreated]);
-
-  const handleStop = useCallback(() => {
-    playback.stop();
+  const handlePause = useCallback(() => {
+    playback.pause();
   }, [playback]);
+
+  const handleNext = useCallback(() => {
+    const hasTranscript = selectedTranscriptId !== null && transcriptData !== null;
+
+    if (hasTranscript) {
+      const hasExistingSession = sessionId !== null;
+      if (hasExistingSession) {
+        playback.next();
+      } else {
+        createSessionThen(pendingNextRef);
+      }
+    }
+  }, [selectedTranscriptId, transcriptData, sessionId, playback, createSessionThen]);
 
   const handleResetConfirm = useCallback(() => {
     setIsResetting(true);
@@ -272,8 +308,10 @@ const TranscriptPanel = ({
         playbackSpeed={playbackIntervalMs}
         onSpeedChange={setPlaybackIntervalMs}
         playbackStatus={playback.status}
+        isComplete={playback.isComplete}
         onPlay={handlePlay}
-        onStop={handleStop}
+        onPause={handlePause}
+        onNext={handleNext}
         onReset={() => setShowResetDialog(true)}
         isResetting={isResetting}
       />
@@ -283,7 +321,7 @@ const TranscriptPanel = ({
         roles={datasetConfig.roles}
         participants={datasetConfig.participants}
         accentColor={datasetConfig.branding.accentColor}
-        isPlaying={playback.isPlaying}
+        isPlaybackComplete={playback.isComplete}
       />
 
       <PlaybackControls

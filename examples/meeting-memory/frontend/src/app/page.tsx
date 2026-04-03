@@ -137,7 +137,6 @@ const DemoPage = () => {
               datasetConfig={config}
               lastAppendResult={lastAppendResult}
               currentChunkIndex={currentChunkIndex}
-              isPlaying={isPlaying}
               isPlaybackComplete={isPlaybackComplete}
             />
           </div>

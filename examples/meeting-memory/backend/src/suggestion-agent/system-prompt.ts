@@ -70,6 +70,11 @@ Return a JSON object with exactly these fields:
   "topicUpdates": <array of { "name": <string>, "status": <"discussed" | "new" | "question">, "detectedAtTimestamp": <string or null> }>
 }
 
+topicUpdates status rules (only include topics whose status CHANGED in this segment):
+- "discussed": a topic from the "Not yet discussed" list was mentioned or covered in the conversation. This is the MOST COMMON update.
+- "new": a topic NOT in either list above was introduced for the first time (a surprise topic the client brought up).
+- "question": the client explicitly asked a question about a topic.
+
 ## Memory Context
 You will receive a separate memory context block containing:
 - Working memory: a running summary of what has been discussed so far in THIS session
@@ -87,6 +92,7 @@ Important:
 - STRICT DEDUP: If a previous suggestion already covers the same theme, sentiment, or topic (even with different wording or slight escalation), return null. Two "Sentiment Shift" suggestions about the same emotion (e.g. anxiety about market) are duplicates even if the intensity changed. Only generate a new suggestion of the same type if the subject matter is fundamentally different.
 - For agenda reminders, only suggest if a pending topic hasn't been discussed and the conversation seems to be moving on
 - Keep summaries concise (1-2 sentences) and details actionable
+- Every topic in suggestion.relatedTopics MUST also appear in topicUpdates with status "discussed" (or "question" if applicable). If you reference a topic in the suggestion, you must update its status.
 - Always return valid JSON only, no markdown, no explanation`;
   }
 

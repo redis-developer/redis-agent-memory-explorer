@@ -15,12 +15,14 @@ type UseTranscriptPlaybackResult = {
   currentIndex: number;
   totalChunks: number;
   isPlaying: boolean;
+  isPaused: boolean;
   isComplete: boolean;
   status: PlaybackStatusValue;
   lastAppendResult: AppendResult | null;
   error: string | null;
   start: () => void;
-  stop: () => void;
+  pause: () => void;
+  next: () => void;
   reset: () => void;
   loadAll: () => void;
 };
@@ -46,6 +48,36 @@ const useTranscriptPlayback = (
     }
   }, []);
 
+  const advanceOne = useCallback(() => {
+    const idx = indexRef.current;
+    const isFinished = idx >= chunks.length;
+    if (isFinished) {
+      clearTimer();
+      setStatus(PLAYBACK_STATUS.COMPLETED);
+      return;
+    }
+
+    const chunk = chunks[idx];
+    const isLastChunk = idx === chunks.length - 1;
+
+    setDisplayedChunks((prev) => [...prev, chunk]);
+    setCurrentIndex(idx + 1);
+    indexRef.current = idx + 1;
+
+    appendChunk(sessionId!, chunk, isLastChunk)
+      .then((result) => {
+        setLastAppendResult(result);
+      })
+      .catch((err: Error) => {
+        console.error("Append chunk failed:", err.message);
+      });
+
+    if (isLastChunk) {
+      clearTimer();
+      setStatus(PLAYBACK_STATUS.COMPLETED);
+    }
+  }, [chunks, sessionId, clearTimer]);
+
   const start = useCallback(() => {
     const hasNoSession = !sessionId;
     const hasNoChunks = chunks.length === 0;
@@ -55,41 +87,25 @@ const useTranscriptPlayback = (
     setError(null);
     indexRef.current = currentIndex;
 
-    intervalRef.current = setInterval(() => {
-      const idx = indexRef.current;
-      const isFinished = idx >= chunks.length;
-      if (isFinished) {
-        clearTimer();
-        setStatus(PLAYBACK_STATUS.COMPLETED);
-        return;
-      }
+    intervalRef.current = setInterval(advanceOne, intervalMs);
+  }, [sessionId, chunks, intervalMs, currentIndex, advanceOne]);
 
-      const chunk = chunks[idx];
-      const isLastChunk = idx === chunks.length - 1;
-
-      setDisplayedChunks((prev) => [...prev, chunk]);
-      setCurrentIndex(idx + 1);
-      indexRef.current = idx + 1;
-
-      appendChunk(sessionId, chunk, isLastChunk)
-        .then((result) => {
-          setLastAppendResult(result);
-        })
-        .catch((err: Error) => {
-          console.error("Append chunk failed:", err.message);
-        });
-
-      if (isLastChunk) {
-        clearTimer();
-        setStatus(PLAYBACK_STATUS.COMPLETED);
-      }
-    }, intervalMs);
-  }, [sessionId, chunks, intervalMs, currentIndex, clearTimer]);
-
-  const stop = useCallback(() => {
+  const pause = useCallback(() => {
     clearTimer();
-    setStatus(PLAYBACK_STATUS.IDLE);
+    setStatus(PLAYBACK_STATUS.PAUSED);
   }, [clearTimer]);
+
+  const next = useCallback(() => {
+    const hasNoSession = !sessionId;
+    const hasNoChunks = chunks.length === 0;
+    const isFinished = indexRef.current >= chunks.length;
+    if (hasNoSession || hasNoChunks || isFinished) return;
+
+    setError(null);
+    indexRef.current = currentIndex;
+    setStatus(PLAYBACK_STATUS.PAUSED);
+    advanceOne();
+  }, [sessionId, chunks, currentIndex, advanceOne]);
 
   const reset = useCallback(() => {
     clearTimer();
@@ -119,12 +135,14 @@ const useTranscriptPlayback = (
     currentIndex,
     totalChunks: chunks.length,
     isPlaying: status === PLAYBACK_STATUS.PLAYING,
+    isPaused: status === PLAYBACK_STATUS.PAUSED,
     isComplete: status === PLAYBACK_STATUS.COMPLETED,
     status,
     lastAppendResult,
     error,
     start,
-    stop,
+    pause,
+    next,
     reset,
     loadAll,
   };

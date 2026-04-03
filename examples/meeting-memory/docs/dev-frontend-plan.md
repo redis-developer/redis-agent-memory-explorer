@@ -4,12 +4,12 @@
 
 Build a Next.js frontend that powers the **Memory Exploration Demo** for the Redis Released flagship event. V1 focuses on two visual experiences derived from Screen 5 (Transcript History) and Screen 6 (Memory Explorer) of the [full UX plan](./plan.md):
 
-1. **TranscriptPanel** -- a self-contained business component that bundles the demo toolbar (transcript picker, play/stop/reset, speed) with the live transcript feed and playback controls.
+1. **TranscriptPanel** -- a self-contained business component that bundles the demo toolbar (transcript picker, play/pause/next/reset, speed) with the live transcript feed and playback controls.
 2. **MemoryExplorerPanel** -- a fully self-contained, portable business component that takes `userId`, `sessionId`, `namespace`, and `datasetConfig` as props, owns all memory API calls and UI logic internally, and can be integrated into any page without the parent knowing about memory APIs.
 
 **Key design decisions:**
 
-1. **Frontend-driven playback:** The frontend owns the entire playback loop. It fetches the full transcript in one API call, displays chunks at intervals using `setInterval`, and POSTs each chunk to the backend. No SSE, no WebSockets -- pure REST API calls.
+1. **Frontend-driven playback:** The frontend owns the entire playback loop. It fetches the full transcript in one API call, displays chunks via `setInterval` (play) or immediate single-step (`next`), and POSTs each chunk to the backend. No SSE, no WebSockets -- pure REST API calls.
 2. **Config-driven UI:** Every label, title, speaker name, button text, and description in the UI comes from a `dataset.config.json` file served by the backend via `POST /api/getDataset`. Zero hardcoded display strings. This makes the demo instantly reusable across datasets (wealth advisor, SDR advisor, personal assistant, etc.) without any code changes.
 3. **Clear All & Restart:** A prominent button in the toolbar calls `POST /api/resetLifecycle` to wipe all memories in the backend, then resets the frontend state to idle -- ready for a fresh demo run.
 4. **Component architecture:** Two layers -- `core/` (generic reusable UI primitives like buttons, dropdowns, cards) and `business/` (domain-specific components: `transcript-panel/` and `memory-explorer-panel/`, each with their own sub-components and hooks). Business components are self-contained and portable.
@@ -26,37 +26,39 @@ The frontend consumes the backend's **POST-only REST API** defined in [dev-backe
 │                                                                         │
 │  ┌───────────────────────────────────────────────────────────────────┐  │
 │  │  DemoPage (/)  -- thin orchestrator                               │  │
-│  │  Loads config via useDatasetConfig, bridges sessionId             │  │
-│  │  between the two business components.                             │  │
+│  │  Loads config via useDatasetConfig; bridges sessionId, chunk      │  │
+│  │  index, completion, and append results between the two panels.    │  │
 │  │                                                                    │  │
 │  │  ┌────────────────────────────┐  ┌──────────────────────────────┐ │  │
 │  │  │  TranscriptPanel           │  │  MemoryExplorerPanel          │ │  │
 │  │  │  (business component)      │  │  (business component)         │ │  │
 │  │  │                            │  │                               │ │  │
 │  │  │  ┌──────────────────────┐  │  │  Props: userId, sessionId,   │ │  │
-│  │  │  │  Toolbar (sub)       │  │  │    namespace,                │ │  │
-│  │  │  │  transcript picker,  │  │  │    datasetConfig             │ │  │
-│  │  │  │  play/stop/reset,    │  │  │                               │ │  │
-│  │  │  │  speed (single row)  │  │  │                               │ │  │
-│  │  │  └──────────────────────┘  │  │  Owns hooks internally:      │ │  │
-│  │  │  ┌──────────────────────┐  │  │  - useWorkingMemory          │ │  │
-│  │  │  │  TranscriptFeed (sub)│  │  │  - useLongTermMemory         │ │  │
-│  │  │  │  auto-scrolling list │  │  │  - useSummaryViews           │ │  │
-│  │  │  │  of TranscriptChunks │  │  │                               │ │  │
-│  │  │  └──────────────────────┘  │  │  Sub-components:             │ │  │
-│  │  │  ┌──────────────────────┐  │  │  - WorkingMemoryTab          │ │  │
-│  │  │  │  PlaybackControls    │  │  │  - LongTermMemoryTab         │ │  │
-│  │  │  │  health, progress,   │  │  │  - SummaryViewsTab           │ │  │
-│  │  │  │  count, status chip  │  │  │                               │ │  │
-│  │  │  └──────────────────────┘  │  │  - RedisMetricsTab           │ │  │
+│  │  │  │  Toolbar (sub)       │  │  │    namespace, datasetConfig; │ │  │
+│  │  │  │  transcript picker,  │  │  │    optional bridge for live  │ │  │
+│  │  │  │  play/pause/next/    │  │  │    suggestions (chunk index,│ │  │
+│  │  │  │  reset, speed        │  │  │    completion, append)       │ │  │
+│  │  │  └──────────────────────┘  │  │                               │ │  │
+│  │  │  ┌──────────────────────┐  │  │  Owns hooks internally:      │ │  │
+│  │  │  │  TranscriptFeed (sub)│  │  │  - useWorkingMemory          │ │  │
+│  │  │  │  auto-scrolling list │  │  │  - useLongTermMemory         │ │  │
+│  │  │  │  of TranscriptChunks │  │  │  - useSummaryViews           │ │  │
+│  │  │  └──────────────────────┘  │  │                               │ │  │
+│  │  │  ┌──────────────────────┐  │  │  Sub-components:             │ │  │
+│  │  │  │  PlaybackControls    │  │  │  - WorkingMemoryTab          │ │  │
+│  │  │  │  health, progress,   │  │  │  - LongTermMemoryTab         │ │  │
+│  │  │  │  count, status chip  │  │  │  - SummaryViewsTab           │ │  │
+│  │  │  └──────────────────────┘  │  │                               │ │  │
+│  │  │                            │  │  - RedisMetricsTab           │ │  │
+│  │  │  Owns hooks internally:    │  │                               │ │  │
+│  │  │  - useTranscriptPlayback   │  │  No TranscriptPanel imports; │ │  │
+│  │  │  - useBackendHealth        │  │  optional props from page.   │ │  │
 │  │  │                            │  │                               │ │  │
-│  │  │  Owns hooks internally:    │  │  Zero knowledge of           │ │  │
-│  │  │  - useTranscriptPlayback   │  │  TranscriptPanel internals.  │ │  │
-│  │  │  - useBackendHealth        │  │  Can be dropped into any     │ │  │
-│  │  │                            │  │  page that provides the      │ │  │
-│  │  │  Emits: onSessionCreated,  │  │  required props.             │ │  │
-│  │  │    onReset                 │  └──────────────────────────────┘ │  │
-│  │  └────────────────────────────┘                                   │  │
+│  │  │  Emits: onSessionCreated,  │  │                               │ │  │
+│  │  │    onReset; optional       │  │                               │ │  │
+│  │  │    onAppendResult,         │  │                               │ │  │
+│  │  │    onPlaybackStateChange   │  │                               │ │  │
+│  │  └────────────────────────────┘  └──────────────────────────────┘ │  │
 │  └───────────────────────────────────────────────────────────────────┘  │
 │                                                                         │
 │  Shared (page-level):                                                   │
@@ -82,22 +84,31 @@ DemoPage
   ├─ useDatasetConfig() ──────────────────────────────┐
   │   returns: config, isLoading, error               │
   │                                                    │
-  ├─ State owned by DemoPage (minimal bridge):         │
-  │   sessionId         (string | null)                │
+  ├─ State owned by DemoPage (bridge):                 │
+  │   sessionId              (string | null)           │
+  │   lastAppendResult       (AppendResult | null)     │
+  │   currentChunkIndex      (number)                  │
+  │   isPlaybackComplete     (boolean)                 │
   │                                                    │
   ├───► TranscriptPanel                                │
   │      props: datasetConfig ◄────────────────────────┘
   │      callbacks: onSessionCreated(id) ─► sets sessionId
-  │                 onReset() ─► clears sessionId
+  │                 onReset() ─► clears bridge state
+  │                 onAppendResult(result) ─► lastAppendResult
+  │                 onPlaybackStateChange(idx, playing, complete)
+  │                   ─► currentChunkIndex, isPlaying (page), isPlaybackComplete
   │
   └───► MemoryExplorerPanel
          props: userId ◄── config.userId
                 namespace ◄── config.namespace
                 sessionId ◄── sessionId state
                 datasetConfig ◄── config (for labels only)
+                lastAppendResult ◄── from TranscriptPanel (optional)
+                currentChunkIndex ◄── from playback (optional)
+                isPlaybackComplete ◄── gates live suggestions & UI (optional)
 ```
 
-The page owns only **one piece of bridge state**: `sessionId`. Everything else is internal to each business component. TranscriptPanel manages its own playback status, metrics, and UI. MemoryExplorerPanel reacts to `sessionId` changes and manages all memory polling, fetching, and metrics tracking internally.
+The page owns **small bridge state** (`sessionId`, `lastAppendResult`, `currentChunkIndex`, `isPlaybackComplete`) so MemoryExplorerPanel can run live suggestions and related UI without reaching into TranscriptPanel. Playback timing, toolbar, and transcript feed remain internal to TranscriptPanel. MemoryExplorerPanel reacts to `sessionId` and the bridge fields and manages memory polling, fetching, and metrics tracking internally.
 
 ---
 
@@ -308,6 +319,7 @@ const PlaybackStatus = {
   IDLE: "idle",
   LOADING: "loading",
   PLAYING: "playing",
+  PAUSED: "paused",
   COMPLETED: "completed",
   ERROR: "error",
 } as const;
@@ -354,7 +366,7 @@ Both panels have a symmetrical 2-row header (title row + controls/tabs row) and 
 │  │ [session dropdown ▾]  (40px)   │  │                                          ││
 │  ├────────────────────────────────┤  ├──────────────────────────────────────────┤│
 │  │ [Select Meeting ▾] [1x ▾]     │  │ [AI Copilot] [Working Memory]            ││
-│  │ [▶] [■] [Clear All] (40px)    │  │ [Long-Term] [Summary] [Redis]  (40px)   ││
+│  │ [Play/Pause] [Next] [Clear All] (40px) │  │ [Long-Term] [Summary] [Redis]  (40px)   ││
 │  ├────────────────────────────────┤  ├──────────────────────────────────────────┤│
 │  │                                │  │                                          ││
 │  │  ┌──────────────────────────┐  │  │  (active tab content, scrollable)       ││
@@ -389,7 +401,7 @@ The root page component. Its only job is to load the dataset config, render the 
 - `datasetConfig` -- the active dataset configuration (from `POST /api/getDataset`, fetched once on mount via `useDatasetConfig`)
 - `sessionId` -- current working memory session ID (set by TranscriptPanel callback)
 
-Note: `userId` and `namespace` are read from `datasetConfig.userId` and `datasetConfig.namespace` -- not separate state variables. Playback status and metrics are fully internal to TranscriptPanel. Memory polling and metrics are fully internal to MemoryExplorerPanel.
+Note: `userId` and `namespace` are read from `datasetConfig.userId` and `datasetConfig.namespace` -- not separate state variables. Playback status is fully internal to TranscriptPanel. The page mirrors `currentChunkIndex` and `isPlaybackComplete` (and optional `lastAppendResult`) for MemoryExplorerPanel. Memory polling and metrics are fully internal to MemoryExplorerPanel.
 
 **Lifecycle:**
 
@@ -410,14 +422,19 @@ Note: `userId` and `namespace` are read from `datasetConfig.userId` and `dataset
   <div className="demo-page__panels">
     <TranscriptPanel
       datasetConfig={config}
-      onSessionCreated={setSessionId}
+      onSessionCreated={handleSessionCreated}
       onReset={handleReset}
+      onAppendResult={handleAppendResult}
+      onPlaybackStateChange={handlePlaybackStateChange}
     />
     <MemoryExplorerPanel
       userId={config.userId}
       namespace={config.namespace}
       sessionId={sessionId}
       datasetConfig={config}
+      lastAppendResult={lastAppendResult}
+      currentChunkIndex={currentChunkIndex}
+      isPlaybackComplete={isPlaybackComplete}
     />
   </div>
 
@@ -507,7 +524,7 @@ Uses pure CSS with `--bg-card` background and `--border-color` border.
 
 ### 3. TranscriptPanel -- Business Component (`components/business/transcript-panel/`)
 
-Self-contained business component that bundles the **demo toolbar** (transcript picker, play/stop/reset, speed, status, health) with the **transcript feed** and **playback controls**. Left panel, 55% width on desktop.
+Self-contained business component that bundles the **demo toolbar** (transcript picker, play/pause/next/reset, speed, status, health) with the **transcript feed** and **playback controls**. Left panel, 55% width on desktop.
 
 This component owns the entire transcript lifecycle: fetching transcript lists, selecting transcripts, creating sessions, running playback, and triggering resets. It communicates with DemoPage purely through callbacks.
 
@@ -518,10 +535,16 @@ type TranscriptPanelProps = {
   datasetConfig: DatasetConfig;
   onSessionCreated: (sessionId: string) => void;
   onReset: () => void;
+  onAppendResult?: (result: AppendResult) => void;
+  onPlaybackStateChange?: (
+    chunkIndex: number,
+    isPlaying: boolean,
+    isComplete: boolean,
+  ) => void;
 };
 ```
 
-Only two callbacks. No playback status or metrics leak outside. The parent only needs to know: (1) a session was created (so it can pass `sessionId` to MemoryExplorerPanel), and (2) a reset happened (so it can clear `sessionId`).
+Optional callbacks let the page mirror append results and playback position for MemoryExplorerPanel (live suggestions, copilot UI) without exposing full playback state. The parent always needs: (1) `onSessionCreated` so it can pass `sessionId` to MemoryExplorerPanel, and (2) `onReset` to clear bridge state.
 
 #### Internal State (managed within TranscriptPanel)
 
@@ -530,8 +553,8 @@ Only two callbacks. No playback status or metrics leak outside. The parent only 
 - `selectedTranscriptId` -- which transcript is selected in the dropdown
 - `transcriptData` -- full transcript JSON (fetched on selection)
 - `displayedChunks` -- array of chunks visible in the feed (grows during playback)
-- `playbackStatus` -- idle / loading / playing / completed / error (internal to this component)
-- `playbackMetrics` -- chunks processed, append latencies (internal, shown in PlaybackControls)
+- `playbackStatus` -- idle / loading / playing / paused / completed / error (internal to this component)
+- `lastAppendResult` -- latest append response (internal; may inform Working Memory / debugging)
 - `isResetting` -- whether a reset is in progress
 - `healthStatus` -- backend health check result (from `useBackendHealth`)
 
@@ -540,7 +563,7 @@ Only two callbacks. No playback status or metrics leak outside. The parent only 
 1. On mount: fetch transcript list from `POST /api/listTranscripts` AND session list from `POST /api/listWorkingMemorySessions`
 2. On transcript selection: fetch full transcript via `POST /api/getTranscript { transcriptId }`
 3. On Play: call `POST /api/createWorkingMemory { transcriptId }` to create session -> emit `onSessionCreated(sessionId)` -> start playback via `useTranscriptPlayback`
-4. During playback: update internal `playbackStatus` and `playbackMetrics` per tick
+4. During playback (or stepped `next()`): update internal `playbackStatus` per tick
 5. On playback complete: update internal status to "completed". TranscriptPanel has no knowledge of extraction -- that is MemoryExplorerPanel's concern.
 6. On "Load Existing Session": parse `transcriptId` from session ID (format: `playback-{transcriptId}-{timestamp}`), fetch the transcript, display all chunks instantly via `playback.loadAll()`, set status to "completed", emit `onSessionCreated(sessionId)` -- MemoryExplorerPanel auto-populates with working memory, LT memories, and summaries for the loaded session.
 7. On "Clear All": show ConfirmDialog, call `POST /api/resetLifecycle`, clear internal state (including sessions list), emit `onReset()`
@@ -553,11 +576,13 @@ Single-row horizontal controls bar within TranscriptPanel, set to `--panel-heade
 | ----------------------- | --------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Transcript dropdown     | `config.toolbar.transcriptDropdownLabel`                        | MUI Select                    | Lists available transcripts                                                                                                                               |
 | Speed dropdown          | `config.toolbar.speedLabel`, `config.playbackDefaults.speeds[]` | MUI Select                    | Speed options from config                                                                                                                                 |
-| Play button             | `config.toolbar.playLabel`                                      | MUI IconButton (PlayArrow)    | Starts playback, disabled while playing                                                                                                                   |
-| Stop button             | `config.toolbar.stopLabel`                                      | MUI IconButton (Stop)         | Stops playback mid-stream, keeps data                                                                                                                     |
+| Play / Pause toggle     | `config.toolbar.playLabel`, `config.toolbar.pauseLabel`           | MUI IconButton (PlayArrow / Pause) | Starts interval playback when idle/paused; pauses mid-stream while keeping chunks and session                                                             |
+| Next button             | `config.toolbar.nextLabel`                                      | MUI IconButton (skip / step)   | Advances one chunk (same as one tick), for stepping through without continuous play                                                                       |
 | Clear All button        | `config.toolbar.resetLabel`                                     | MUI Button (DeleteSweep, red) | **Prominently styled.** Triggers `POST /api/resetLifecycle` via parent. Shows ConfirmDialog first.                                                        |
 
 Note: The session picker dropdown is in the transcript panel header row (above the toolbar), not in the toolbar itself.
+
+The toolbar receives `onPlay`, `onPause`, and `onNext` from TranscriptPanel, wired to `useTranscriptPlayback` `start`, `pause`, and `next`.
 
 **Clear All button details:**
 
@@ -576,7 +601,7 @@ Scrollable container that renders `TranscriptChunk` sub-components. Auto-scrolls
 - `chunks: TranscriptChunkData[]` -- grows during playback
 - `roles: Record<string, RoleConfig>` -- from config, for speaker labels
 - `participants: Record<string, ParticipantConfig>` -- from config, for speaker names
-- `isPlaying: boolean`
+- `isPlaybackComplete: boolean` -- entrance animation runs for new chunks only while `!isPlaybackComplete` (e.g. `isNew && !isPlaybackComplete`); when complete, newly rendered rows do not animate
 
 **Behavior:**
 
@@ -628,7 +653,7 @@ Footer bar at the bottom of the transcript panel. Combines the health indicator,
 - Health indicator (StatusDot + "Connected"/"Disconnected") on the far left
 - MUI LinearProgress fills the middle (flex: 1)
 - Chunk count as a monospace label
-- Status chip on the far right with color-coding per state (idle/playing/completed/error)
+- Status chip on the far right with color-coding per state (idle/loading/playing/paused/completed/error)
 
 #### Internal Hook: `useTranscriptPlayback`
 
@@ -654,16 +679,20 @@ type MemoryExplorerPanelProps = {
   namespace: string;
   sessionId: string | null;
   datasetConfig: DatasetConfig;
+  lastAppendResult?: AppendResult | null;
+  currentChunkIndex?: number;
+  isPlaybackComplete?: boolean;
 };
 ```
 
 **Why these props are sufficient for portability:**
 
 - `userId` + `namespace` -- identify whose memories to query. Not tied to any transcript concept.
-- `sessionId` -- scopes working memory and session-specific LT memory queries. Can be `null` (shows empty states). The panel reacts to `sessionId` changes -- that is its only external signal.
+- `sessionId` -- scopes working memory and session-specific LT memory queries. Can be `null` (shows empty states). The panel reacts to `sessionId` changes as its primary external signal.
 - `datasetConfig` -- used for display labels and branding only. The panel never modifies it.
+- `lastAppendResult`, `currentChunkIndex`, `isPlaybackComplete` -- optional bridge from the page for live suggestions and copilot UI. They do not require importing TranscriptPanel; defaults suit pages that omit live suggestions.
 
-No `playbackStatus`, no `playbackMetrics`. The panel has zero knowledge of transcript playback. It derives all its internal states from `sessionId` and the data it fetches from its own API calls.
+No `playbackStatus` and no `isPlaying` prop. The panel does not run the playback timer itself. It derives memory UI from `sessionId` and its own API calls, and uses the optional bridge fields only where needed (e.g. `useLiveSuggestions` skips generation when `isPlaybackComplete` is true).
 
 #### Internal State (managed within MemoryExplorerPanel)
 
@@ -672,7 +701,7 @@ No `playbackStatus`, no `playbackMetrics`. The panel has zero knowledge of trans
 - Working memory data (from `useWorkingMemory` hook)
 - Long-term memory data (from `useLongTermMemory` hook)
 - Summary views data (from `useSummaryViews` hook)
-All data fetching is triggered internally based on `sessionId` changes only.
+Data fetching is triggered primarily by `sessionId` changes; live suggestions also use `currentChunkIndex` and `isPlaybackComplete` when provided.
 
 #### Internal Behavior (sessionId-driven, no playback knowledge)
 
@@ -984,7 +1013,8 @@ type DatasetConfig = {
     transcriptDropdownLabel: string;
     sessionDropdownLabel: string;
     playLabel: string;
-    stopLabel: string;
+    pauseLabel: string;
+    nextLabel: string;
     resetLabel: string;
     speedLabel: string;
   };
@@ -1006,27 +1036,24 @@ Note: `SummaryViewConfigEntry` is `{ name: string; source: string; groupBy: stri
 
 The core playback hook. The frontend owns the entire playback loop. Lives inside the TranscriptPanel folder -- only TranscriptPanel uses it.
 
+`PlaybackStatusValue` matches `PlaybackStatus` in `app.constants.ts` (`idle`, `loading`, `playing`, `paused`, `completed`, `error`).
+
 ```typescript
 type UseTranscriptPlaybackResult = {
   displayedChunks: TranscriptChunkData[];
   currentIndex: number;
   totalChunks: number;
   isPlaying: boolean;
+  isPaused: boolean;
   isComplete: boolean;
+  status: PlaybackStatusValue;
   lastAppendResult: AppendResult | null;
-  metrics: PlaybackMetrics;
   error: string | null;
   start: () => void;
-  stop: () => void;
+  pause: () => void;
+  next: () => void;
   reset: () => void;
   loadAll: () => void;
-};
-
-type PlaybackMetrics = {
-  chunksProcessed: number;
-  totalAppendLatencyMs: number;
-  avgAppendLatencyMs: number;
-  appendLatencies: number[];
 };
 ```
 
@@ -1038,11 +1065,11 @@ type PlaybackMetrics = {
    b. Add it to `displayedChunks` state (UI renders it immediately)
    c. Fire-and-forget `POST /api/appendWorkingMemory { sessionId, chunk, isLastChunk }` with the chunk data
    d. When the POST resolves, update `lastAppendResult` (tokens, context, latency)
-   e. Track latency in `metrics`
-   f. If `currentIndex === totalChunks - 1`, send with `isLastChunk: true` and stop the interval
-3. `stop()` clears the interval but keeps displayed chunks and session intact
-4. `reset()` clears everything -- displayed chunks, metrics, session ID
-5. `loadAll()` instantly displays all chunks (no interval), sets `currentIndex` to `chunks.length`, sets status to `COMPLETED`. Used by the "Load Existing Session" feature to show the full transcript without replaying it.
+   e. If `currentIndex === totalChunks - 1`, send with `isLastChunk: true` and clear the interval
+3. `pause()` clears the interval and sets status to `paused`; displayed chunks and session stay intact
+4. `next()` appends a single chunk (same work as one tick), then leaves playback in `paused` unless the last chunk was just sent (then `completed`)
+5. `reset()` clears everything -- displayed chunks, session position, last append result
+6. `loadAll()` instantly displays all chunks (no interval), sets `currentIndex` to `chunks.length`, sets status to `COMPLETED`. Used by the "Load Existing Session" feature to show the full transcript without replaying it.
 
 **Why fire-and-forget the POST:** The UI display is instant (from local state). The API call happens in the background. If the API is slow on one tick, the next chunk still displays on time. The `lastAppendResult` state updates asynchronously, so the Working Memory tab shows the latest server-side stats with a slight lag -- which is fine for the demo and actually looks more realistic.
 
@@ -1446,7 +1473,7 @@ When a metric value changes, briefly highlight it:
 
 ## State Flow Diagram
 
-Shows how DemoPage, TranscriptPanel, and MemoryExplorerPanel interact. The only bridge state is `sessionId`.
+Shows how DemoPage, TranscriptPanel, and MemoryExplorerPanel interact. Bridge state includes `sessionId` plus optional fields mirrored for the explorer (`lastAppendResult`, `currentChunkIndex`, `isPlaybackComplete`).
 
 ```
 Page loads (DemoPage)
@@ -1462,7 +1489,7 @@ Page loads (DemoPage)
         ├─────────────────────────────────────┐
         ▼                                     ▼
   TranscriptPanel                     MemoryExplorerPanel
-  (owns playback, status, metrics)    (owns memory polling, exploration)
+  (owns playback, status)             (owns memory polling, exploration)
         │                                     │
         │  POST /api/listTranscripts          │  sessionId = null
         │  POST /api/listWorkingMemorySessions│  (shows empty states)
@@ -1492,7 +1519,7 @@ User selects transcript                       │
         │  │  1. Display chunk[i]  │
         │  │  2. Fire-and-forget   │
         │  │     POST /api/append  │
-        │  │  3. Track metrics     │
+        │  │  3. Update lastAppend  │
         │  │  4. i++               │
         │  └──────────────────────┘
         │
@@ -1545,7 +1572,7 @@ User selects session from "Load Existing Session" dropdown
                     MemoryExplorerPanel shows all memory data)
 ```
 
-Note: the "Clear All" button is in TranscriptPanel's toolbar and is accessible from **any** state (idle, playing, completed). If clicked during playback, TranscriptPanel stops the interval first, then proceeds with the reset API call, then emits `onReset()`. After reset, the sessions list is cleared (since all sessions are deleted by the backend).
+Note: the "Clear All" button is in TranscriptPanel's toolbar and is accessible from **any** state (idle, loading, playing, paused, completed). If clicked while a timer is active, TranscriptPanel clears the interval first, then proceeds with the reset API call, then emits `onReset()`. After reset, the sessions list is cleared (since all sessions are deleted by the backend).
 
 ---
 
@@ -1563,7 +1590,7 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 | 2     | `api.service.ts` + all types (`dataset-config.types.ts`, `transcript.types.ts`, `memory.types.ts`, `api.types.ts`)                                                                    | Shared     | API connectivity + type definitions used by both business components |
 | 3     | `components/core/*` -- StatusDot, EmptyState, MemoryTypeBadge, ConfirmDialog, SectionCard + `core.css`                                                                                | Core       | Generic UI primitives, no domain logic                               |
 | 4     | `hooks/use-dataset-config.ts` + loading/error states in `page.tsx`                                                                                                                    | Page       | Config must load before anything renders                             |
-| 5     | **TranscriptPanel shell** -- `transcript-panel.component.tsx` + `toolbar.component.tsx` (transcript picker, play/stop/reset, speed, status chip, health dot) + `transcript-panel.css` | Business   | Left panel structure with all controls                               |
+| 5     | **TranscriptPanel shell** -- `transcript-panel.component.tsx` + `toolbar.component.tsx` (transcript picker, play/pause/next/reset, speed, status chip, health dot) + `transcript-panel.css` | Business   | Left panel structure with all controls                               |
 | 6     | **TranscriptPanel internals** -- `transcript-chunk.component.tsx` + `transcript-feed.component.tsx` + `playback-controls.component.tsx`                                               | Business   | Transcript display sub-components                                    |
 | 7     | **TranscriptPanel hooks** -- `use-transcript-playback.ts` (interval + POST /append) + `use-backend-health.ts`                                                                         | Business   | Core playback loop and health check                                  |
 | 8     | **MemoryExplorerPanel shell** -- `memory-explorer-panel.component.tsx` (tab container, tab labels from config) + `memory-explorer-panel.css`                                          | Business   | Right panel structure with tabs                                      |
@@ -1571,7 +1598,7 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 | 10    | **LongTermMemoryTab** -- `long-term-memory-tab.component.tsx` + `memory-card.component.tsx` + `use-long-term-memory.ts`                                                               | Business   | Extracted memories display                                           |
 | 11    | **SummaryViewsTab** -- `summary-views-tab.component.tsx` + `computed-summary-card.component.tsx` + `use-summary-views.ts`                                                             | Business   | Summary views + computed summaries                                   |
 | 12    | **RedisMetricsTab** -- `redis-metrics-tab.component.tsx`                                                                                                                              | Business   | Under the hood stats (memory lifecycle)                              |
-| 13    | **Integration** -- wire up DemoPage with TranscriptPanel callbacks (`onSessionCreated`, `onReset`) and MemoryExplorerPanel props (`sessionId`)                                        | Page       | Bridge sessionId between business components                         |
+| 13    | **Integration** -- wire up DemoPage with TranscriptPanel callbacks and MemoryExplorerPanel props (`sessionId`, optional `lastAppendResult`, `currentChunkIndex`, `isPlaybackComplete`) | Page       | Bridge session and playback signals between business components        |
 | 14    | **Polish** -- animations, empty states, error states, loading states, responsive layout, demo readiness                                                                               | All        | Demo-grade visual quality                                            |
 
 ---
@@ -1614,9 +1641,9 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 ### Component Architecture
 
 - **Two-layer component model:** `core/` (generic UI primitives) and `business/` (domain-specific). Business components export only their main component -- sub-components, hooks, and styles are internal. This enforces encapsulation and prevents cross-component coupling.
-- **MemoryExplorerPanel is fully portable.** It takes `userId`, `sessionId`, `namespace`, and `datasetConfig` as props. It owns all memory API calls, polling logic, and metrics tracking internally. When `sessionId` is non-null, it starts polling. When `sessionId` is `null`, it shows empty states. Zero knowledge of transcripts or playback. To integrate it in a chatbot page, just pass a `sessionId` (or `null` for cross-session exploration).
-- **TranscriptPanel owns the entire transcript lifecycle** including the toolbar, transcript picker, playback controls, playback status, playback metrics, session creation, reset, and health check. It communicates with DemoPage through only two callbacks: `onSessionCreated` and `onReset`. Playback status and metrics never leave this component.
-- **DemoPage is a thin orchestrator.** It loads the dataset config (only page-level hook) and bridges a single piece of state -- `sessionId` -- between the two business components. It has no domain logic of its own.
+- **MemoryExplorerPanel is fully portable.** It takes `userId`, `sessionId`, `namespace`, and `datasetConfig` as required props, with optional `lastAppendResult`, `currentChunkIndex`, and `isPlaybackComplete` for live suggestions. It owns all memory API calls, polling logic, and metrics tracking internally. When `sessionId` is non-null, it starts polling. When `sessionId` is `null`, it shows empty states. It does not import TranscriptPanel. To integrate it in a chatbot page, pass `sessionId` (or `null` for cross-session exploration) and omit the optional bridge props if unused.
+- **TranscriptPanel owns the entire transcript lifecycle** including the toolbar, transcript picker, playback controls, playback status, session creation, reset, and health check. It requires `onSessionCreated` and `onReset`; optional `onAppendResult` and `onPlaybackStateChange` let the page mirror position and completion for MemoryExplorerPanel without exposing the full hook surface.
+- **DemoPage is a thin orchestrator.** It loads the dataset config (only page-level hook) and bridges `sessionId` plus optional playback-related fields to MemoryExplorerPanel. It has no domain logic of its own.
 
 ### Display & Config
 
@@ -1628,7 +1655,7 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 
 - **All backend calls are POST-only** with camelCase paths. No URL params, no query strings. All parameters in JSON body. Responses unwrapped from `{ data, error }` envelope by `api.service.ts`.
 - **`userId` and `namespace` are never sent by the frontend** -- they are derived from the active dataset config on every backend request. The frontend reads them from `datasetConfig` for display purposes only.
-- The "Clear All Memories & Restart" button (in TranscriptPanel's toolbar) calls `POST /api/resetLifecycle` which wipes all working memory sessions, long-term memories, and summary views within the active namespace. The backend re-creates all pre-seeded summary views. TranscriptPanel emits `onReset()`, DemoPage clears `sessionId`, MemoryExplorerPanel reacts to `sessionId=null` by stopping all polling and clearing its internal state.
+- The "Clear All Memories & Restart" button (in TranscriptPanel's toolbar) calls `POST /api/resetLifecycle` which wipes all working memory sessions, long-term memories, and summary views within the active namespace. The backend re-creates all pre-seeded summary views. TranscriptPanel emits `onReset()`, DemoPage clears bridge state (`sessionId`, append result, chunk index, completion flags), MemoryExplorerPanel reacts to `sessionId=null` by stopping all polling and clearing its internal state.
 
 ### CSS Style
 
@@ -1648,8 +1675,8 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 
 - The frontend follows the project code style: arrow functions, consolidated exports, separate type imports, kebab-case files, PascalCase components, no emojis.
 - MUI is used sparingly -- only for Tabs, Chip, Button, IconButton, LinearProgress, Select, Card, Dialog (for Clear All confirmation). All layout, typography, colors, and animations are pure CSS.
-- No state management library needed. React state + hooks are sufficient. DemoPage has minimal state (config + 1 bridge variable: `sessionId`). Business components manage their own state internally.
-- Metrics are tracked independently by each business component. TranscriptPanel tracks its own playback metrics (chunks sent, append latencies) and displays them in PlaybackControls. MemoryExplorerPanel tracks its own API metrics (working memory polls, LT searches, summary computations) and displays them in RedisMetricsTab. No metrics cross the component boundary.
+- No state management library needed. React state + hooks are sufficient. DemoPage has minimal state (config + small bridge: `sessionId`, `lastAppendResult`, `currentChunkIndex`, `isPlaybackComplete`, and any page-local flags). Business components manage their own state internally.
+- Operational stats are tracked independently: TranscriptPanel exposes progress and status in PlaybackControls; MemoryExplorerPanel tracks API activity (working memory polls, LT searches, summary computations) in RedisMetricsTab. Optional `onAppendResult` mirrors the latest append to the page for the explorer without coupling the panels.
 - The fire-and-forget pattern in `useTranscriptPlayback` ensures smooth visual playback regardless of API latency. The Working Memory tab may lag 1-2 ticks behind the transcript display -- this is intentional and looks natural.
 - Playback speed options come from `config.playbackDefaults.speeds` -- each entry has a `label` (e.g., "2x") and `intervalMs` (e.g., 1000). This means speed options can vary per dataset if needed.
 
@@ -1666,7 +1693,7 @@ To reuse MemoryExplorerPanel on a future chatbot page that searches across sessi
 />
 ```
 
-No transcript, no playback, no toolbar, no playback status props. The panel shows all long-term memories across sessions, supports summary computation, and works independently. Pass a `sessionId` to scope it to one session, or `null` for cross-session exploration.
+No transcript, no playback, no toolbar; omit optional `lastAppendResult`, `currentChunkIndex`, and `isPlaybackComplete` when live suggestions are unused. The panel shows all long-term memories across sessions, supports summary computation, and works independently. Pass a `sessionId` to scope it to one session, or `null` for cross-session exploration.
 
 ---
 
@@ -1674,4 +1701,4 @@ No transcript, no playback, no toolbar, no playback status props. The panel show
 
 - [Frontend Chatbot Plan](./dev-frontend-chatbot-plan.md) -- adds a CopilotKit-powered chatbot sidebar (floating overlay, purely additive, zero changes to existing components)
 - [Backend Chatbot Plan](./dev-backend-chatbot-plan.md) -- LangGraph agent with memory tools powering the chatbot
-- [Live Suggestions Plan](./dev-live-suggestions-brainstorm.md) -- push-based AI copilot that surfaces real-time suggestions during transcript playback (new AI Copilot tab + persistent banner)
+- [Live Suggestions Plan](./dev-live-suggestions-brainstorm.md) -- push-based AI copilot that surfaces real-time suggestions as chunks advance; gated by `isPlaybackComplete` rather than continuous play (new AI Copilot tab + persistent banner)

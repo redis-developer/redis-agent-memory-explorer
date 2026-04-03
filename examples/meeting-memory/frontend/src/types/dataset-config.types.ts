@@ -79,7 +79,8 @@ type DatasetConfig = {
     transcriptDropdownLabel: string;
     sessionDropdownLabel: string;
     playLabel: string;
-    stopLabel: string;
+    pauseLabel: string;
+    nextLabel: string;
     resetLabel: string;
     speedLabel: string;
   };

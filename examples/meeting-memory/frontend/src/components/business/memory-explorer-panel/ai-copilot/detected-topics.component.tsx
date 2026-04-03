@@ -16,6 +16,7 @@ type DetectedTopicsProps = {
 const PRE_SEEDED_ICON: Record<string, string> = {
   [DETECTED_TOPIC_STATUS.PENDING]: "○",
   [DETECTED_TOPIC_STATUS.DISCUSSED]: "✓",
+  [DETECTED_TOPIC_STATUS.NEW]: "✦",
   [DETECTED_TOPIC_STATUS.QUESTION]: "?",
 };
 
@@ -29,6 +30,7 @@ const TOPIC_TITLE: Record<string, Record<string, string>> = {
   [DETECTED_TOPIC_SOURCE.PRE_SEEDED]: {
     [DETECTED_TOPIC_STATUS.PENDING]: "Pre-seeded topic -- not yet discussed",
     [DETECTED_TOPIC_STATUS.DISCUSSED]: "Pre-seeded topic -- discussed",
+    [DETECTED_TOPIC_STATUS.NEW]: "Pre-seeded topic -- newly raised",
     [DETECTED_TOPIC_STATUS.QUESTION]: "Pre-seeded topic -- question raised",
   },
   [DETECTED_TOPIC_SOURCE.AI_DETECTED]: {
