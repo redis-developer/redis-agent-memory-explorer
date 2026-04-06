@@ -62,8 +62,6 @@ const StateAnnotation = Annotation.Root({
 const ensureInitialized = (datasetConfig: DatasetConfig): void => {
   //since langgraph server runs in a separate process, we need to ensure that the AgentMemory is initialized
 
-  ensureLoggerInitialized();
-
   try {
     AgentMemory.getInstance();
   } catch {
@@ -140,6 +138,8 @@ const invokeReactNode = async (
 };
 
 const createCompiledGraph = () => {
+  ensureLoggerInitialized();
+
   const datasetConfig = DatasetLoaderService.loadDatasetConfig(
     ENV.ACTIVE_DATASET,
   );
