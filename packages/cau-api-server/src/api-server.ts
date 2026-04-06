@@ -7,6 +7,8 @@ import type {
   SignalCleanup,
 } from "./types";
 
+import { existsSync } from "node:fs";
+
 import express, { Router } from "express";
 import { Logger } from "cau-logger";
 
@@ -26,13 +28,7 @@ import {
 const DEFAULT_LOGGER_CONTEXT = "ApiServer";
 
 const buildInternalConfig = (input: ApiServerConfig): InternalConfig => {
-  const {
-    config: serverConfig,
-    logger,
-    onAppStart,
-    onAppStop,
-    routes,
-  } = input;
+  const { config: serverConfig, logger, onAppStart, onAppStop, routes } = input;
 
   const resolvedLogger =
     logger ??
@@ -40,6 +36,10 @@ const buildInternalConfig = (input: ApiServerConfig): InternalConfig => {
       context: DEFAULT_LOGGER_CONTEXT,
       transports: [{ type: "console" }],
     });
+
+  const rawStaticDir = serverConfig?.STATIC_DIR ?? null;
+  const staticDir =
+    rawStaticDir !== null && existsSync(rawStaticDir) ? rawStaticDir : null;
 
   return {
     port: serverConfig?.PORT ?? ENV.PORT,
@@ -49,6 +49,7 @@ const buildInternalConfig = (input: ApiServerConfig): InternalConfig => {
     rateLimitWindowMs:
       serverConfig?.RATE_LIMIT_WINDOW_MS ?? DEFAULT_RATE_LIMIT_WINDOW_MS,
     rateLimitMax: serverConfig?.RATE_LIMIT_MAX ?? DEFAULT_RATE_LIMIT_MAX,
+    staticDir,
     logger: resolvedLogger,
     onAppStart,
     onAppStop,
@@ -59,6 +60,7 @@ const buildInternalConfig = (input: ApiServerConfig): InternalConfig => {
 const buildExpressApp = (config: InternalConfig): Application => {
   const app = express();
 
+  // 1. Security: helmet, cors, compression, body parsing, rate limiting
   setupSecurity(app, {
     allowedOrigins: config.allowedOrigins,
     bodyLimit: config.bodyLimit,
@@ -66,8 +68,10 @@ const buildExpressApp = (config: InternalConfig): Application => {
     rateLimitMax: config.rateLimitMax,
   });
 
+  // 2. Attach a unique request ID to every request for tracing
   app.use(createRequestIdMiddleware(config.logger) as express.RequestHandler);
 
+  // 3. Health check — always available, no auth or prefix
   app.get(HEALTH_ENDPOINT_PATH, (_req, res) => {
     const result: ApiResponse = {
       data: { status: "ok", uptime: process.uptime() },
@@ -83,15 +87,45 @@ const mountRouterAndErrorHandlers = (
   app: Application,
   config: InternalConfig,
 ): void => {
+  // ── Registered after create(), before start() ──
+  // Consumer can add custom middleware via server.expressApp.use()
+  // (e.g. /copilotkit handler in backend/src/index.ts)
+
+  // 4. API routes — mounted under the configured prefix (e.g. /api)
   const router = Router();
   registerRoutes(router, config.routes);
   app.use(config.apiPrefix, router);
 
-  app.use((_req, res) => {
+  // 5. API 404 — unmatched API routes get JSON, never HTML or SPA fallback
+  const jsonNotFound: express.RequestHandler = (_req, res) => {
     const result: ApiResponse = { data: null, error: "Not found" };
     res.status(HTTP_STATUS_CODES.NOT_FOUND).json(result);
-  });
+  };
+  app.use(config.apiPrefix, jsonNotFound);
 
+  if (config.staticDir !== null) {
+    const stripCsp = (res: express.Response) => {
+      res.removeHeader("Content-Security-Policy");
+    };
+
+    // 6a. Static assets — serve files from disk (CSP stripped for frontend)
+    app.use(express.static(config.staticDir, { setHeaders: stripCsp }));
+
+    // 6b. SPA fallback — any remaining path gets index.html for client-side routing;
+    //     the frontend app renders its own "not found" page for unknown routes
+    app.use((_req, res, next) => {
+      stripCsp(res);
+      res.sendFile("index.html", { root: config.staticDir! }, (err) => {
+        if (err) next(err);
+      });
+    });
+    config.logger.info("Serving static files", { dir: config.staticDir });
+  } else {
+    // 6. Global 404 — no frontend; all unmatched routes get JSON error
+    app.use(jsonNotFound);
+  }
+
+  // 7. Global error handler — catches any next(err) from the entire chain
   app.use(
     (
       err: Error,
@@ -169,9 +203,7 @@ class ApiServer {
     await new Promise<void>((resolve) => {
       const server = this.#app.listen(this.#config.port, () => {
         this.#server = server;
-        this.#config.logger.info(
-          `ApiServer listening on port ${this.port}`,
-        );
+        this.#config.logger.info(`ApiServer listening on port ${this.port}`);
         resolve();
       });
     });

@@ -9,6 +9,7 @@ type ServerConfig = {
   BODY_LIMIT?: string;
   RATE_LIMIT_WINDOW_MS?: number;
   RATE_LIMIT_MAX?: number;
+  STATIC_DIR?: string;
 };
 
 type RouteContext = {
@@ -48,6 +49,7 @@ type InternalConfig = {
   bodyLimit: string;
   rateLimitWindowMs: number;
   rateLimitMax: number;
+  staticDir: string | null;
   logger: Logger;
   onAppStart?: LifecycleCallback;
   onAppStop?: LifecycleCallback;

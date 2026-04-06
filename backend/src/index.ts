@@ -1,5 +1,7 @@
 import type { SummaryViewConfigEntry } from "./types";
 
+import { resolve } from "node:path";
+
 import { ApiServer } from "cau-api-server";
 import { Logger } from "cau-logger";
 import { RedisDb } from "cau-redis";
@@ -9,6 +11,7 @@ import {
   LOGGER_CONTEXT,
   COPILOTKIT_ENDPOINT,
   DEFAULT_RATE_LIMIT_MAX,
+  DEFAULT_STATIC_DIR,
 } from "./constants";
 import { routes } from "./routes";
 import { setAppState } from "./app-state";
@@ -108,11 +111,14 @@ const initializeApp = async (): Promise<void> => {
   });
 };
 
+const STATIC_DIR = resolve(__dirname, DEFAULT_STATIC_DIR);
+
 const server = ApiServer.create({
   config: {
     PORT: ENV.PORT,
     ALLOWED_ORIGINS: ENV.ALLOWED_ORIGINS,
     RATE_LIMIT_MAX: DEFAULT_RATE_LIMIT_MAX,
+    STATIC_DIR,
   },
   logger,
   routes,

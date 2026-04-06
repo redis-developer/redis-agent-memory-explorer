@@ -1,0 +1,78 @@
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  agent-memory:
+    image: redislabs/agent-memory-server:latest
+    command: agent-memory api --host 0.0.0.0 --port 8000 --task-backend=asyncio
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379
+      DISABLE_AUTH: "true"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  demo-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+    ports:
+      - "3001:3001"
+    env_file: .env
+    environment:
+      AGENT_MEMORY_BASE_URL: http://agent-memory:8000
+      REDIS_URL: redis://redis:6379
+      MEETING_MEMORY_DATA_DIR: /app/data
+      MEETING_MEMORY_ALLOWED_ORIGINS: "*"
+      LANGGRAPH_DEPLOYMENT_URL: http://demo-langgraph:2024
+    depends_on:
+      redis:
+        condition: service_healthy
+      agent-memory:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  demo-langgraph:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+    command: npx @langchain/langgraph-cli dev --port 2024 --host 0.0.0.0
+    working_dir: /app/backend
+    ports:
+      - "2024:2024"
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379
+      AGENT_MEMORY_BASE_URL: http://agent-memory:8000
+    depends_on:
+      redis:
+        condition: service_healthy
+      agent-memory:
+        condition: service_healthy
+
+volumes:
+  redis-data:

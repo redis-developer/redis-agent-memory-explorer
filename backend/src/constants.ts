@@ -50,6 +50,8 @@ const DEFAULT_RATE_LIMIT_MAX = 8000;
 
 const DEFAULT_REDIS_URL = "redis://localhost:6379";
 
+const DEFAULT_STATIC_DIR = "../public";
+
 const DetectedTopicStatus = {
   PENDING: "pending",
   DISCUSSED: "discussed",
@@ -102,6 +104,7 @@ export {
   DEFAULT_RATE_LIMIT_MAX,
   REDIS_JSON_ROOT_PATH,
   DEFAULT_REDIS_URL,
+  DEFAULT_STATIC_DIR,
   DetectedTopicStatus,
   DetectedTopicSource,
 };
