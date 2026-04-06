@@ -27,6 +27,9 @@ const searchLongTermMemoryHandler: RouteHandler = async (
   } = (input as SearchLongTermMemoryInput) ?? {};
   const { namespace, userId } = getAppState();
 
+  logger.info("Searching long-term memory", { text, memoryType, topics, entities, limit, offset });
+
+  const startMs = Date.now();
   const result = await AgentMemory.getInstance().searchLongTermMemory({
     text: text ?? "",
     userId: { eq: userId },
@@ -38,9 +41,10 @@ const searchLongTermMemoryHandler: RouteHandler = async (
     offset: offset ?? DEFAULT_SEARCH_OFFSET,
   });
 
-  logger.info("Searched long-term memory", {
+  logger.info("Long-term memory search complete", {
     total: result.total,
     returned: result.memories.length,
+    latencyMs: Date.now() - startMs,
   });
 
   return result;

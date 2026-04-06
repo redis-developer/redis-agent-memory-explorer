@@ -52,6 +52,9 @@ const DEFAULT_REDIS_URL = "redis://localhost:6379";
 
 const DEFAULT_STATIC_DIR = "../public";
 
+const DEFAULT_LOG_DIR = "../../logs";
+const DEFAULT_LOG_FILE = "meeting-memory.log";
+
 const DetectedTopicStatus = {
   PENDING: "pending",
   DISCUSSED: "discussed",
@@ -105,6 +108,8 @@ export {
   REDIS_JSON_ROOT_PATH,
   DEFAULT_REDIS_URL,
   DEFAULT_STATIC_DIR,
+  DEFAULT_LOG_DIR,
+  DEFAULT_LOG_FILE,
   DetectedTopicStatus,
   DetectedTopicSource,
 };

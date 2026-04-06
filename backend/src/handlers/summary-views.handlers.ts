@@ -103,10 +103,18 @@ const computeSummaryHandler: RouteHandler = async (input, { logger }) => {
 
   logger.info("Computing summary", { viewId, group });
 
+  const startMs = Date.now();
   const result = await AgentMemory.getInstance().runSummaryViewPartition(
     viewId,
     group,
   );
+
+  logger.info("Summary computed", {
+    viewId,
+    group: result.group,
+    memoryCount: result.memoryCount,
+    latencyMs: Date.now() - startMs,
+  });
 
   return {
     viewId: result.viewId,

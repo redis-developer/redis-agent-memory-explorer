@@ -12,6 +12,7 @@ import {
   DEFAULT_CHATBOT_MODEL,
   DEFAULT_REDIS_URL,
   DEFAULT_QUERY_EXTRACTION_MODEL,
+  DEFAULT_LOG_DIR,
 } from "./constants";
 
 const parseAllowedOrigins = (raw: string | undefined): string[] => {
@@ -48,6 +49,10 @@ const ENV = {
   REDIS_URL: process.env.REDIS_URL ?? DEFAULT_REDIS_URL,
   QUERY_EXTRACTION_MODEL:
     process.env.MEETING_MEMORY_QUERY_EXTRACTION_MODEL ?? DEFAULT_QUERY_EXTRACTION_MODEL,
+  LOG_DIR: resolve(
+    __dirname,
+    process.env.MEETING_MEMORY_LOG_DIR ?? DEFAULT_LOG_DIR,
+  ),
 } as const;
 
 export { ENV };

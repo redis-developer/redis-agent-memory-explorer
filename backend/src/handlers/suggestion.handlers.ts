@@ -12,6 +12,7 @@ const generateSuggestionHandler: RouteHandler = async (input, { logger }) => {
 
   logger.info("Generating suggestion", { sessionId, chunkIndex });
 
+  const startMs = Date.now();
   const result = await generateSuggestion(sessionId, chunkIndex, datasetConfig!);
 
   const hasSuggestion = result.suggestion !== null;
@@ -19,7 +20,9 @@ const generateSuggestionHandler: RouteHandler = async (input, { logger }) => {
     sessionId,
     chunkIndex,
     hasSuggestion,
+    suggestionType: result.suggestion?.type ?? null,
     topicCount: result.detectedTopics.length,
+    latencyMs: Date.now() - startMs,
   });
 
   return {

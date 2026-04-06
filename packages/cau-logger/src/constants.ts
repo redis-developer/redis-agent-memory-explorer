@@ -38,6 +38,7 @@ type RotationInterval =
   (typeof RotationInterval)[keyof typeof RotationInterval];
 
 const DEFAULT_LOG_LEVEL = LogLevel.INFO;
+const DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
 const DEFAULT_BATCH_SIZE = 100;
 const DEFAULT_FLUSH_INTERVAL = 5000;
 const DEFAULT_MONGO_COLLECTION = "logs";
@@ -50,6 +51,7 @@ export {
   OutputDestination,
   RotationInterval,
   DEFAULT_LOG_LEVEL,
+  DEFAULT_DATE_FORMAT,
   DEFAULT_BATCH_SIZE,
   DEFAULT_FLUSH_INTERVAL,
   DEFAULT_MONGO_COLLECTION,

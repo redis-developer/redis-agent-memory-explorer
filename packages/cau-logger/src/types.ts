@@ -22,6 +22,7 @@ type FileTransportConfig = {
   level?: LogLevel;
   path: string;
   rotation?: RotationInterval | number;
+  dateFormat?: string;
   maxSize?: string | number;
   maxFiles?: number;
   mkdir?: boolean;

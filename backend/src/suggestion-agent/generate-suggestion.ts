@@ -11,6 +11,7 @@ import type {
 import { ChatOpenAI } from "@langchain/openai";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 import { AgentMemory } from "cau-redis-agent-memory";
+import { Logger } from "cau-logger";
 
 import { SUGGESTION_CHUNK_WINDOW, DetectedTopicStatus } from "../constants";
 import { ENV } from "../config";
@@ -21,6 +22,13 @@ import { TranscriptChunkStore } from "../services/transcript-chunk-store";
 import { TopicStore } from "../services/topic-store";
 import { SuggestionStore } from "../services/suggestion-store";
 
+let _logger: ReturnType<typeof Logger.getInstance> | null = null;
+const getLogger = () => {
+  if (!_logger)
+    _logger = Logger.getInstance().child({ component: "SuggestionAgent" });
+  return _logger;
+};
+
 const formatRecentChunks = (chunks: TranscriptChunk[]): string => {
   return chunks
     .map((c) => `[${c.timestamp}] ${c.speaker} (${c.role}): ${c.text}`)
@@ -28,18 +36,27 @@ const formatRecentChunks = (chunks: TranscriptChunk[]): string => {
 };
 
 const parseLlmResponse = (content: string): SuggestionLlmResponse => {
+  const logger = getLogger();
   let cleaned = content.trim();
   const hasCodeFence = cleaned.startsWith("```");
   if (hasCodeFence) {
     cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
   }
 
-  const parsed = JSON.parse(cleaned);
-  const isValidObject = parsed !== null && typeof parsed === "object";
-  const suggestion = isValidObject ? (parsed.suggestion ?? null) : null;
-  const topicUpdates = isValidObject ? (parsed.topicUpdates ?? []) : [];
+  try {
+    const parsed = JSON.parse(cleaned);
+    const isValidObject = parsed !== null && typeof parsed === "object";
+    const suggestion = isValidObject ? (parsed.suggestion ?? null) : null;
+    const topicUpdates = isValidObject ? (parsed.topicUpdates ?? []) : [];
 
-  return { suggestion, topicUpdates };
+    return { suggestion, topicUpdates };
+  } catch (err) {
+    logger.warn("Failed to parse LLM suggestion response as JSON", {
+      error: (err as Error).message,
+      contentLength: content.length,
+    });
+    return { suggestion: null, topicUpdates: [] };
+  }
 };
 
 const fetchRecentChunksAndTopics = async (
@@ -65,8 +82,18 @@ const fetchMemoryContext = async (
   recentChunks: TranscriptChunk[],
 ): Promise<string> => {
   const { namespace, userId } = getAppState();
-  //convert recent chunks to query and search existing AMS memory
+  const logger = getLogger();
+
+  const queryStartMs = Date.now();
   const extractedQuery = await extractSearchQuery(recentChunks);
+  logger.info("Search query extracted from chunks", {
+    sessionId,
+    chunkCount: recentChunks.length,
+    extractedQuery,
+    latencyMs: Date.now() - queryStartMs,
+  });
+
+  const contextStartMs = Date.now();
   const memoryContext = await AgentMemory.getInstance().memoryPrompt({
     query: extractedQuery,
     session: {
@@ -80,6 +107,10 @@ const fetchMemoryContext = async (
       userId: { eq: userId },
     },
   });
+  logger.info("Memory context hydrated via memoryPrompt", {
+    sessionId,
+    latencyMs: Date.now() - contextStartMs,
+  });
 
   return JSON.stringify(memoryContext);
 };
@@ -91,6 +122,7 @@ const invokeSuggestionLlm = async (
   recentChunks: TranscriptChunk[],
   memoryContext: string,
 ): Promise<SuggestionLlmResponse> => {
+  const logger = getLogger();
   const systemPrompt = buildSuggestionSystemPrompt(
     datasetConfig,
     detectedTopics,
@@ -103,12 +135,22 @@ const invokeSuggestionLlm = async (
     apiKey: ENV.OPENAI_API_KEY,
   });
 
-  //systemPrompt(topics, previousSuggestions), memoryContext, recentChunks are passed to the LLM to generate suggestion
+  logger.info("Invoking suggestion LLM", {
+    model: ENV.CHATBOT_MODEL,
+    topicCount: detectedTopics.length,
+    previousSuggestionCount: previousSuggestions.length,
+    chunkCount: recentChunks.length,
+  });
+
+  const llmStartMs = Date.now();
   const result = await llm.invoke([
     new SystemMessage(systemPrompt),
     new SystemMessage(`Memory context:\n${memoryContext}`),
     new HumanMessage(formatRecentChunks(recentChunks)),
   ]);
+  logger.info("Suggestion LLM responded", {
+    latencyMs: Date.now() - llmStartMs,
+  });
 
   return parseLlmResponse(result.content as string);
 };
@@ -200,6 +242,11 @@ const generateSuggestion = async (
   chunkIndex: number,
   datasetConfig: DatasetConfig,
 ): Promise<GenerateSuggestionResult> => {
+  const logger = getLogger();
+  const pipelineStartMs = Date.now();
+
+  logger.info("Suggestion pipeline started", { sessionId, chunkIndex });
+
   const { recentChunks, detectedTopics } = await fetchRecentChunksAndTopics(
     sessionId,
     chunkIndex,
@@ -234,7 +281,20 @@ const generateSuggestion = async (
       chunkIndex,
       recentChunks,
     );
+  } else {
+    logger.debug("Skipping suggestion — no recent chunks", {
+      sessionId,
+      chunkIndex,
+    });
   }
+
+  logger.info("Suggestion pipeline completed", {
+    sessionId,
+    chunkIndex,
+    hasSuggestion: liveSuggestion !== null,
+    topicCount: updatedTopics.length,
+    totalLatencyMs: Date.now() - pipelineStartMs,
+  });
 
   return { suggestion: liveSuggestion, detectedTopics: updatedTopics };
 };

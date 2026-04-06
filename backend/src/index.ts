@@ -1,6 +1,6 @@
 import type { SummaryViewConfigEntry } from "./types";
 
-import { resolve } from "node:path";
+import { resolve, join } from "node:path";
 
 import { ApiServer } from "cau-api-server";
 import { Logger } from "cau-logger";
@@ -12,6 +12,7 @@ import {
   COPILOTKIT_ENDPOINT,
   DEFAULT_RATE_LIMIT_MAX,
   DEFAULT_STATIC_DIR,
+  DEFAULT_LOG_FILE,
 } from "./constants";
 import { routes } from "./routes";
 import { setAppState } from "./app-state";
@@ -22,7 +23,16 @@ import { handleCopilotKitLanggraph } from "./chatbot-agent";
 const logger = Logger.create({
   level: "info",
   context: LOGGER_CONTEXT,
-  transports: [{ type: "console", format: "pretty" }],
+  transports: [
+    { type: "console", format: "pretty" },
+    {
+      type: "file",
+      path: join(ENV.LOG_DIR, DEFAULT_LOG_FILE),
+      rotation: "daily",
+      maxFiles: 7,
+      mkdir: true,
+    },
+  ],
 });
 
 const ensureSummaryViews = async (
@@ -98,7 +108,7 @@ const initializeApp = async (): Promise<void> => {
     userId,
   });
 
-  const redis = RedisDb.create({ url: ENV.REDIS_URL });
+  const redis = RedisDb.create({ url: ENV.REDIS_URL, logger });
   await redis.connect();
   logger.info("Redis connected for copilot stores", { url: ENV.REDIS_URL });
 

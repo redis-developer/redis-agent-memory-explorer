@@ -18,14 +18,58 @@ redis-agent-memory-explorer/
     └── cau-redis-agent-memory  Redis Agent Memory client
 ```
 
-## Prerequisites
+## Quick Start (Docker)
+
+The fastest way to get everything running — Redis, Agent Memory Server, backend + frontend, and LangGraph — in a single command.
+
+### 1. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set your `OPENAI_API_KEY`:
+
+```env
+OPENAI_API_KEY=sk-your-actual-key-here
+```
+
+### 2. Start all services
+
+```bash
+docker compose up --build
+```
+
+This spins up four containers:
+
+| Service           | Description                              | Port   |
+| ----------------- | ---------------------------------------- | ------ |
+| `redis`           | Redis 8.x (vector search + JSON)         | `6379` |
+| `agent-memory`    | Redis Agent Memory Server                | `8000` |
+| `demo-app`        | Backend API + frontend (static build)    | `3001` |
+| `demo-langgraph`  | LangGraph chatbot agent dev server       | `2024` |
+
+Open [http://localhost:3001](http://localhost:3001) once all services are healthy.
+
+### Stop & clean up
+
+```bash
+docker compose down            # stop containers
+docker compose down -v         # stop + remove Redis data volume
+```
+
+---
+
+## Local Development
+
+If you prefer running services directly on your machine (e.g. for hot-reload).
+
+### Prerequisites
 
 - **Node.js** >= 18
 - **Redis** running locally (default `redis://localhost:6379`)
 - **Redis Agent Memory Server** running locally (default `http://localhost:8000`)
 - **OpenAI API key** for the chatbot and suggestion agents
-
-## Quick Start
 
 ### 1. Install dependencies and build packages
 

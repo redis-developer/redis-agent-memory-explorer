@@ -12,8 +12,11 @@ import { TranscriptChunkStore } from "../services/transcript-chunk-store";
 const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   const { namespace, userId, datasetConfig } = getAppState();
   const memory = AgentMemory.getInstance();
+  const resetStartMs = Date.now();
 
   logger.info("Resetting lifecycle -- clearing all memories", { namespace });
+
+  const sessionsStartMs = Date.now();
   // 1. Delete all working memory sessions
   const sessions = await memory.listSessions({ namespace, userId });
   let sessionsDeleted = 0;
@@ -21,7 +24,12 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
     await memory.deleteWorkingMemory(sessionId, { namespace, userId });
     sessionsDeleted += 1;
   }
+  logger.info("Step 1/5: Working memory sessions deleted", {
+    sessionsDeleted,
+    latencyMs: Date.now() - sessionsStartMs,
+  });
 
+  const ltStartMs = Date.now();
   // 2. Delete all long-term memories
   const ltResult = await memory.searchLongTermMemory({
     text: "",
@@ -34,6 +42,12 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   if (hasMemories) {
     await memory.deleteLongTermMemories(memoryIds);
   }
+  logger.info("Step 2/5: Long-term memories deleted", {
+    memoriesDeleted,
+    latencyMs: Date.now() - ltStartMs,
+  });
+
+  const viewsStartMs = Date.now();
   // 3. Delete summary views belonging to this namespace only
   const existingViews = await memory.listSummaryViews();
   const ownViews = existingViews.filter(
@@ -44,6 +58,12 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
     await memory.deleteSummaryView(view.id);
     viewsDeleted += 1;
   }
+  logger.info("Step 3/5: Summary views deleted", {
+    viewsDeleted,
+    latencyMs: Date.now() - viewsStartMs,
+  });
+
+  const createViewsStartMs = Date.now();
   // 4. Re-create summary view definitions with namespace scoping
 
   const viewConfigs = datasetConfig!.memoryLabels.summaryViews.views;
@@ -65,17 +85,27 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
     });
     viewsCreated += 1;
   }
+  logger.info("Step 4/5: Summary views re-created", {
+    viewsCreated,
+    latencyMs: Date.now() - createViewsStartMs,
+  });
 
+  const storesStartMs = Date.now();
   // 5. Clear all copilot stores (suggestions, topics, raw chunks)
+
   await SuggestionStore.clearAll();
   await TopicStore.clearAll();
   await TranscriptChunkStore.clearAll();
+  logger.info("Step 5/5: Copilot stores cleared", {
+    latencyMs: Date.now() - storesStartMs,
+  });
 
   logger.info("Lifecycle reset complete", {
     sessionsDeleted,
     memoriesDeleted,
     viewsDeleted,
     viewsCreated,
+    totalLatencyMs: Date.now() - resetStartMs,
   });
 
   return {

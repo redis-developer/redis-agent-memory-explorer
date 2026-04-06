@@ -4,6 +4,7 @@ import type { MemoryPromptRequest } from "cau-redis-agent-memory";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { AgentMemory, MemoryType } from "cau-redis-agent-memory";
+import { Logger } from "cau-logger";
 
 import { getAppState } from "../app-state";
 import { ENV } from "../config";
@@ -12,6 +13,12 @@ import {
   AGENT_SESSION_LIST_DEFAULT_LIMIT,
   AGENT_SESSION_MEMORIES_LIMIT,
 } from "../constants";
+
+let _logger: ReturnType<typeof Logger.getInstance> | null = null;
+const getLogger = () => {
+  if (!_logger) _logger = Logger.getInstance().child({ component: "ChatbotTools" });
+  return _logger;
+};
 
 const searchMemoriesTool = new DynamicStructuredTool({
   name: "searchMemories",
@@ -35,7 +42,11 @@ const searchMemoriesTool = new DynamicStructuredTool({
       .describe("Max results to return"),
   }),
   func: async ({ query, memoryType, topics, entities, limit }) => {
+    const logger = getLogger();
     const { namespace, userId } = getAppState();
+    const startMs = Date.now();
+
+    logger.info("Tool: searchMemories invoked", { query, memoryType, topics, entities, limit });
 
     let memoryTypeFilter: { eq: string } | undefined;
     if (memoryType) {
@@ -63,6 +74,8 @@ const searchMemoriesTool = new DynamicStructuredTool({
       limit: limit ?? AGENT_SEARCH_DEFAULT_LIMIT,
     });
 
+    logger.info("Tool: searchMemories completed", { total: result.total, latencyMs: Date.now() - startMs });
+
     return JSON.stringify(result);
   },
 });
@@ -79,7 +92,12 @@ const searchMemoriesBySessionTool = new DynamicStructuredTool({
       .describe("Optional semantic search query within the session"),
   }),
   func: async ({ sessionId, query }) => {
+    const logger = getLogger();
     const { namespace } = getAppState();
+    const startMs = Date.now();
+
+    logger.info("Tool: searchMemoriesBySession invoked", { sessionId, query });
+
     const agentMemoryInst = AgentMemory.getInstance();
     const result = await agentMemoryInst.searchLongTermMemory({
       text: query ?? "",
@@ -87,6 +105,8 @@ const searchMemoriesBySessionTool = new DynamicStructuredTool({
       namespace: { eq: namespace },
       limit: AGENT_SESSION_MEMORIES_LIMIT,
     });
+
+    logger.info("Tool: searchMemoriesBySession completed", { sessionId, total: result.total, latencyMs: Date.now() - startMs });
 
     return JSON.stringify(result);
   },
@@ -109,7 +129,12 @@ const getMemoryContextTool = new DynamicStructuredTool({
       .describe("Whether to search long-term memories"),
   }),
   func: async ({ query, sessionId, includeAllLongTermMemories }) => {
+    const logger = getLogger();
     const { namespace, userId } = getAppState();
+    const startMs = Date.now();
+
+    logger.info("Tool: getMemoryContext invoked", { query, sessionId, includeAllLongTermMemories });
+
     const request: MemoryPromptRequest = { query };
 
     if (sessionId) {
@@ -130,6 +155,8 @@ const getMemoryContextTool = new DynamicStructuredTool({
 
     const agentMemoryInst = AgentMemory.getInstance();
     const result = await agentMemoryInst.memoryPrompt(request);
+
+    logger.info("Tool: getMemoryContext completed", { latencyMs: Date.now() - startMs });
 
     return JSON.stringify(result);
   },

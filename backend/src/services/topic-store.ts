@@ -1,11 +1,22 @@
 import type { DetectedTopic, TopicUpdate } from "../types";
 
-import {
-  COPILOT_TOPICS_PREFIX,
-  DetectedTopicSource,
-} from "../constants";
+import { Logger } from "cau-logger";
 
-import { getItems, setItems, clearItems, clearAllItems } from "./redis-json-store";
+import { COPILOT_TOPICS_PREFIX, DetectedTopicSource } from "../constants";
+
+import {
+  getItems,
+  setItems,
+  clearItems,
+  clearAllItems,
+} from "./redis-json-store";
+
+let _logger: ReturnType<typeof Logger.getInstance> | null = null;
+const getLogger = () => {
+  if (!_logger)
+    _logger = Logger.getInstance().child({ component: "TopicStore" });
+  return _logger;
+};
 
 const ENTITY_PREFIX = COPILOT_TOPICS_PREFIX;
 
@@ -25,6 +36,7 @@ const mergeUpdates = async (
   updates: TopicUpdate[],
   chunkIndex: number,
 ): Promise<DetectedTopic[]> => {
+  const logger = getLogger();
   const current = await getItems<DetectedTopic>(ENTITY_PREFIX, sessionId);
 
   for (const update of updates) {
@@ -69,6 +81,13 @@ const mergeUpdates = async (
   }
 
   await setItems(ENTITY_PREFIX, sessionId, current);
+
+  logger.info("Topics merged", {
+    sessionId,
+    chunkIndex,
+    updatesApplied: updates.length,
+    totalTopics: current.length,
+  });
 
   return current;
 };

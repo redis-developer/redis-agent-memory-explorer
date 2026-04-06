@@ -1,4 +1,5 @@
 import { RedisDb } from "cau-redis";
+import { Logger } from "cau-logger";
 
 import {
   COPILOT_KEY_PREFIX,
@@ -6,6 +7,13 @@ import {
   REDIS_JSON_ROOT_PATH,
 } from "../constants";
 import { getAppState } from "../app-state";
+
+let _logger: ReturnType<typeof Logger.getInstance> | null = null;
+const getLogger = () => {
+  if (!_logger)
+    _logger = Logger.getInstance().child({ component: "RedisJsonStore" });
+  return _logger;
+};
 
 const SCAN_BATCH_SIZE = 100;
 
@@ -27,9 +35,12 @@ const getItems = async <T>(
   entityPrefix: string,
   sessionId: string,
 ): Promise<T[]> => {
+  const logger = getLogger();
   const key = buildStoreKey(entityPrefix, sessionId);
   const redis = RedisDb.getInstance();
   const result = await redis.jsonGet<T[]>({ key });
+
+  logger.debug("getItems", { key, count: result?.length ?? 0 });
 
   return result ?? [];
 };
@@ -85,10 +96,12 @@ const countItems = async (
 };
 
 const clearAllItems = async (entityPrefix: string): Promise<void> => {
+  const logger = getLogger();
   const prefix = buildStoreKey(entityPrefix);
   const redis = RedisDb.getInstance();
   let cursor = 0;
   let hasMore = true;
+  let totalDeleted = 0;
 
   while (hasMore) {
     const result = await redis.scan({
@@ -101,8 +114,11 @@ const clearAllItems = async (entityPrefix: string): Promise<void> => {
 
     for (const key of result.keys) {
       await redis.del({ keys: [key] });
+      totalDeleted += 1;
     }
   }
+
+  logger.debug("clearAllItems completed", { prefix, totalDeleted });
 };
 
 export {

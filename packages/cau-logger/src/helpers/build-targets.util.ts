@@ -15,6 +15,7 @@ import {
   OutputDestination,
   RotationInterval,
   TransportType,
+  DEFAULT_DATE_FORMAT,
   DEFAULT_BATCH_SIZE,
   DEFAULT_FLUSH_INTERVAL,
   DEFAULT_MONGO_COLLECTION,
@@ -79,17 +80,27 @@ const buildConsoleTarget = (config: ConsoleTransportConfig): PinoTarget => {
   return target;
 };
 
-const buildFileTarget = (config: FileTransportConfig): PinoTarget => ({
-  target: PINO_ROLL_TARGET,
-  level: config.level,
-  options: {
-    file: config.path,
-    frequency: config.rotation ?? RotationInterval.DAILY,
-    ...(config.maxSize ? { size: config.maxSize } : {}),
-    ...(config.maxFiles ? { limit: { count: config.maxFiles } } : {}),
-    mkdir: config.mkdir ?? true,
-  },
-});
+const buildFileTarget = (config: FileTransportConfig): PinoTarget => {
+  const frequency = config.rotation ?? RotationInterval.DAILY;
+  const isTimeBased =
+    frequency === RotationInterval.DAILY ||
+    frequency === RotationInterval.HOURLY;
+
+  return {
+    target: PINO_ROLL_TARGET,
+    level: config.level,
+    options: {
+      file: config.path,
+      frequency,
+      ...(isTimeBased
+        ? { dateFormat: config.dateFormat ?? DEFAULT_DATE_FORMAT }
+        : {}),
+      ...(config.maxSize ? { size: config.maxSize } : {}),
+      ...(config.maxFiles ? { limit: { count: config.maxFiles } } : {}),
+      mkdir: config.mkdir ?? true,
+    },
+  };
+};
 
 const buildMongoTarget = (config: MongoTransportConfig): PinoTarget => ({
   target: join(TRANSPORT_DIR, MONGO_TRANSPORT_FILE),

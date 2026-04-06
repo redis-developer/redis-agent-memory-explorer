@@ -2,9 +2,17 @@ import type { TranscriptData, TranscriptSummary } from "../types";
 
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, basename } from "node:path";
+import { Logger } from "cau-logger";
 
 import { TRANSCRIPTS_SUBDIR, JSON_EXT } from "../constants";
 import { ENV } from "../config";
+
+let _logger: ReturnType<typeof Logger.getInstance> | null = null;
+const getLogger = () => {
+  if (!_logger)
+    _logger = Logger.getInstance().child({ component: "TranscriptLoader" });
+  return _logger;
+};
 
 const getTranscriptsDir = (datasetId: string): string => {
   return join(ENV.DATA_DIR, datasetId, TRANSCRIPTS_SUBDIR);
@@ -14,6 +22,7 @@ const loadTranscript = (
   datasetId: string,
   transcriptId: string,
 ): TranscriptData => {
+  const logger = getLogger();
   const filePath = join(
     getTranscriptsDir(datasetId),
     `${transcriptId}${JSON_EXT}`,
@@ -21,13 +30,17 @@ const loadTranscript = (
   const fileExists = existsSync(filePath);
 
   if (!fileExists) {
-    throw new Error(
-      `Transcript not found: ${filePath}`,
-    );
+    throw new Error(`Transcript not found: ${filePath}`);
   }
 
   const raw = readFileSync(filePath, "utf-8");
   const parsed = JSON.parse(raw) as TranscriptData;
+
+  logger.info("Transcript loaded", {
+    datasetId,
+    transcriptId,
+    chunkCount: parsed.chunks.length,
+  });
 
   return parsed;
 };

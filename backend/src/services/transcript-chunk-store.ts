@@ -1,8 +1,24 @@
 import type { TranscriptChunk } from "../types";
 
+import { Logger } from "cau-logger";
+
 import { COPILOT_CHUNKS_PREFIX } from "../constants";
 
-import { getItems, setItems, appendItem, countItems, clearItems, clearAllItems } from "./redis-json-store";
+import {
+  getItems,
+  setItems,
+  appendItem,
+  countItems,
+  clearItems,
+  clearAllItems,
+} from "./redis-json-store";
+
+let _logger: ReturnType<typeof Logger.getInstance> | null = null;
+const getLogger = () => {
+  if (!_logger)
+    _logger = Logger.getInstance().child({ component: "TranscriptChunkStore" });
+  return _logger;
+};
 
 const ENTITY_PREFIX = COPILOT_CHUNKS_PREFIX;
 
@@ -14,7 +30,13 @@ const append = async (
   sessionId: string,
   chunk: TranscriptChunk,
 ): Promise<void> => {
+  const logger = getLogger();
   await appendItem(ENTITY_PREFIX, sessionId, chunk);
+  logger.debug("Chunk appended", {
+    sessionId,
+    speaker: chunk.speaker,
+    timestamp: chunk.timestamp,
+  });
 };
 
 const getRange = async (

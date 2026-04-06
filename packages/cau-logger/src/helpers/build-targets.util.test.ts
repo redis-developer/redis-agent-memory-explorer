@@ -81,7 +81,19 @@ describe("buildTarget", () => {
       expect(target.target).toBe("pino-roll");
       expect(target.options.file).toBe("./logs/app.log");
       expect(target.options.frequency).toBe(RotationInterval.DAILY);
+      expect(target.options.dateFormat).toBe("yyyy-MM-dd");
       expect(target.options.mkdir).toBe(true);
+    });
+
+    it("should allow custom dateFormat", () => {
+      const config: TransportConfig = {
+        type: TransportType.FILE,
+        path: "./logs/app.log",
+        dateFormat: "yyyy-MM-dd-HH",
+      };
+      const target = buildTarget(config);
+
+      expect(target.options.dateFormat).toBe("yyyy-MM-dd-HH");
     });
 
     it("should pass maxSize and maxFiles as pino-roll options", () => {
