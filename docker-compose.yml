@@ -70,6 +70,8 @@ services:
     environment:
       REDIS_URL: redis://redis:6379
       AGENT_MEMORY_BASE_URL: http://agent-memory:8000
+    volumes:
+      - ./logs:/app/logs
     depends_on:
       redis:
         condition: service_healthy
