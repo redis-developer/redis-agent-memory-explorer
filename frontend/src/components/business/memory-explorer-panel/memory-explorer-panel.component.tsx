@@ -50,7 +50,7 @@ const MemoryExplorerPanel = ({
   const prevSessionIdRef = useRef(sessionId);
 
   const workingMemory = useWorkingMemory(sessionId, hasSession);
-  const longTermMemory = useLongTermMemory(sessionId);
+  const longTermMemory = useLongTermMemory(sessionId, isPlaybackComplete);
   const summaryViews = useSummaryViews();
 
   const triggerEveryN = liveSuggestionsConfig?.triggerEveryNChunks ?? DEFAULT_TRIGGER_EVERY_N_CHUNKS;

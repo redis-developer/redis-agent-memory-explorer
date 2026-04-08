@@ -11,6 +11,8 @@ import {
 } from "@/services/api.service";
 import {
   EXTRACTION_POLL_INTERVAL_MS,
+  EXTRACTION_MAX_WAIT_MS,
+  STABILIZATION_POLL_COUNT,
   LT_SCOPE,
   SEARCH_ALL_LIMIT,
 } from "@/constants/app.constants";
@@ -28,8 +30,25 @@ type UseLongTermMemoryResult = {
   searchByText: (query: string) => void;
 };
 
+/**
+ * Polls for long-term memories extracted by the Agent Memory Server (AMS).
+ *
+ * Polling strategy (why it matters):
+ * AMS can extract LT memories at two points -- (1) explicitly when the app
+ * sends `isLastChunk: true`, and (2) autonomously mid-playback when AMS
+ * compresses the working memory context window or auto extract memories after some interval gap. Because of (2), memories can
+ * appear at any time during playback, not just after completion.
+ *
+ * To avoid missing extraction rounds:
+ * - During playback: poll continuously, never stop on first detection.
+ * - After playback completes: continue polling for a grace period
+ *   (EXTRACTION_MAX_WAIT_MS) to catch the final explicit extraction.
+ * - Stop early if the count stabilizes (same total for STABILIZATION_POLL_COUNT
+ *   consecutive polls), meaning all extractions have settled.
+ */
 const useLongTermMemory = (
   sessionId: string | null,
+  isPlaybackComplete: boolean,
 ): UseLongTermMemoryResult => {
   const [memories, setMemories] = useState<MemoryRecordData[]>([]);
   const [sessionTotal, setSessionTotal] = useState(0);
@@ -38,8 +57,11 @@ const useLongTermMemory = (
   const [error, setError] = useState<string | null>(null);
   const [scope, setScopeState] = useState<LtScope>(LT_SCOPE.SESSION);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const foundMemoriesRef = useRef(false);
+  const graceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasFetchedOnceRef = useRef(false);
+  const isPlaybackCompleteRef = useRef(isPlaybackComplete);
+  const lastTotalRef = useRef(-1);
+  const stableCountRef = useRef(0);
 
   const total = scope === LT_SCOPE.SESSION ? sessionTotal : allTotal;
 
@@ -49,6 +71,28 @@ const useLongTermMemory = (
       pollRef.current = null;
     }
   }, []);
+
+  const clearGraceTimer = useCallback(() => {
+    if (graceTimerRef.current) {
+      clearTimeout(graceTimerRef.current);
+      graceTimerRef.current = null;
+    }
+  }, []);
+
+  // Reset stabilization tracking when playback completes so the post-completion
+  // grace window starts fresh. Without this, mid-playback stability (e.g., total
+  // unchanged for many polls while AMS hasn't extracted again) would cause an
+  // immediate stop before the final explicit extraction has time to finish.
+  useEffect(() => {
+    const wasComplete = isPlaybackCompleteRef.current;
+    isPlaybackCompleteRef.current = isPlaybackComplete;
+
+    const justCompleted = isPlaybackComplete && !wasComplete;
+    if (justCompleted) {
+      stableCountRef.current = 0;
+      lastTotalRef.current = -1;
+    }
+  }, [isPlaybackComplete]);
 
   const refreshAllTotal = useCallback(() => {
     searchLongTermMemory({ limit: SEARCH_ALL_LIMIT })
@@ -74,10 +118,24 @@ const useLongTermMemory = (
         setIsLoading(false);
         setError(null);
 
-        const hasMemories = result.total > 0;
-        if (hasMemories && !foundMemoriesRef.current) {
-          foundMemoriesRef.current = true;
+        // Track how many consecutive polls return the same total.
+        // Only stop polling after playback is done AND count has settled,
+        // so we don't miss late extraction rounds from AMS.
+        const isSameTotal = result.total === lastTotalRef.current;
+        if (isSameTotal) {
+          stableCountRef.current += 1;
+        } else {
+          stableCountRef.current = 0;
+        }
+        lastTotalRef.current = result.total;
+
+        const isStabilized =
+          isPlaybackCompleteRef.current &&
+          result.total > 0 &&
+          stableCountRef.current >= STABILIZATION_POLL_COUNT;
+        if (isStabilized) {
           clearPoll();
+          clearGraceTimer();
         }
 
         refreshAllTotal();
@@ -86,7 +144,7 @@ const useLongTermMemory = (
         setError(err.message);
         setIsLoading(false);
       });
-  }, [sessionId, clearPoll, refreshAllTotal]);
+  }, [sessionId, clearPoll, clearGraceTimer, refreshAllTotal]);
 
   const fetchAll = useCallback(() => {
     setIsLoading(true);
@@ -124,9 +182,13 @@ const useLongTermMemory = (
           return;
         }
         hasFetchedOnceRef.current = false;
-        foundMemoriesRef.current = false;
+        lastTotalRef.current = -1;
+        stableCountRef.current = 0;
         fetchBySession();
-        pollRef.current = setInterval(fetchBySession, EXTRACTION_POLL_INTERVAL_MS);
+        pollRef.current = setInterval(
+          fetchBySession,
+          EXTRACTION_POLL_INTERVAL_MS,
+        );
       } else {
         fetchAll();
       }
@@ -136,8 +198,10 @@ const useLongTermMemory = (
 
   useEffect(() => {
     clearPoll();
-    foundMemoriesRef.current = false;
+    clearGraceTimer();
     hasFetchedOnceRef.current = false;
+    lastTotalRef.current = -1;
+    stableCountRef.current = 0;
     setScopeState(LT_SCOPE.SESSION);
 
     if (!sessionId) {
@@ -151,8 +215,27 @@ const useLongTermMemory = (
     fetchBySession();
     pollRef.current = setInterval(fetchBySession, EXTRACTION_POLL_INTERVAL_MS);
 
-    return () => clearPoll();
-  }, [sessionId, fetchBySession, clearPoll]);
+    return () => {
+      clearPoll();
+      clearGraceTimer();
+    };
+  }, [sessionId, fetchBySession, clearPoll, clearGraceTimer]);
+
+  // Hard-stop safety net: after playback completes, stop polling after
+  // EXTRACTION_MAX_WAIT_MS even if the count never stabilizes (e.g., AMS
+  // keeps producing memories in small batches). The stabilization check
+  // inside fetchBySession usually fires first for normal flows.
+  useEffect(() => {
+    if (!isPlaybackComplete || !sessionId) {
+      return;
+    }
+
+    graceTimerRef.current = setTimeout(() => {
+      clearPoll();
+    }, EXTRACTION_MAX_WAIT_MS);
+
+    return () => clearGraceTimer();
+  }, [isPlaybackComplete, sessionId, clearPoll, clearGraceTimer]);
 
   const searchByText = useCallback((query: string) => {
     setIsLoading(true);
