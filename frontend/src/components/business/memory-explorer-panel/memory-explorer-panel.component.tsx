@@ -86,6 +86,10 @@ const MemoryExplorerPanel = ({
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
+    const isLtTab = newValue === DEMO_TAB.LONG_TERM_MEMORY;
+    if (isLtTab) {
+      longTermMemory.refetch();
+    }
     const isSummaryTab = newValue === DEMO_TAB.SUMMARY_VIEWS;
     if (isSummaryTab) {
       summaryViews.refreshViews();
