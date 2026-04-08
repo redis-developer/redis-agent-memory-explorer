@@ -49,7 +49,7 @@ const MemoryExplorerPanel = ({
 
   const prevSessionIdRef = useRef(sessionId);
 
-  const workingMemory = useWorkingMemory(sessionId, hasSession);
+  const workingMemory = useWorkingMemory(sessionId, hasSession, isPlaybackComplete);
   const longTermMemory = useLongTermMemory(sessionId, isPlaybackComplete);
   const summaryViews = useSummaryViews();
 
