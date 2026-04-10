@@ -56,8 +56,8 @@ const SCOPE_TABS_SX = {
 } as const;
 
 const SCOPE_LABELS: Record<LtScope, string> = {
-  [LT_SCOPE.SESSION]: "This Session",
-  [LT_SCOPE.ALL]: "All Memories",
+  [LT_SCOPE.SESSION]: "This session",
+  [LT_SCOPE.ALL]: "All memories",
 };
 
 const LongTermMemoryTab = ({

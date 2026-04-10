@@ -50,7 +50,7 @@ const AiCopilotTab = ({
   }
   if (isComplete) {
     statusText = hasSuggestions
-      ? `Playback complete -- ${suggestions.length} insight${suggestions.length !== 1 ? "s" : ""} generated`
+      ? `Playback complete—${suggestions.length} insight${suggestions.length !== 1 ? "s" : ""} generated`
       : labels.noSuggestionsMessage;
   }
 

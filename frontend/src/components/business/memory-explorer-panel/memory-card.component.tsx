@@ -46,7 +46,7 @@ const MemoryCard = ({ memory }: MemoryCardProps) => {
 
       {memory.eventDate && (
         <div className="memory-card__event-date">
-          Event Date: {memory.eventDate}
+          Event date: {memory.eventDate}
         </div>
       )}
 

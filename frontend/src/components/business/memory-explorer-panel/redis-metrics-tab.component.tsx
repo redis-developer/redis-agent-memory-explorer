@@ -29,19 +29,19 @@ const RedisMetricsTab = ({
 
   const rows = [
     {
-      label: "Working Memory",
+      label: "Working memory",
       value: `${messageCount} messages, ${tokens.toLocaleString()} tokens`,
     },
     {
-      label: "Long-Term Memories (Session)",
+      label: "Long-term memories (session)",
       value: `${longTermMemorySessionCount} extracted`,
     },
     {
-      label: "Long-Term Memories (All)",
+      label: "Long-term memories (all)",
       value: `${longTermMemoryAllCount} total`,
     },
     {
-      label: "Summary Views",
+      label: "Summary views",
       value: `${summaryViewCount} configured, ${computedSummaryCount} computed`,
     },
   ];
@@ -53,7 +53,7 @@ const RedisMetricsTab = ({
         {config.memoryLabels.metrics.description}
       </p>
 
-      <SectionCard title="Memory Lifecycle">
+      <SectionCard title="Memory lifecycle">
         <div className="redis-metrics-tab__lifecycle">
           {rows.map((row) => (
             <div key={row.label} className="redis-metrics-tab__row">

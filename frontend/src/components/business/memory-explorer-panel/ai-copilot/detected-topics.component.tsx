@@ -28,15 +28,15 @@ const AI_DETECTED_ICON: Record<string, string> = {
 
 const TOPIC_TITLE: Record<string, Record<string, string>> = {
   [DETECTED_TOPIC_SOURCE.PRE_SEEDED]: {
-    [DETECTED_TOPIC_STATUS.PENDING]: "Pre-seeded topic -- not yet discussed",
-    [DETECTED_TOPIC_STATUS.DISCUSSED]: "Pre-seeded topic -- discussed",
-    [DETECTED_TOPIC_STATUS.NEW]: "Pre-seeded topic -- newly raised",
-    [DETECTED_TOPIC_STATUS.QUESTION]: "Pre-seeded topic -- question raised",
+    [DETECTED_TOPIC_STATUS.PENDING]: "Pre-seeded topic—not yet discussed",
+    [DETECTED_TOPIC_STATUS.DISCUSSED]: "Pre-seeded topic—discussed",
+    [DETECTED_TOPIC_STATUS.NEW]: "Pre-seeded topic—newly raised",
+    [DETECTED_TOPIC_STATUS.QUESTION]: "Pre-seeded topic—question raised",
   },
   [DETECTED_TOPIC_SOURCE.AI_DETECTED]: {
     [DETECTED_TOPIC_STATUS.NEW]: "AI-detected topic",
-    [DETECTED_TOPIC_STATUS.DISCUSSED]: "AI-detected topic -- discussed",
-    [DETECTED_TOPIC_STATUS.QUESTION]: "AI-detected topic -- question raised",
+    [DETECTED_TOPIC_STATUS.DISCUSSED]: "AI-detected topic—discussed",
+    [DETECTED_TOPIC_STATUS.QUESTION]: "AI-detected topic—question raised",
   },
 };
 

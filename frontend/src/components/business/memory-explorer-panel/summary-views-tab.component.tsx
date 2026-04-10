@@ -131,7 +131,7 @@ const SummaryViewsTab = (props: SummaryViewsTabProps) => {
                     },
                   }}
                 >
-                  {isComputing ? "Computing..." : "Compute Summary"}
+                  {isComputing ? "Computing..." : "Compute summary"}
                 </Button>
               )}
               {!canCompute && (

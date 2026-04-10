@@ -1,6 +1,6 @@
-# Redis Agent Memory Explorer
+# Redis agent memory explorer
 
-A meeting-memory application that demonstrates [Redis Agent Memory](https://github.com/redis/agent-memory-server) capabilities — working memory,long-term memory, summary views, live suggestions and a conversational chatbot.
+A meeting-memory app that demonstrates [Redis Agent Memory](https://github.com/redis/agent-memory-server) capabilities—working memory, long-term memory, summary views, live suggestions, and a conversational chatbot.
 
 ## Architecture
 
@@ -9,7 +9,7 @@ redis-agent-memory-explorer/
 ├── backend/         Express API server + LangGraph chatbot agent
 ├── frontend/        Next.js + MUI + CopilotKit UI
 ├── data/            Sample transcript datasets (e.g. wealth-advisor)
-├── docs/            Design & planning documents
+├── docs/            Design and planning documents
 └── packages/        Reusable utility libraries
     ├── cau-api-server          Zero-boilerplate Express server
     ├── cau-logger              Pino-based structured logger
@@ -18,9 +18,9 @@ redis-agent-memory-explorer/
     └── cau-redis-agent-memory  Redis Agent Memory client
 ```
 
-## Quick Start (Docker)
+## Quick start (Docker)
 
-The fastest way to get everything running — Redis, Agent Memory Server, backend + frontend, and LangGraph — in a single command.
+The fastest way to get everything running—Redis, Agent Memory Server, backend + frontend, and LangGraph—in a single command.
 
 ### 1. Configure environment
 
@@ -51,7 +51,7 @@ This spins up four containers:
 
 Open [http://localhost:3001](http://localhost:3001) once all services are healthy.
 
-### Stop & clean up
+### Stop and clean up
 
 ```bash
 docker compose down            # stop containers
@@ -60,7 +60,7 @@ docker compose down -v         # stop + remove Redis data volume
 
 ---
 
-## Local Development
+## Local development
 
 If you prefer running services directly on your machine (e.g. for hot-reload).
 
@@ -121,7 +121,7 @@ npm run dev:api         # Express API server
 npm run dev:frontend    # Next.js frontend
 ```
 
-## Scripts Reference
+## Scripts reference
 
 All scripts are run from the repo root.
 
@@ -130,7 +130,7 @@ All scripts are run from the repo root.
 | `npm run setup` | Install all deps + build shared packages (run once)   |
 | `npm run dev`   | Build packages + start all 3 services in one terminal |
 
-### Individual Services
+### Individual services
 
 | Script                   | Description                                       |
 | ------------------------ | ------------------------------------------------- |
@@ -138,7 +138,7 @@ All scripts are run from the repo root.
 | `npm run dev:api`        | Start Express backend with hot-reload (port 3001) |
 | `npm run dev:langgraph`  | Start LangGraph CLI dev server (port 2024)        |
 
-### Build & Maintenance
+### Build and maintenance
 
 | Script                   | Description                                 |
 | ------------------------ | ------------------------------------------- |

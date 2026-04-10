@@ -37,7 +37,7 @@ const SuggestionBanner = ({
               onClick={onViewDetails}
               type="button"
             >
-              View Details
+              View details
             </button>
             <span className="suggestion-banner__timestamp">{suggestion.timestamp}</span>
           </div>

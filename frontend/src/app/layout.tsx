@@ -20,7 +20,7 @@ const spaceMono = Space_Mono({
 });
 
 const metadata: Metadata = {
-  title: "Meeting Memory Explorer -- Redis Released 2026",
+  title: "Meeting memory explorer—Redis released 2026",
   description: "AI-powered meeting memory exploration demo powered by Redis Agent Memory Server",
 };
 

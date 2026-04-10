@@ -5,9 +5,9 @@
   "namespace": "wealth-advisor",
   "userId": "sarah-chen",
   "branding": {
-    "title": "Wealth Advisor Memory Explorer",
+    "title": "Wealth advisor memory explorer",
     "subtitle": "Powered by Redis Agent Memory",
-    "footerText": "Redis Released 2026 -- Wealth Advisor Memory Demo",
+    "footerText": "Redis released 2026—wealth advisor memory demo",
     "accentColor": "#dc382c"
   },
   "roles": {
@@ -34,32 +34,32 @@
   },
   "memoryLabels": {
     "workingMemory": {
-      "title": "Working Memory",
-      "description": "Live session state -- transcript messages, token count, and auto-generated context summary.",
-      "contextSummaryLabel": "Conversation Summary (auto-generated)"
+      "title": "Working memory",
+      "description": "Live session state—transcript messages, token count, and auto-generated context summary.",
+      "contextSummaryLabel": "Conversation summary (auto-generated)"
     },
     "longTermMemory": {
-      "title": "Long-Term Memories",
+      "title": "Long-term memories",
       "description": "Durable facts extracted from the transcript by the agent memory server.",
       "semantic": {
-        "label": "Client Facts & Preferences",
+        "label": "Client facts and preferences",
         "description": "Financial goals, risk profile, family details, investment preferences"
       },
       "episodic": {
-        "label": "Decisions & Events",
+        "label": "Decisions and events",
         "description": "Portfolio changes, life events, key meeting outcomes"
       },
       "message": {
-        "label": "Conversation Records",
+        "label": "Conversation records",
         "description": "Stored conversation segments"
       }
     },
     "summaryViews": {
-      "title": "Summary Views",
+      "title": "Summary views",
       "description": "AI-generated narrative summaries condensed from extracted memories.",
       "views": [
         {
-          "name": "Client Memory Summary",
+          "name": "Client memory summary",
           "source": "long_term",
           "groupBy": [
             "user_id"
@@ -76,23 +76,23 @@
       ]
     },
     "metrics": {
-      "title": "Redis Under the Hood",
+      "title": "Redis under the hood",
       "description": "Real-time operational stats from the agent memory server."
     }
   },
   "transcriptPanel": {
-    "title": "Meeting Transcript",
-    "playingLabel": "Live Call Simulation",
-    "completedLabel": "Call Ended"
+    "title": "Meeting transcript",
+    "playingLabel": "Live call simulation",
+    "completedLabel": "Call ended"
   },
   "toolbar": {
-    "transcriptDropdownLabel": "Select Meeting",
-    "sessionDropdownLabel": "Load Existing Session",
-    "playLabel": "Play Transcript",
+    "transcriptDropdownLabel": "Select meeting",
+    "sessionDropdownLabel": "Load existing session",
+    "playLabel": "Play transcript",
     "pauseLabel": "Pause",
-    "nextLabel": "Next Message",
-    "resetLabel": "Clear All Memories & Restart",
-    "speedLabel": "Playback Speed"
+    "nextLabel": "Next message",
+    "resetLabel": "Clear all memories and restart",
+    "speedLabel": "Playback speed"
   },
   "statusLabels": {
     "idle": "Select a meeting to begin",
@@ -126,55 +126,55 @@
     ]
   },
   "liveSuggestions": {
-    "title": "Live Suggestions",
+    "title": "Live suggestions",
     "description": "Real-time AI suggestions during transcript playback.",
-    "bannerLabel": "AI Insight",
-    "topicsTitle": "Detected Topics",
-    "insightsTitle": "Live Insights",
+    "bannerLabel": "AI insight",
+    "topicsTitle": "Detected topics",
+    "insightsTitle": "Live insights",
     "waitingMessage": "Listening to transcript...",
     "noSuggestionsMessage": "No insights yet. Play a transcript to see live AI suggestions.",
     "triggerEveryNChunks": 5,
     "suggestionTypes": [
       {
         "id": "lifeEvent",
-        "label": "Life Event Detected",
+        "label": "Life event detected",
         "description": "Client mentions a significant personal change (retirement, marriage, health, etc.)",
         "enabled": true
       },
       {
         "id": "topicRecall",
-        "label": "Topic Recall",
+        "label": "Topic recall",
         "description": "Conversation touches a topic from past sessions (long-term memory match)",
         "enabled": true
       },
       {
         "id": "questionAnswer",
-        "label": "Question Answer",
+        "label": "Question answer",
         "description": "Client asks a factual question the AI can help answer",
         "enabled": true
       },
       {
         "id": "agendaReminder",
-        "label": "Agenda Reminder",
-        "description": "Pre-seeded topic not yet discussed -- nudge to bring it up",
+        "label": "Agenda reminder",
+        "description": "Pre-seeded topic not yet discussed—nudge to bring it up",
         "enabled": true
       },
       {
         "id": "sentimentShift",
-        "label": "Sentiment Shift",
+        "label": "Sentiment shift",
         "description": "Tone or content suggests anxiety, excitement, or concern",
         "enabled": true
       },
       {
         "id": "actionItem",
-        "label": "Action Item",
+        "label": "Action item",
         "description": "A decision is made or a follow-up is identified",
         "enabled": true
       }
     ]
   },
   "chatbot": {
-    "title": "Memory Assistant",
+    "title": "Memory assistant",
     "initialMessage": "Ask me anything about the stored memories for this client. I can search across all meetings or focus on a specific session.",
     "placeholder": "Ask about memories...",
     "instructions": "You are a Memory Assistant that helps explore memories stored in Redis Agent Memory Server for this wealth advisor demo."

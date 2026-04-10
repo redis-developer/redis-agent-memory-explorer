@@ -96,7 +96,7 @@ const MAX_MEMORY_TEXT_LENGTH = 200;
 const SESSION_ID_PREFIX = "playback";
 const SESSION_ID_PATTERN = /^playback-(.+)-(\d{13,})$/;
 
-const DEFAULT_CHATBOT_TITLE = "Memory Assistant";
+const DEFAULT_CHATBOT_TITLE = "Memory assistant";
 const DEFAULT_CHATBOT_INITIAL =
   "Ask me anything about the stored memories for this client. I can search across all meetings or focus on a specific session.";
 const DEFAULT_CHATBOT_PLACEHOLDER = "Ask about memories...";

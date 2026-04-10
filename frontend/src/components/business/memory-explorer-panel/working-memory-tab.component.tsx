@@ -67,7 +67,7 @@ const WorkingMemoryTab = ({
   return (
     <div className="working-memory-tab">
       <SectionCard
-        title="Session Info"
+        title="Session info"
         actions={
           <IconButton size="small" onClick={onRefresh} sx={{ color: "var(--fg-muted)" }}>
             <RefreshIcon fontSize="small" />
@@ -90,7 +90,7 @@ const WorkingMemoryTab = ({
         </div>
       </SectionCard>
 
-      <SectionCard title="Context Window Usage">
+      <SectionCard title="Context window usage">
         <div className="working-memory-tab__context">
           <LinearProgress
             variant="determinate"
