@@ -10,7 +10,7 @@
     gap: var(--space-3xs);
     padding: 0 var(--space-xs);
     height: var(--panel-header-height);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
   }
 

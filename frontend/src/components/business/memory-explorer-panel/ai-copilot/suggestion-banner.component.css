@@ -10,7 +10,7 @@
 
 .suggestion-banner--empty {
   background: var(--bg-surface);
-  border: 1px dashed var(--border);
+  border: 1px dashed var(--border-subtle);
   justify-content: center;
 
   .suggestion-banner__placeholder {
@@ -21,7 +21,7 @@
 }
 
 .suggestion-banner--active {
-  background: var(--dusk-90);
+  background: var(--bg-surface-hover);
   border: 1px solid var(--sky-blue-09);
   animation: banner-highlight var(--transition-slow) ease-out;
 

@@ -40,16 +40,16 @@ a:hover {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-surface);
+  background: var(--bg-default);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--dusk-90);
+  background: var(--border);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--dusk-50);
+  background: var(--stroke-divider);
 }
 
 @keyframes fade-in {

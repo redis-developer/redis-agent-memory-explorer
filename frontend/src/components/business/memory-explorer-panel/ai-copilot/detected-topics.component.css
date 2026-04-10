@@ -1,6 +1,6 @@
 .detected-topics {
   background: var(--bg-surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--border-radius);
   padding: var(--space-3xs) var(--space-xs);
   margin-bottom: var(--space-xs);
@@ -67,7 +67,7 @@
   }
 
   .detected-topics__item--discussed .detected-topics__icon {
-    color: #4caf50;
+    color: var(--yellow-06);
   }
 
   .detected-topics__item--new .detected-topics__icon {

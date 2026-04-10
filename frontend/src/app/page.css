@@ -35,7 +35,7 @@
     align-items: center;
     gap: var(--space-xs);
     padding: var(--space-3xs) var(--space-xs);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
     height: var(--toolbar-height);
   }
@@ -84,7 +84,7 @@
     align-items: center;
     justify-content: center;
     height: var(--footer-height);
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--border-subtle);
     font-size: var(--font-size-xs);
     color: var(--fg-muted);
     flex-shrink: 0;

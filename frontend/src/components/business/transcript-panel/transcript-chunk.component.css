@@ -25,8 +25,8 @@
     align-self: flex-start;
 
     .transcript-chunk__bubble {
-      background-color: var(--dusk-90);
-      border: 1px solid var(--border);
+      background-color: var(--bg-surface-hover);
+      border: 1px solid var(--border-subtle);
     }
   }
 

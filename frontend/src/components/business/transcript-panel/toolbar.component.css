@@ -4,7 +4,7 @@
   gap: var(--space-3xs);
   padding: 0 var(--space-xs);
   height: var(--panel-header-height);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-subtle);
   background-color: var(--bg-surface);
   flex-shrink: 0;
 
@@ -62,7 +62,7 @@
     background-color: var(--btn-primary-bg) !important;
     color: var(--btn-primary-text) !important;
     border: 1px solid var(--btn-primary-border) !important;
-    border-radius: var(--border-radius-pill) !important;
+    border-radius: var(--btn-border-radius-rounded) !important;
     font-size: var(--font-size-xs) !important;
     text-transform: none !important;
     box-shadow: var(--shadow-sm) !important;

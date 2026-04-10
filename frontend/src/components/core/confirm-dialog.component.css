@@ -4,6 +4,7 @@
     color: var(--fg-default) !important;
     border: 1px solid var(--border);
     border-radius: var(--border-radius-lg) !important;
+    box-shadow: var(--shadow-lg) !important;
     min-width: 400px;
   }
 
@@ -24,13 +25,15 @@
   }
 
   .confirm-dialog__confirm-btn {
-    background-color: var(--hyper-07) !important;
-    color: var(--base-white) !important;
+    background-color: var(--btn-primary-bg) !important;
+    color: var(--btn-primary-text) !important;
     font-weight: var(--font-weight-medium) !important;
+    border: 1px solid var(--btn-primary-border) !important;
     border-radius: var(--btn-border-radius-rounded) !important;
 
     &:hover {
-      background-color: var(--hyper-08) !important;
+      background-color: var(--btn-primary-hover-bg) !important;
+      border-color: var(--btn-primary-hover-border) !important;
     }
   }
 }

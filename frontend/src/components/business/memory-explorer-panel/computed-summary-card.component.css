@@ -7,7 +7,7 @@
 
   .computed-summary-card__header {
     padding: var(--space-xs);
-    border-bottom: 1px solid color-mix(in srgb, var(--sky-blue) 30%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--sky-blue) 20%, transparent);
   }
 
   .computed-summary-card__header-row {
@@ -49,7 +49,7 @@
 
   .computed-summary-card__footer {
     padding: var(--space-3xs) var(--space-xs);
-    border-top: 1px solid color-mix(in srgb, var(--sky-blue) 30%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--sky-blue) 20%, transparent);
     font-family: var(--secondary-font);
     font-size: var(--font-size-2xs);
     color: var(--fg-muted);

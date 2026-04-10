@@ -23,6 +23,7 @@
 
   --hyper-04: #fd736a;
   --hyper-05: #ff4438;
+  --hyper-06: #eb352a;
   --hyper-07: #e4291e;
   --hyper-08: #d1281e;
   --hyper-09: #8a221c;
@@ -36,15 +37,16 @@
   --dusk-10: #d9d9d9;
 
   --bg-default: var(--midnight);
-  --bg-surface: var(--dusk-09);
-  --bg-surface-hover: var(--dusk);
+  --bg-surface: #0b1e28;
+  --bg-surface-hover: #12303f;
   --bg-surface-accent: var(--dusk-90);
   --fg-default: var(--base-white);
   --fg-body: var(--dusk-10);
   --fg-muted: var(--dusk-30);
   --fg-brand: var(--yellow);
-  --border: var(--dusk);
-  --stroke-divider: var(--dusk-50);
+  --border: #132d3a;
+  --border-subtle: #0f2530;
+  --stroke-divider: #3a5060;
 
   --color-semantic: #80dbff;
   --color-episodic: #dcff1e;
@@ -71,26 +73,24 @@
   --btn-primary-border: var(--hyper-05);
   --btn-primary-text: var(--base-white);
   --btn-primary-hover-bg: var(--hyper-09);
-  --btn-primary-hover-border: var(--hyper-07);
+  --btn-primary-hover-border: var(--hyper-06);
   --btn-secondary-bg: var(--dusk);
   --btn-secondary-border: var(--dusk-90);
   --btn-secondary-text: var(--base-white);
   --btn-secondary-hover-bg: var(--dusk-90);
   --btn-font-size: 0.875rem;
   --btn-font-weight: 500;
-  --btn-border-radius-pill: 200px;
   --btn-border-radius-rounded: 5px;
   --btn-padding-sm: 0.5rem 0.75rem;
   --btn-padding-md: 0.625rem 1.5rem;
 
-  --border-radius: 8px;
-  --border-radius-sm: 4px;
-  --border-radius-lg: 12px;
-  --border-radius-pill: 200px;
+  --border-radius: 12px;
+  --border-radius-sm: 5px;
+  --border-radius-lg: 16px;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.25);
 
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
