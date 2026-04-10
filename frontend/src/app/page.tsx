@@ -113,9 +113,6 @@ const DemoPage = () => {
     <CopilotSidebar {...sidebarProps}>
       <main className="demo-page">
         <header className="demo-page__header">
-          <div className="demo-page__logo">
-            <img src="redis-logo.svg" alt="Redis" height={28} />
-          </div>
           <h1 className="demo-page__title">{config.branding.title}</h1>
         </header>
 
