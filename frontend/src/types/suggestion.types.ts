@@ -12,6 +12,8 @@ type LiveSuggestionsConfig = {
   description: string;
   bannerLabel: string;
   topicsTitle: string;
+  topicsEmptyTitle: string;
+  topicsEmptyDescription: string;
   insightsTitle: string;
   waitingMessage: string;
   noSuggestionsMessage: string;

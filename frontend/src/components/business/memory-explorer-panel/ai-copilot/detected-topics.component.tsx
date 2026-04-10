@@ -4,6 +4,7 @@ import type { DetectedTopic } from "@/types/suggestion.types";
 
 import { useState } from "react";
 
+import { EmptyState } from "@/components/core";
 import { DETECTED_TOPIC_STATUS, DETECTED_TOPIC_SOURCE } from "@/constants/app.constants";
 
 import "./detected-topics.component.css";
@@ -11,6 +12,8 @@ import "./detected-topics.component.css";
 type DetectedTopicsProps = {
   topics: DetectedTopic[];
   title: string;
+  emptyTitle: string;
+  emptyDescription: string;
 };
 
 const PRE_SEEDED_ICON: Record<string, string> = {
@@ -59,7 +62,7 @@ const formatTimestamp = (value: string): string => {
   return hasBrackets ? value : `[${value}]`;
 };
 
-const DetectedTopics = ({ topics, title }: DetectedTopicsProps) => {
+const DetectedTopics = ({ topics, title, emptyTitle, emptyDescription }: DetectedTopicsProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const hasTopics = topics.length > 0;
 
@@ -103,7 +106,7 @@ const DetectedTopics = ({ topics, title }: DetectedTopicsProps) => {
           })}
         </ul>
       ) : isExpanded ? (
-        <p className="detected-topics__empty">No topics detected yet.</p>
+        <EmptyState title={emptyTitle} description={emptyDescription} />
       ) : null}
     </div>
   );

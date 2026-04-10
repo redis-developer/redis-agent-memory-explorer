@@ -5,9 +5,9 @@
   "namespace": "wealth-advisor",
   "userId": "sarah-chen",
   "branding": {
-    "title": "Wealth advisor memory explorer",
-    "subtitle": "Powered by Redis Agent Memory",
-    "footerText": "Redis released 2026—wealth advisor memory demo",
+    "title": "Wealth advisor memory agent",
+    "subtitle": "Powered by Redis Agent Memory and Redis Context Retriever",
+    "footerText": "",
     "accentColor": "#dc382c"
   },
   "roles": {
@@ -40,7 +40,7 @@
     },
     "longTermMemory": {
       "title": "Long-term memories",
-      "description": "Durable facts extracted from the transcript by the agent memory server.",
+      "description": "Durable facts extracted from the transcript by Redis Agent Memory.",
       "semantic": {
         "label": "Client facts and preferences",
         "description": "Financial goals, risk profile, family details, investment preferences"
@@ -77,7 +77,7 @@
     },
     "metrics": {
       "title": "Redis under the hood",
-      "description": "Real-time operational stats from the agent memory server."
+      "description": "Real-time operational stats from Redis Agent Memory."
     }
   },
   "transcriptPanel": {
@@ -130,6 +130,8 @@
     "description": "Real-time AI suggestions during transcript playback.",
     "bannerLabel": "AI insight",
     "topicsTitle": "Detected topics",
+    "topicsEmptyTitle": "Detected topics",
+    "topicsEmptyDescription": "Topics will appear here as the AI detects them during transcript playback.",
     "insightsTitle": "Live insights",
     "waitingMessage": "Listening to transcript...",
     "noSuggestionsMessage": "No insights yet. Play a transcript to see live AI suggestions.",

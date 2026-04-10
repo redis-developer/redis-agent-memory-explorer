@@ -415,7 +415,6 @@ Note: `userId` and `namespace` are read from `datasetConfig.userId` and `dataset
 ```tsx
 <main className="demo-page">
   <header className="demo-page__header">
-    <img src="/redis-logo.svg" alt="Redis" height={28} />
     <h1 className="demo-page__title">{config.branding.title}</h1>
   </header>
 

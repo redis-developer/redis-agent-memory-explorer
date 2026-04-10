@@ -56,7 +56,12 @@ const AiCopilotTab = ({
 
   return (
     <div className="ai-copilot-tab">
-      <DetectedTopics topics={detectedTopics} title={labels.topicsTitle} />
+      <DetectedTopics
+        topics={detectedTopics}
+        title={labels.topicsTitle}
+        emptyTitle={labels.topicsEmptyTitle}
+        emptyDescription={labels.topicsEmptyDescription}
+      />
 
       <div className="ai-copilot-tab__insights" ref={insightsRef}>
         <h3 className="ai-copilot-tab__insights-title">{labels.insightsTitle}</h3>

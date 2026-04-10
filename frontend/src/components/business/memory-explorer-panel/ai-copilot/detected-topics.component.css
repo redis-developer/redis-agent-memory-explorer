@@ -92,12 +92,4 @@
     color: var(--fg-muted);
   }
 
-  .detected-topics__empty {
-    font-size: var(--font-size-xs);
-    color: var(--fg-muted);
-    font-style: italic;
-    text-align: center;
-    margin: 0;
-    padding: var(--space-2xs) 0;
-  }
 }
