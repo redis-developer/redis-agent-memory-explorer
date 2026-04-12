@@ -30,18 +30,21 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   });
 
   const ltStartMs = Date.now();
-  // 2. Delete all long-term memories
-  const ltResult = await memory.searchLongTermMemory({
-    text: "",
-    namespace: { eq: namespace },
-    limit: SEARCH_ALL_LIMIT,
-  });
-  const memoryIds = ltResult.memories.map((m) => m.id);
-  const memoriesDeleted = memoryIds.length;
-  const hasMemories = memoriesDeleted > 0;
-  if (hasMemories) {
-    await memory.deleteLongTermMemories(memoryIds);
-  }
+  // 2. Delete all long-term memories in batches (may exceed SEARCH_ALL_LIMIT)
+  let memoriesDeleted = 0;
+  let ltBatch;
+  do {
+    ltBatch = await memory.searchLongTermMemory({
+      text: "",
+      namespace: { eq: namespace },
+      limit: SEARCH_ALL_LIMIT,
+    });
+    if (ltBatch.memories.length > 0) {
+      const batchIds = ltBatch.memories.map((m) => m.id);
+      await memory.deleteLongTermMemories(batchIds);
+      memoriesDeleted += batchIds.length;
+    }
+  } while (ltBatch.memories.length > 0);
   logger.info("Step 2/5: Long-term memories deleted", {
     memoriesDeleted,
     latencyMs: Date.now() - ltStartMs,
