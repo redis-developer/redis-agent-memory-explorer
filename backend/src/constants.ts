@@ -50,6 +50,14 @@ const DEFAULT_RATE_LIMIT_MAX = 8000;
 
 const DEFAULT_REDIS_URL = "redis://localhost:6379";
 
+// Workaround: https://github.com/redis/agent-memory-server/issues/229
+// AMS deleteSummaryView leaves orphaned partition keys in Redis.
+// Remove this constant + cleanup logic once the upstream fix lands.
+const AMS_PARTITION_KEY_PREFIX = "summary_view";
+const AMS_PARTITION_KEY_SEPARATOR = ":";
+const AMS_PARTITION_SUMMARY_SEGMENT = "summary";
+const AMS_PARTITION_SCAN_BATCH = 100;
+
 const DEFAULT_STATIC_DIR = "../public";
 
 const DEFAULT_LOG_DIR = "../../logs";
@@ -107,6 +115,10 @@ export {
   DEFAULT_RATE_LIMIT_MAX,
   REDIS_JSON_ROOT_PATH,
   DEFAULT_REDIS_URL,
+  AMS_PARTITION_KEY_PREFIX,
+  AMS_PARTITION_KEY_SEPARATOR,
+  AMS_PARTITION_SUMMARY_SEGMENT,
+  AMS_PARTITION_SCAN_BATCH,
   DEFAULT_STATIC_DIR,
   DEFAULT_LOG_DIR,
   DEFAULT_LOG_FILE,

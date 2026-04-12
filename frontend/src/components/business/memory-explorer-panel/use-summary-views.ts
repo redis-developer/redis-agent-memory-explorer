@@ -157,6 +157,7 @@ const useSummaryViews = (): UseSummaryViewsResult => {
     [loadViews],
   );
 
+  // Not used yet -- reserved for a per-view delete button in SummaryViewsTab.
   const deleteView = useCallback(
     async (viewId: string) => {
       try {

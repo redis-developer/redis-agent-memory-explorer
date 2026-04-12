@@ -5,6 +5,7 @@ import { AgentMemory } from "cau-redis-agent-memory";
 
 import { SEARCH_ALL_LIMIT } from "../constants";
 import { getAppState } from "../app-state";
+import { deletePartitionsForView } from "../services/ams-partition-cleanup";
 import { SuggestionStore } from "../services/suggestion-store";
 import { TopicStore } from "../services/topic-store";
 import { TranscriptChunkStore } from "../services/transcript-chunk-store";
@@ -57,12 +58,16 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
     (v) => v.filters?.namespace === namespace,
   );
   let viewsDeleted = 0;
+  let partitionsDeleted = 0;
   for (const view of ownViews) {
+    // Workaround: https://github.com/redis/agent-memory-server/issues/229
+    partitionsDeleted += await deletePartitionsForView(view.id);
     await memory.deleteSummaryView(view.id);
     viewsDeleted += 1;
   }
   logger.info("Step 3/5: Summary views deleted", {
     viewsDeleted,
+    partitionsDeleted,
     latencyMs: Date.now() - viewsStartMs,
   });
 

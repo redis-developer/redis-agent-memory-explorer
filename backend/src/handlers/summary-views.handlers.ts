@@ -12,6 +12,7 @@ import { AgentMemory } from "cau-redis-agent-memory";
 
 import { SUPPORTED_GROUP_BY_FIELDS } from "../constants";
 import { getAppState } from "../app-state";
+import { deletePartitionsForView } from "../services/ams-partition-cleanup";
 
 const validateGroupBy = (groupBy?: string[]): void => {
   const hasGroupBy = groupBy !== undefined && groupBy.length > 0;
@@ -151,7 +152,14 @@ const deleteSummaryViewHandler: RouteHandler = async (input, { logger }) => {
 
   logger.info("Deleting summary view", { viewId });
 
+  // Workaround: https://github.com/redis/agent-memory-server/issues/229
+  const partitionsDeleted = await deletePartitionsForView(viewId);
   const result = await AgentMemory.getInstance().deleteSummaryView(viewId);
+
+  logger.info("Summary view deleted with partition cleanup", {
+    viewId,
+    partitionsDeleted,
+  });
 
   return result;
 };

@@ -149,3 +149,5 @@ dist/
 
 # Scratch / planning
 temp/
+
+tests/
