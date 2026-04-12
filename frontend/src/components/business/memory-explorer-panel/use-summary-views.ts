@@ -36,6 +36,9 @@ type UseSummaryViewsResult = {
   resetAndRefresh: () => void;
 };
 
+const sortSummariesDescending = (items: ComputedSummaryData[]): ComputedSummaryData[] =>
+  [...items].sort((a, b) => new Date(b.computedAt).getTime() - new Date(a.computedAt).getTime());
+
 const useSummaryViews = (): UseSummaryViewsResult => {
   const [views, setViews] = useState<SummaryViewData[]>([]);
   const [summaries, setSummaries] = useState<Map<string, ComputedSummaryData[]>>(new Map());
@@ -66,7 +69,7 @@ const useSummaryViews = (): UseSummaryViewsResult => {
         for (const { viewId, summaries: viewSummaries } of results) {
           const hasSummaries = viewSummaries.length > 0;
           if (hasSummaries) {
-            newSummaries.set(viewId, viewSummaries);
+            newSummaries.set(viewId, sortSummariesDescending(viewSummaries));
           }
         }
         setSummaries(newSummaries);
@@ -107,9 +110,9 @@ const useSummaryViews = (): UseSummaryViewsResult => {
           if (hasExisting) {
             const updated = [...existing];
             updated[updatedIdx] = summaryData;
-            next.set(viewId, updated);
+            next.set(viewId, sortSummariesDescending(updated));
           } else {
-            next.set(viewId, [...existing, summaryData]);
+            next.set(viewId, sortSummariesDescending([...existing, summaryData]));
           }
           return next;
         });
@@ -128,7 +131,7 @@ const useSummaryViews = (): UseSummaryViewsResult => {
       const res = await fetchComputedSummaries(viewId);
       setSummaries((prev) => {
         const next = new Map(prev);
-        next.set(viewId, res.summaries);
+        next.set(viewId, sortSummariesDescending(res.summaries));
         return next;
       });
     } catch (err) {
