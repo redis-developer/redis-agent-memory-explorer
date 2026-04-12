@@ -35,11 +35,15 @@ const formatSessionLabel = (sessionId: string): string => {
     const transcriptId = match[1];
     const timestamp = parseInt(match[2], 10);
     const date = new Date(timestamp);
+    const dateStr = date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    });
     const timeStr = date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
-    label = `${transcriptId} (${timeStr})`;
+    label = `${transcriptId} -- ${dateStr}, ${timeStr}`;
   }
 
   return label;
@@ -146,7 +150,12 @@ const TranscriptPanel = ({
   const loadSessionList = useCallback(() => {
     listWorkingMemorySessions()
       .then((res) => {
-        setSessions(res.sessions);
+        const sorted = [...res.sessions].sort((a, b) => {
+          const tsA = SESSION_ID_PATTERN.exec(a)?.[2] ?? "0";
+          const tsB = SESSION_ID_PATTERN.exec(b)?.[2] ?? "0";
+          return Number(tsB) - Number(tsA);
+        });
+        setSessions(sorted);
       })
       .catch((err: Error) => {
         console.error("Failed to load sessions:", err.message);
