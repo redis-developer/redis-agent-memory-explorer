@@ -4,7 +4,7 @@ import type { DatasetConfig } from "@/types/dataset-config.types";
 import type { TranscriptData, TranscriptSummary } from "@/types/transcript.types";
 import type { AppendResult } from "@/types/memory.types";
 
-import { useState, useCallback, useEffect, useRef, type MutableRefObject } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef, type MutableRefObject } from "react";
 
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
@@ -84,6 +84,17 @@ const TranscriptPanel = ({
   );
 
   const hasSessions = sessions.length > 0;
+
+  const usedTranscriptIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const s of sessions) {
+      const tid = parseTranscriptIdFromSessionId(s);
+      if (tid) {
+        ids.add(tid);
+      }
+    }
+    return ids;
+  }, [sessions]);
 
   const pendingPlayRef = useRef(false);
   const pendingNextRef = useRef(false);
@@ -186,6 +197,11 @@ const TranscriptPanel = ({
 
   const handleLoadSession = useCallback(
     (selectedSessionId: string) => {
+      const isAlreadyLoaded = selectedSessionId === sessionId;
+      if (isAlreadyLoaded) {
+        return;
+      }
+
       const transcriptId = parseTranscriptIdFromSessionId(selectedSessionId);
 
       if (transcriptId) {
@@ -204,7 +220,7 @@ const TranscriptPanel = ({
           });
       }
     },
-    [playback, onSessionCreated],
+    [sessionId, playback, onSessionCreated],
   );
 
   const createSessionThen = useCallback(
@@ -213,6 +229,7 @@ const TranscriptPanel = ({
         createWorkingMemory(selectedTranscriptId)
           .then((res) => {
             setSessionId(res.sessionId);
+            setSessions((prev) => [res.sessionId, ...prev]);
             onSessionCreated(res.sessionId);
             pendingRef.current = true;
           })
@@ -313,6 +330,7 @@ const TranscriptPanel = ({
         config={datasetConfig}
         transcripts={transcripts}
         selectedTranscriptId={selectedTranscriptId}
+        usedTranscriptIds={usedTranscriptIds}
         onSelectTranscript={handleSelectTranscript}
         playbackSpeed={playbackIntervalMs}
         onSpeedChange={setPlaybackIntervalMs}

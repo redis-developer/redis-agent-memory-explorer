@@ -57,6 +57,17 @@
     }
   }
 
+  .toolbar__used-hint {
+    margin-left: var(--space-3xs);
+    color: var(--fg-muted);
+    font-size: var(--font-size-2xs);
+  }
+
+  .toolbar__all-used-hint {
+    font-size: var(--font-size-2xs) !important;
+    font-style: italic;
+  }
+
   .toolbar__reset-btn {
     margin-left: auto !important;
     background-color: var(--btn-primary-bg) !important;

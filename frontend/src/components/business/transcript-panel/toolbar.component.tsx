@@ -23,6 +23,7 @@ type ToolbarProps = {
   config: DatasetConfig;
   transcripts: TranscriptSummary[];
   selectedTranscriptId: string | null;
+  usedTranscriptIds: Set<string>;
   onSelectTranscript: (id: string) => void;
   playbackSpeed: number;
   onSpeedChange: (intervalMs: number) => void;
@@ -50,6 +51,7 @@ const Toolbar = ({
   config,
   transcripts,
   selectedTranscriptId,
+  usedTranscriptIds,
   onSelectTranscript,
   playbackSpeed,
   onSpeedChange,
@@ -66,6 +68,7 @@ const Toolbar = ({
   const canStep = hasTranscript && !isPlaying && !isComplete && !isResetting;
   const playPauseLabel = isPlaying ? config.toolbar.pauseLabel : config.toolbar.playLabel;
   const playPauseDisabled = !hasTranscript || isComplete || isResetting;
+  const allTranscriptsUsed = transcripts.length > 0 && usedTranscriptIds.size >= transcripts.length;
 
   return (
     <div className="toolbar">
@@ -81,11 +84,22 @@ const Toolbar = ({
         <MenuItem value="" disabled>
           {config.toolbar.transcriptDropdownLabel}
         </MenuItem>
-        {transcripts.map((t) => (
-          <MenuItem key={t.id} value={t.id}>
-            {t.date} - {t.type} ({t.chunkCount} chunks)
+        {transcripts.map((t) => {
+          const isUsed = usedTranscriptIds.has(t.id);
+          return (
+            <MenuItem key={t.id} value={t.id} disabled={isUsed}>
+              {t.date} - {t.type} ({t.chunkCount} chunks)
+              {isUsed && (
+                <span className="toolbar__used-hint">(session exists)</span>
+              )}
+            </MenuItem>
+          );
+        })}
+        {allTranscriptsUsed && (
+          <MenuItem disabled divider={false} className="toolbar__all-used-hint">
+            Use session dropdown or Clear All
           </MenuItem>
-        ))}
+        )}
       </Select>
 
       <Select

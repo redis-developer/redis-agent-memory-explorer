@@ -1,6 +1,7 @@
 services:
   redis:
     image: redis:latest
+    command: redis-server --stop-writes-on-bgsave-error no
     ports:
       - "6379:6379"
     volumes:

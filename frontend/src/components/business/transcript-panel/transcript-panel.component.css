@@ -26,5 +26,22 @@
     margin-left: auto;
     min-width: 180px;
     max-width: 300px;
+
+    &.Mui-disabled {
+      opacity: 0.45;
+
+      .MuiSelect-select {
+        color: var(--fg-muted) !important;
+        -webkit-text-fill-color: var(--fg-muted) !important;
+      }
+
+      .MuiOutlinedInput-notchedOutline {
+        border-color: var(--border) !important;
+      }
+
+      .MuiSvgIcon-root {
+        color: var(--fg-muted) !important;
+      }
+    }
   }
 }
