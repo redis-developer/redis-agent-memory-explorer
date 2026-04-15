@@ -5,11 +5,14 @@ import type {
   MemoryEditInput,
   MemorySearchOptions,
   MemorySearchResult,
+  SearchAllOptions,
+  SearchAllResult,
   CreateMemoriesOptions,
   AckResult,
   RawClientConfig,
 } from "../types";
 
+import { DEFAULT_SEARCH_ALL_BATCH_SIZE } from "../constants";
 import {
   mapInputToSdkRecord,
   mapSdkRecordToResult,
@@ -61,6 +64,40 @@ const searchLongTermMemoryOp = async (
     memories: response.memories.map(mapSdkRecordToResult),
     total: response.total,
     nextOffset: response.next_offset ?? null,
+  };
+};
+
+/**
+ * Auto-paginating search that collects all matching long-term memories.
+ * Iterates with `batchSize` (default 100, the AMS server max) until all
+ * pages are exhausted, then returns the full flat array.
+ */
+const searchAllLongTermMemoriesOp = async (
+  client: MemoryAPIClient,
+  options: SearchAllOptions,
+): Promise<SearchAllResult> => {
+  const { batchSize, ...searchOptions } = options;
+  const resolvedBatchSize = batchSize ?? DEFAULT_SEARCH_ALL_BATCH_SIZE;
+
+  const allMemories: MemoryRecordResult[] = [];
+  let offset = 0;
+  let lastTotal = 0;
+  let batch: MemorySearchResult;
+
+  do {
+    batch = await searchLongTermMemoryOp(client, {
+      ...searchOptions,
+      limit: resolvedBatchSize,
+      offset,
+    });
+    allMemories.push(...batch.memories);
+    lastTotal = batch.total;
+    offset += resolvedBatchSize;
+  } while (batch.memories.length >= resolvedBatchSize);
+
+  return {
+    memories: allMemories,
+    total: lastTotal,
   };
 };
 
@@ -142,6 +179,7 @@ const deleteLongTermMemoriesOp = async (
 export {
   createLongTermMemoriesOp,
   searchLongTermMemoryOp,
+  searchAllLongTermMemoriesOp,
   getLongTermMemoryOp,
   editLongTermMemoryOp,
   deleteLongTermMemoriesOp,

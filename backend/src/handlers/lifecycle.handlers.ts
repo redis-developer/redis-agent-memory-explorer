@@ -3,7 +3,7 @@ import type { ForgetLifecycleInput } from "../types";
 
 import { AgentMemory } from "cau-redis-agent-memory";
 
-import { SEARCH_ALL_LIMIT } from "../constants";
+import { DEFAULT_LIST_LIMIT, SEARCH_ALL_LIMIT, FORGET_LIMIT } from "../constants";
 import { getAppState } from "../app-state";
 import { deletePartitionsForView } from "../services/ams-partition-cleanup";
 import { SuggestionStore } from "../services/suggestion-store";
@@ -18,20 +18,31 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   logger.info("Resetting lifecycle -- clearing all memories", { namespace });
 
   const sessionsStartMs = Date.now();
-  // 1. Delete all working memory sessions
-  const sessions = await memory.listSessions({ namespace, userId });
+  // 1. Delete all working memory sessions in batches.
+  // AMS enforces a hard limit of 100 on GET /v1/working-memory/ (GetSessionsQuery),
+  // so a single listSessions call can miss sessions beyond 100. Loop until empty.
   let sessionsDeleted = 0;
-  for (const sessionId of sessions.sessions) {
-    await memory.deleteWorkingMemory(sessionId, { namespace, userId });
-    sessionsDeleted += 1;
-  }
+  let sessionBatch;
+  do {
+    sessionBatch = await memory.listSessions({
+      namespace,
+      userId,
+      limit: DEFAULT_LIST_LIMIT,
+    });
+    for (const sessionId of sessionBatch.sessions) {
+      await memory.deleteWorkingMemory(sessionId, { namespace, userId });
+      sessionsDeleted += 1;
+    }
+  } while (sessionBatch.sessions.length >= DEFAULT_LIST_LIMIT);
   logger.info("Step 1/5: Working memory sessions deleted", {
     sessionsDeleted,
     latencyMs: Date.now() - sessionsStartMs,
   });
 
   const ltStartMs = Date.now();
-  // 2. Delete all long-term memories in batches (may exceed SEARCH_ALL_LIMIT)
+  // 2. Delete all long-term memories in batches.
+  // AMS enforces a hard limit of 100 on POST /v1/long-term-memory/search (SearchRequest),
+  // so a single search call can miss memories beyond 100. Loop until empty.
   let memoriesDeleted = 0;
   let ltBatch;
   do {
@@ -124,6 +135,11 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   };
 };
 
+/**
+ * Not called by the frontend or any backend flow. The "Clear all memories"
+ * button uses `resetLifecycleHandler` instead. This endpoint exists for
+ * ad-hoc / demo use of the AMS forget-policy feature via direct API call.
+ */
 const forgetLifecycleHandler: RouteHandler = async (input, { logger }) => {
   const { policy, dryRun } = (input as ForgetLifecycleInput) ?? {};
   const { namespace, userId } = getAppState();
@@ -135,7 +151,7 @@ const forgetLifecycleHandler: RouteHandler = async (input, { logger }) => {
     {
       namespace,
       userId,
-      limit: SEARCH_ALL_LIMIT,
+      limit: FORGET_LIMIT,
     },
   );
 

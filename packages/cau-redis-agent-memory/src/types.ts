@@ -178,6 +178,15 @@ type MemorySearchResult = {
   nextOffset: number | null;
 };
 
+type SearchAllOptions = Omit<MemorySearchOptions, "limit" | "offset"> & {
+  batchSize?: number;
+};
+
+type SearchAllResult = {
+  memories: MemoryRecordResult[];
+  total: number;
+};
+
 // --- Memory Prompt ---
 
 type MemoryPromptRequest = {
@@ -300,6 +309,8 @@ export type {
   DateFilter,
   MemorySearchOptions,
   MemorySearchResult,
+  SearchAllOptions,
+  SearchAllResult,
   MemoryPromptRequest,
   MemoryPromptResult,
   ForgetPolicy,

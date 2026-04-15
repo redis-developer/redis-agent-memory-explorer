@@ -1,5 +1,6 @@
 const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_SEARCH_LIMIT = 10;
+const DEFAULT_SEARCH_ALL_BATCH_SIZE = 100;
 const DEFAULT_SESSION_LIST_LIMIT = 100;
 
 const MemoryType = {
@@ -36,6 +37,7 @@ type TaskStatus = (typeof TaskStatus)[keyof typeof TaskStatus];
 export {
   DEFAULT_TIMEOUT_MS,
   DEFAULT_SEARCH_LIMIT,
+  DEFAULT_SEARCH_ALL_BATCH_SIZE,
   DEFAULT_SESSION_LIST_LIMIT,
   MemoryType,
   ExtractionStrategy,

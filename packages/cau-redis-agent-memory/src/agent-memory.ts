@@ -11,6 +11,8 @@ import type {
   CreateMemoriesOptions,
   MemorySearchOptions,
   MemorySearchResult,
+  SearchAllOptions,
+  SearchAllResult,
   MemoryPromptRequest,
   MemoryPromptResult,
   ForgetPolicy,
@@ -40,6 +42,7 @@ import {
 import {
   createLongTermMemoriesOp,
   searchLongTermMemoryOp,
+  searchAllLongTermMemoriesOp,
   getLongTermMemoryOp,
   editLongTermMemoryOp,
   deleteLongTermMemoriesOp,
@@ -194,6 +197,12 @@ class AgentMemory {
     options: MemorySearchOptions,
   ): Promise<MemorySearchResult> => {
     return searchLongTermMemoryOp(this.#client, options);
+  };
+
+  searchAllLongTermMemories = async (
+    options: SearchAllOptions,
+  ): Promise<SearchAllResult> => {
+    return searchAllLongTermMemoriesOp(this.#client, options);
   };
 
   getLongTermMemory = async (

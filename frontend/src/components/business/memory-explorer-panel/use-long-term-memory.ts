@@ -14,7 +14,6 @@ import {
   EXTRACTION_MAX_WAIT_MS,
   STABILIZATION_POLL_COUNT,
   LT_SCOPE,
-  SEARCH_ALL_LIMIT,
 } from "@/constants/app.constants";
 
 type UseLongTermMemoryResult = {
@@ -95,7 +94,7 @@ const useLongTermMemory = (
   }, [isPlaybackComplete]);
 
   const refreshAllTotal = useCallback(() => {
-    searchLongTermMemory({ limit: SEARCH_ALL_LIMIT })
+    searchLongTermMemory({})
       .then((result) => {
         setAllTotal(result.total);
       })
@@ -148,7 +147,7 @@ const useLongTermMemory = (
 
   const fetchAll = useCallback(() => {
     setIsLoading(true);
-    searchLongTermMemory({ limit: SEARCH_ALL_LIMIT })
+    searchLongTermMemory({})
       .then((result) => {
         setMemories(result.memories);
         setAllTotal(result.total);
