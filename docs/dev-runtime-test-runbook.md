@@ -489,7 +489,7 @@ Open the app at `http://localhost:3000` and walk through each item:
 
 - [ ] Dark theme: midnight background on all surfaces, no white flashes
 - [ ] Panel split: transcript panel ~55%, memory explorer ~45%
-- [ ] Header shows "Wealth advisor memory agent" (from config)
+- [ ] Header shows "Wealth advisor agent" (from config)
 - [ ] Footer shows subtitle text
 - [ ] Redis accent color (`#dc382c`) used on interactive elements
 

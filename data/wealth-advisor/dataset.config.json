@@ -5,7 +5,7 @@
   "namespace": "wealth-advisor",
   "userId": "sarah-chen",
   "branding": {
-    "title": "Wealth advisor memory agent",
+    "title": "Wealth advisor agent",
     "subtitle": "Powered by Redis Agent Memory and Redis Context Retriever",
     "footerText": "",
     "accentColor": "#dc382c"

@@ -17,9 +17,9 @@ Returns the active dataset configuration. First call the frontend makes on page 
     "namespace": "wealth-advisor",
     "userId": "sarah-chen",
     "branding": {
-      "title": "Wealth Advisor Memory Explorer",
+      "title": "Wealth advisor agent",
       "subtitle": "Powered by Redis Agent Memory Server",
-      "footerText": "Redis Released 2026 -- Wealth Advisor Memory Demo",
+      "footerText": "Redis Released 2026 -- Wealth advisor agent demo",
       "accentColor": "#dc382c"
     },
     "roles": {

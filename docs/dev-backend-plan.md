@@ -303,7 +303,7 @@ Response `data`: the full `dataset.config.json` for the active dataset.
 
 Key fields the frontend uses:
 
-- `branding.title` -- page title (e.g., "Wealth Advisor Memory Explorer")
+- `branding.title` -- page title (e.g., "Wealth advisor agent")
 - `roles` -- how to label speakers in transcript bubbles
 - `participants` -- speaker names, titles
 - `memoryLabels` -- all tab titles, section headers, descriptions (including `memoryLabels.summaryViews.views` -- the pre-seeded summary view definitions)
