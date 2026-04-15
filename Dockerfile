@@ -19,6 +19,7 @@ RUN npm run build:packages
 FROM packages AS frontend-build
 COPY frontend/ frontend/
 ENV NEXT_PUBLIC_API_BASE_URL=""
+ENV NEXT_PUBLIC_COPILOTKIT_RUNTIME_URL="/copilotkit"
 RUN npm run build -w frontend
 
 # ── Stage 4: Production app image ──
