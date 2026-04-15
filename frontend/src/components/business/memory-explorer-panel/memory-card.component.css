@@ -1,6 +1,6 @@
 .memory-card {
   background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: var(--border-radius);
   padding: var(--space-xs);
   border-left: 3px solid var(--border);

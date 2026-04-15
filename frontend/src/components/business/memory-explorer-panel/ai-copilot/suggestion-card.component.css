@@ -1,6 +1,6 @@
 .suggestion-card {
   background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: var(--border-radius);
   padding: var(--space-3xs) var(--space-xs);
 
@@ -19,7 +19,7 @@
 
   .suggestion-card__title {
     font-size: var(--font-size-rg);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semibold);
     color: var(--fg-default);
     margin: 0 0 var(--space-2xs) 0;
   }

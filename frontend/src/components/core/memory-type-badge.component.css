@@ -1,7 +1,7 @@
 .memory-type-badge {
   font-family: var(--secondary-font) !important;
   font-size: var(--font-size-2xs) !important;
-  font-weight: var(--font-weight-bold) !important;
+  font-weight: var(--font-weight-semibold) !important;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-radius: var(--border-radius-sm) !important;

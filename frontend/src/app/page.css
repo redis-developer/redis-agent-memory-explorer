@@ -21,7 +21,7 @@
   .demo-page__error-title {
     font-size: var(--font-size-xl);
     color: var(--hyper-05);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semibold);
   }
 
   .demo-page__error-message {
@@ -35,7 +35,7 @@
     align-items: center;
     gap: var(--space-xs);
     padding: var(--space-3xs) var(--space-xs);
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     height: var(--toolbar-height);
   }
@@ -46,7 +46,7 @@
 
   .demo-page__title {
     font-size: var(--font-size-md);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semibold);
     color: var(--fg-default);
     margin: 0;
     line-height: 1;
@@ -84,7 +84,7 @@
     align-items: center;
     justify-content: center;
     height: var(--footer-height);
-    border-top: 1px solid var(--border-subtle);
+    border-top: 1px solid var(--border);
     font-size: var(--font-size-xs);
     color: var(--fg-muted);
     flex-shrink: 0;

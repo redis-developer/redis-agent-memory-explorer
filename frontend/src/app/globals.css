@@ -26,6 +26,28 @@ pre,
   font-family: var(--secondary-font);
 }
 
+/* Override MUI default Roboto with redis-visual-guide fonts */
+.MuiTypography-root,
+.MuiButton-root,
+.MuiTab-root,
+.MuiChip-root,
+.MuiSelect-select,
+.MuiMenuItem-root,
+.MuiInputBase-root,
+.MuiDialogTitle-root,
+.MuiDialogContent-root,
+.MuiDialogActions-root {
+  font-family: var(--primary-font) !important;
+}
+
+/* Override MUI default border-radius to 5px (except Chips) */
+.MuiButton-root,
+.MuiOutlinedInput-root,
+.MuiPaper-root,
+.MuiDialog-paper {
+  border-radius: var(--border-radius-sm) !important;
+}
+
 a {
   color: var(--sky-blue);
   text-decoration: none;

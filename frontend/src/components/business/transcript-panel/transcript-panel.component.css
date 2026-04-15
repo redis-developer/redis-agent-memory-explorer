@@ -10,13 +10,13 @@
     gap: var(--space-3xs);
     padding: 0 var(--space-xs);
     height: var(--panel-header-height);
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
 
   .transcript-panel__title {
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semibold);
     color: var(--fg-default);
     margin: 0;
     flex-shrink: 0;
@@ -37,10 +37,6 @@
 
       .MuiOutlinedInput-notchedOutline {
         border-color: var(--border) !important;
-      }
-
-      .MuiSvgIcon-root {
-        color: var(--fg-muted) !important;
       }
     }
   }

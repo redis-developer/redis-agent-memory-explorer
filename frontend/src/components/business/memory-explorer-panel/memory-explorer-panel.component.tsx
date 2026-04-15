@@ -124,10 +124,10 @@ const MemoryExplorerPanel = ({
             padding: "8px 16px",
           },
           "& .Mui-selected": {
-            color: "var(--fg-default) !important",
+            color: "var(--yellow) !important",
           },
           "& .MuiTabs-indicator": {
-            backgroundColor: "var(--primary-color)",
+            backgroundColor: "var(--yellow)",
           },
         }}
       >

@@ -57,7 +57,7 @@ const PlaybackControls = ({
           "& .MuiLinearProgress-bar": {
             backgroundColor: percentage >= 100
               ? "var(--color-episodic)"
-              : "var(--primary-color)",
+              : "var(--sky-blue)",
             borderRadius: 2,
           },
         }}

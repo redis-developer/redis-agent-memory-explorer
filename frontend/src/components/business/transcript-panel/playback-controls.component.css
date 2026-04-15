@@ -4,7 +4,7 @@
   gap: var(--space-3xs);
   padding: 0 var(--space-xs);
   height: var(--panel-footer-height);
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--border);
   flex-shrink: 0;
 
   .playback-controls__health {

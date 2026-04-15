@@ -11,7 +11,6 @@ type TranscriptChunkProps = {
   roleLabel: string;
   text: string;
   isNew: boolean;
-  accentColor: string;
 };
 
 const TranscriptChunkComponent = ({
@@ -21,14 +20,10 @@ const TranscriptChunkComponent = ({
   roleLabel,
   text,
   isNew,
-  accentColor,
 }: TranscriptChunkProps) => {
-  const isRm = role === TRANSCRIPT_ROLE.RM;
-
   return (
     <div
       className={`transcript-chunk transcript-chunk--${role} ${isNew ? "transcript-chunk--new" : ""}`}
-      style={isRm ? { "--chunk-accent": accentColor } as React.CSSProperties : undefined}
     >
       <div className="transcript-chunk__meta">
         <span className="transcript-chunk__timestamp">{timestamp}</span>

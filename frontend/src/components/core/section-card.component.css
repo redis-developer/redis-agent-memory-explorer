@@ -9,7 +9,7 @@
     align-items: flex-start;
     justify-content: space-between;
     padding: var(--space-xs);
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border);
     gap: var(--space-3xs);
   }
 
@@ -20,7 +20,7 @@
 
   .section-card__title {
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semibold);
     color: var(--fg-default);
     margin: 0;
   }

@@ -12,8 +12,8 @@
     align-self: flex-end;
 
     .transcript-chunk__bubble {
-      background-color: var(--chunk-accent, var(--hyper-10));
-      border: 1px solid color-mix(in srgb, var(--chunk-accent, var(--hyper-05)) 40%, transparent);
+      background-color: var(--dusk-90);
+      border: none;
     }
 
     .transcript-chunk__meta {
@@ -25,8 +25,8 @@
     align-self: flex-start;
 
     .transcript-chunk__bubble {
-      background-color: var(--bg-surface-hover);
-      border: 1px solid var(--border-subtle);
+      background-color: var(--dusk);
+      border: 1px solid var(--border);
     }
   }
 

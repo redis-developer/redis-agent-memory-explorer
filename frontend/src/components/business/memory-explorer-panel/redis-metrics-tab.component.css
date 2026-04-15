@@ -5,7 +5,7 @@
 
   .redis-metrics-tab__title {
     font-size: var(--font-size-md);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semibold);
     color: var(--fg-default);
     text-transform: uppercase;
     letter-spacing: 0.05em;

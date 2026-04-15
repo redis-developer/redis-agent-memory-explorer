@@ -74,7 +74,7 @@ const DemoPage = () => {
   if (isLoading) {
     return (
       <div className="demo-page demo-page--loading">
-        <CircularProgress size={48} sx={{ color: "var(--primary-color)" }} />
+        <CircularProgress size={48} sx={{ color: "var(--sky-blue)" }} />
         <p className="demo-page__loading-text">Loading dataset configuration...</p>
       </div>
     );
@@ -89,8 +89,8 @@ const DemoPage = () => {
           variant="contained"
           onClick={retry}
           sx={{
-            backgroundColor: "var(--hyper-07)",
-            "&:hover": { backgroundColor: "var(--hyper-08)" },
+            backgroundColor: "var(--dusk)",
+            "&:hover": { backgroundColor: "var(--dusk-90)" },
           }}
         >
           Retry

@@ -5,7 +5,7 @@ import type { DatasetConfig } from "@/types/dataset-config.types";
 
 import LinearProgress from "@mui/material/LinearProgress";
 import IconButton from "@mui/material/IconButton";
-import RefreshIcon from "@mui/icons-material/Refresh";
+import { RefreshCw } from "lucide-react";
 
 import { EmptyState, SectionCard } from "@/components/core";
 import { CONTEXT_THRESHOLD, LAST_MESSAGES_COUNT } from "@/constants/app.constants";
@@ -70,7 +70,7 @@ const WorkingMemoryTab = ({
         title="Session info"
         actions={
           <IconButton size="small" onClick={onRefresh} sx={{ color: "var(--fg-muted)" }}>
-            <RefreshIcon fontSize="small" />
+            <RefreshCw size={16} />
           </IconButton>
         }
       >
@@ -159,7 +159,7 @@ const WorkingMemoryTab = ({
         <LinearProgress
           sx={{
             backgroundColor: "var(--dusk-90)",
-            "& .MuiLinearProgress-bar": { backgroundColor: "var(--primary-color)" },
+            "& .MuiLinearProgress-bar": { backgroundColor: "var(--sky-blue)" },
           }}
         />
       )}

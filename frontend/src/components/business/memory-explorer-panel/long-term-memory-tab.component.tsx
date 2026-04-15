@@ -8,7 +8,7 @@ import { useMemo } from "react";
 import IconButton from "@mui/material/IconButton";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
-import RefreshIcon from "@mui/icons-material/Refresh";
+import { RefreshCw } from "lucide-react";
 
 import { EmptyState, SectionCard } from "@/components/core";
 import { LT_SCOPE, MEMORY_TYPE } from "@/constants/app.constants";
@@ -47,10 +47,10 @@ const SCOPE_TABS_SX = {
     minWidth: "auto",
   },
   "& .Mui-selected": {
-    color: "var(--base-white) !important",
+    color: "var(--yellow) !important",
   },
   "& .MuiTabs-indicator": {
-    backgroundColor: "var(--sky-blue)",
+    backgroundColor: "var(--yellow)",
     height: 2,
   },
 } as const;
@@ -97,7 +97,7 @@ const LongTermMemoryTab = ({
         <div className="long-term-memory-tab__header">
           {scopeToggle}
           <IconButton size="small" onClick={onRefresh} sx={{ color: "var(--fg-muted)" }}>
-            <RefreshIcon fontSize="small" />
+            <RefreshCw size={16} />
           </IconButton>
         </div>
         <EmptyState title={labels.title} description={emptyDescription} />
@@ -142,7 +142,7 @@ const LongTermMemoryTab = ({
             {total} {total === 1 ? "memory" : "memories"} from {scopeLabel}
           </span>
           <IconButton size="small" onClick={onRefresh} sx={{ color: "var(--fg-muted)" }}>
-            <RefreshIcon fontSize="small" />
+            <RefreshCw size={16} />
           </IconButton>
         </div>
       </div>

@@ -4,7 +4,7 @@ import type { ComputedSummaryData } from "@/types/memory.types";
 
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
-import RefreshIcon from "@mui/icons-material/Refresh";
+import { RefreshCw } from "lucide-react";
 
 import "./computed-summary-card.component.css";
 
@@ -41,7 +41,7 @@ const ComputedSummaryCard = ({
             startIcon={
               isRecomputing
                 ? <CircularProgress size={12} sx={{ color: "var(--sky-blue)" }} />
-                : <RefreshIcon sx={{ fontSize: 12 }} />
+                : <RefreshCw size={12} />
             }
             sx={{
               borderColor: "var(--sky-blue-09)",

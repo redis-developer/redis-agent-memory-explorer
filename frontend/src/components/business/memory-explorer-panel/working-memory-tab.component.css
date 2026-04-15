@@ -66,7 +66,7 @@
     gap: var(--space-3xs);
     font-size: var(--font-size-xs);
     padding: var(--space-2xs) 0;
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border);
 
     &:last-child {
       border-bottom: none;

@@ -10,7 +10,7 @@
 
   .confirm-dialog__title {
     font-family: var(--primary-font) !important;
-    font-weight: var(--font-weight-bold) !important;
+    font-weight: var(--font-weight-semibold) !important;
     color: var(--fg-default) !important;
   }
 

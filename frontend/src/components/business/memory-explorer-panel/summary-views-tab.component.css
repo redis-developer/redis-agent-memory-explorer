@@ -17,7 +17,7 @@
 
   .summary-views-tab__view-name {
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semibold);
     color: var(--fg-default);
     margin: 0;
   }

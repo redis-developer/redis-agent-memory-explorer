@@ -9,7 +9,7 @@ import { useState, useCallback, useEffect, useMemo, useRef, type MutableRefObjec
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 
-import { ConfirmDialog } from "@/components/core";
+import { ConfirmDialog, DropdownIcon } from "@/components/core";
 import {
   fetchTranscripts,
   fetchTranscript,
@@ -303,14 +303,17 @@ const TranscriptPanel = ({
             size="small"
             className="transcript-panel__session-select"
             disabled={playback.isPlaying || isResetting}
+            IconComponent={DropdownIcon}
             sx={{
               color: "var(--fg-default)",
               fontSize: "var(--font-size-xs)",
+              backgroundColor: "var(--dusk)",
+              borderRadius: "var(--btn-border-radius-rounded)",
               "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "var(--border)",
+                borderColor: "var(--dusk-90)",
               },
-              "& .MuiSvgIcon-root": {
-                color: "var(--fg-muted)",
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: "var(--dusk-50)",
               },
             }}
           >
@@ -347,7 +350,6 @@ const TranscriptPanel = ({
         chunks={playback.displayedChunks}
         roles={datasetConfig.roles}
         participants={datasetConfig.participants}
-        accentColor={datasetConfig.branding.accentColor}
         isPlaybackComplete={playback.isComplete}
       />
 

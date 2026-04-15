@@ -11,7 +11,7 @@
 
   .ai-copilot-tab__insights-title {
     font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semibold);
     color: var(--fg-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -31,7 +31,7 @@
     height: var(--panel-footer-height);
     margin: 0 calc(-1 * var(--space-xs));
     padding: 0 var(--space-xs);
-    border-top: 1px solid var(--border-subtle);
+    border-top: 1px solid var(--border);
     flex-shrink: 0;
   }
 

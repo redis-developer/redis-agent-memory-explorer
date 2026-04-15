@@ -10,10 +10,8 @@ import IconButton from "@mui/material/IconButton";
 import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import CircularProgress from "@mui/material/CircularProgress";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import PauseIcon from "@mui/icons-material/Pause";
-import SkipNextIcon from "@mui/icons-material/SkipNext";
-import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import { Play, Pause, SkipForward, RotateCcw } from "lucide-react";
+import { DropdownIcon } from "@/components/core";
 
 import { PLAYBACK_STATUS, SPEED_SELECT_MIN_WIDTH } from "@/constants/app.constants";
 
@@ -39,11 +37,13 @@ type ToolbarProps = {
 const SELECT_SX = {
   color: "var(--fg-default)",
   fontSize: "var(--font-size-xs)",
+  backgroundColor: "var(--dusk)",
+  borderRadius: "var(--btn-border-radius-rounded)",
   "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "var(--border)",
+    borderColor: "var(--dusk-90)",
   },
-  "& .MuiSvgIcon-root": {
-    color: "var(--fg-muted)",
+  "&:hover .MuiOutlinedInput-notchedOutline": {
+    borderColor: "var(--dusk-50)",
   },
 } as const;
 
@@ -79,6 +79,7 @@ const Toolbar = ({
         size="small"
         className="toolbar__select toolbar__select--transcript"
         disabled={isPlaying || isResetting}
+        IconComponent={DropdownIcon}
         sx={SELECT_SX}
       >
         <MenuItem value="" disabled>
@@ -108,6 +109,7 @@ const Toolbar = ({
         size="small"
         className="toolbar__select toolbar__select--speed"
         disabled={isPlaying || isResetting}
+        IconComponent={DropdownIcon}
         sx={{
           ...SELECT_SX,
           minWidth: SPEED_SELECT_MIN_WIDTH,
@@ -129,7 +131,7 @@ const Toolbar = ({
               className="toolbar__play-pause-btn"
               size="small"
             >
-              {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+              {isPlaying ? <Pause size={20} /> : <Play size={20} />}
             </IconButton>
           </span>
         </Tooltip>
@@ -142,7 +144,7 @@ const Toolbar = ({
               className="toolbar__next-btn"
               size="small"
             >
-              <SkipNextIcon />
+              <SkipForward size={20} />
             </IconButton>
           </span>
         </Tooltip>
@@ -158,7 +160,7 @@ const Toolbar = ({
           isResetting ? (
             <CircularProgress size={14} sx={{ color: "var(--base-white)" }} />
           ) : (
-            <DeleteSweepIcon />
+            <RotateCcw size={14} />
           )
         }
       >

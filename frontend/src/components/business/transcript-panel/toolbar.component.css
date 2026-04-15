@@ -4,7 +4,7 @@
   gap: var(--space-3xs);
   padding: 0 var(--space-xs);
   height: var(--panel-header-height);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border);
   background-color: var(--bg-surface);
   flex-shrink: 0;
 
@@ -21,10 +21,6 @@
 
       .MuiOutlinedInput-notchedOutline {
         border-color: var(--border) !important;
-      }
-
-      .MuiSvgIcon-root {
-        color: var(--fg-muted) !important;
       }
     }
   }

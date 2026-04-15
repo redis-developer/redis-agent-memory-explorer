@@ -5,7 +5,7 @@ import type { DatasetConfig } from "@/types/dataset-config.types";
 
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import { Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/core";
 import { SUMMARY_GROUP_BY_KEY } from "@/constants/app.constants";
 import { ComputedSummaryCard } from "./computed-summary-card.component";
@@ -115,7 +115,7 @@ const SummaryViewsTab = (props: SummaryViewsTabProps) => {
                   startIcon={
                     isComputing
                       ? <CircularProgress size={14} sx={{ color: "var(--base-white)" }} />
-                      : <AutoAwesomeIcon sx={{ fontSize: 14 }} />
+                      : <Sparkles size={14} />
                   }
                   sx={{
                     backgroundColor: "var(--sky-blue-09)",

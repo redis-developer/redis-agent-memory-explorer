@@ -2,7 +2,7 @@
   --copilot-kit-background-color: var(--bg-surface);
   --copilot-kit-input-background-color: var(--bg-surface-hover);
   --copilot-kit-secondary-color: var(--border);
-  --copilot-kit-separator-color: var(--border-subtle);
+  --copilot-kit-separator-color: var(--border);
   --copilot-kit-primary-color: var(--dusk-90);
   --copilot-kit-contrast-color: var(--base-white);
   --copilot-kit-secondary-contrast-color: var(--dusk-30);
@@ -29,7 +29,7 @@
 .copilotKitHeader {
   background-color: var(--bg-surface) !important;
   color: var(--dusk-10) !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   height: var(--toolbar-height) !important;
   min-height: var(--toolbar-height) !important;
   max-height: var(--toolbar-height) !important;
@@ -73,13 +73,13 @@
 }
 
 .copilotKitButton {
-  background: var(--hyper-10) !important;
-  border-color: var(--hyper-05) !important;
+  background: var(--dusk) !important;
+  border-color: var(--dusk-90) !important;
   color: var(--base-white) !important;
 }
 
 .copilotKitButton:hover {
-  background: var(--hyper-09) !important;
+  background: var(--dusk-90) !important;
 }
 
 .poweredBy {

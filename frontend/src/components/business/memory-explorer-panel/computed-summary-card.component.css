@@ -19,7 +19,7 @@
 
   .computed-summary-card__title {
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-semibold);
     color: var(--sky-blue);
     text-transform: uppercase;
     letter-spacing: 0.03em;
