@@ -304,6 +304,10 @@ const TranscriptPanel = ({
             className="transcript-panel__session-select"
             disabled={playback.isPlaying || isResetting}
             IconComponent={DropdownIcon}
+            MenuProps={{
+              anchorOrigin: { vertical: "bottom", horizontal: "left" },
+              transformOrigin: { vertical: "top", horizontal: "left" },
+            }}
             sx={{
               color: "var(--fg-default)",
               fontSize: "var(--font-size-xs)",

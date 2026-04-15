@@ -34,6 +34,11 @@ type ToolbarProps = {
   isResetting: boolean;
 };
 
+const SELECT_MENU_PROPS = {
+  anchorOrigin: { vertical: "bottom", horizontal: "left" },
+  transformOrigin: { vertical: "top", horizontal: "left" },
+} as const;
+
 const SELECT_SX = {
   color: "var(--fg-default)",
   fontSize: "var(--font-size-xs)",
@@ -80,6 +85,7 @@ const Toolbar = ({
         className="toolbar__select toolbar__select--transcript"
         disabled={isPlaying || isResetting}
         IconComponent={DropdownIcon}
+        MenuProps={SELECT_MENU_PROPS}
         sx={SELECT_SX}
       >
         <MenuItem value="" disabled>
@@ -110,6 +116,7 @@ const Toolbar = ({
         className="toolbar__select toolbar__select--speed"
         disabled={isPlaying || isResetting}
         IconComponent={DropdownIcon}
+        MenuProps={SELECT_MENU_PROPS}
         sx={{
           ...SELECT_SX,
           minWidth: SPEED_SELECT_MIN_WIDTH,
