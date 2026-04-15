@@ -1,4 +1,4 @@
-import type { DatasetConfig, DetectedTopic, LiveSuggestion } from "../types";
+import type { DatasetConfig, DetectedTopic, Suggestion } from "../types";
 
 import { DetectedTopicStatus } from "../constants";
 
@@ -7,14 +7,14 @@ const FALLBACK_PROMPT = "You are an AI copilot. Analyze the transcript and retur
 const buildSuggestionSystemPrompt = (
   config: DatasetConfig,
   detectedTopics: DetectedTopic[],
-  previousSuggestions: LiveSuggestion[],
+  previousSuggestions: Suggestion[],
 ): string => {
-  const liveSuggestions = config.liveSuggestions;
-  const hasNoConfig = !liveSuggestions;
+  const suggestions = config.suggestions;
+  const hasNoConfig = !suggestions;
 
   let prompt = FALLBACK_PROMPT;
   if (!hasNoConfig) {
-    const enabledTypes = liveSuggestions.suggestionTypes.filter((t) => t.enabled);
+    const enabledTypes = suggestions.suggestionTypes.filter((t) => t.enabled);
     const pendingTopics = detectedTopics
       .filter((t) => t.status === DetectedTopicStatus.PENDING)
       .map((t) => t.name);

@@ -1,10 +1,10 @@
-# Meeting Memory Demo -- Live Suggestions Plan
+# Meeting Memory Demo -- Suggestions Plan
 
 ## Goal
 
-Add **push-based live suggestions** to the Meeting Memory demo, inspired by Screen 3 from [plan.md](./plan.md). Whenever the transcript advances (continuous play or **Next** / step-one-chunk), the AI periodically analyzes recent chunks and surfaces contextual suggestions -- detected topics, life events, action items, and contextual insights -- without the user asking. Generation is **blocked only when playback is complete** (`isPlaybackComplete`), not merely when the user pauses. This creates the "AI copilot listening in" experience.
+Add **push-based suggestions** to the Meeting Memory demo, inspired by Screen 3 from [plan.md](./plan.md). Whenever the transcript advances (continuous play or **Next** / step-one-chunk), the AI periodically analyzes recent chunks and surfaces contextual suggestions -- detected topics, life events, action items, and contextual insights -- without the user asking. Generation is **blocked only when playback is complete** (`isPlaybackComplete`), not merely when the user pauses. This creates the "listening in" experience.
 
-The chatbot (CopilotKit sidebar) is **pull-based** -- the user asks, the agent answers. Live suggestions are **push-based** -- the AI detects something noteworthy and surfaces it automatically. These are complementary, independent systems.
+The chatbot (CopilotKit sidebar) is **pull-based** -- the user asks, the agent answers. suggestions are **push-based** -- the AI detects something noteworthy and surfaces it automatically. These are complementary, independent systems.
 
 This plan covers changes to both the frontend and backend. The existing chatbot, transcript playback, and memory exploration features are unchanged.
 
@@ -27,14 +27,14 @@ This plan covers changes to both the frontend and backend. The existing chatbot,
 
 | Question                    | Decision                                                                                                                                                                              |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UI placement                | **Persistent banner above tabs + AI Copilot tab** (Option B)                                                                                                                          |
+| UI placement                | **Persistent banner above tabs + Suggestions tab** (Option B)                                                                                                                          |
 | Trigger frequency           | **Every N chunks** (configurable N in dataset config)                                                                                                                                 |
 | Backend architecture        | **New REST endpoints** (`generateSuggestion` + `listSuggestions`), all session state (raw transcript chunks, suggestions, detected topics) stored in Redis with distinct key prefixes |
 | Context for LLM             | `memoryPrompt` (working memory + LT search) + recent chunks (retrieved from Redis) + participant info                                                                                 |
 | Suggestion types            | **Object array in dataset config** (`suggestionTypes[]` with id, label, description, enabled)                                                                                         |
 | Detected topics             | **Backend-managed, hybrid** -- pre-seeded at session creation from transcript `meeting.summary.topics`, AI merges updates in backend, full state returned to frontend                 |
 | Chatbot relationship        | **Independent system**, reuses `AgentMemory` methods but separate LLM call and system prompt                                                                                          |
-| Default tab during playback | **AI Copilot tab is the default** when playback starts or when loading an existing session (read-only tab)                                                                            |
+| Default tab during playback | **Suggestions tab is the default** when playback starts or when loading an existing session (read-only tab)                                                                            |
 
 ---
 
@@ -53,9 +53,9 @@ This plan covers changes to both the frontend and backend. The existing chatbot,
 │  │                          │  │ │  visible above tabs)            │ │  │
 │  │                          │  │ └──────────────────────────────────┘ │  │
 │  │ useTranscriptPlayback    │  │                                      │  │
-│  │   │                      │  │ [AI Copilot*] [WM] [LT] [SV] [Redis]│  │
+│  │   │                      │  │ [AI Insights*] [WM] [LT] [SV] [Redis]│  │
 │  │   │ every N chunks       │  │                                      │  │
-│  │   │ triggers ────────────│──│─► useLiveSuggestions hook            │  │
+│  │   │ triggers ────────────│──│─► useSuggestions hook            │  │
 │  │   │                      │  │     │                                │  │
 │  │                          │  │     │ POST /api/generateSuggestion   │  │
 │  │                          │  │     │ POST /api/listSuggestions      │  │
@@ -87,7 +87,7 @@ This plan covers changes to both the frontend and backend. The existing chatbot,
 ```
 
 - Note: check cau-redis package for Redis storage
-- Note: all live suggestion data (raw transcript chunks, suggestions, detected topics) stored in Redis with distinct key prefixes separate from AMS keys (see [Redis Key Structure](#redis-key-structure) below)
+- Note: all suggestion data (raw transcript chunks, suggestions, detected topics) stored in Redis with distinct key prefixes separate from AMS keys (see [Redis Key Structure](#redis-key-structure) below)
 
 ## UI Design
 
@@ -105,7 +105,7 @@ MemoryExplorerPanel
 │  │                               [View Details]  [00:12:15] │    │
 │  └──────────────────────────────────────────────────────────┘    │
 │                                                                  │
-│ [AI Copilot] [Working Memory] [LT Memory] [Summary] [Redis]     │
+│ [Suggestions] [Working Memory] [LT Memory] [Summary] [Redis]     │
 ├──────────────────────────────────────────────────────────────────┤
 │  (active tab content)                                            │
 └──────────────────────────────────────────────────────────────────┘
@@ -117,16 +117,16 @@ MemoryExplorerPanel
 - Animates to show the new suggestion when a new suggestion arrives
 - Shows a one-line summary of the latest suggestion
 - Timestamp badge (chunk timestamp when the suggestion was triggered)
-- "View Details" navigates to the AI Copilot tab and scrolls to that suggestion
+- "View Details" navigates to the Suggestions tab and scrolls to that suggestion
 - Updates in-place when a newer suggestion arrives (with a brief highlight animation)
 - Stays visible after playback completes (showing the last suggestion)
 
-### AI Copilot Tab (Read-Only, Default During Playback)
+### Suggestions Tab (Read-Only, Default During Playback)
 
 A new fifth tab in MemoryExplorerPanel. This is a **read-only** tab -- no user input, no buttons. It passively displays what the AI has detected.
 
 ```
-AI Copilot Tab
+Suggestions Tab
 ┌──────────────────────────────────────────────────────────────────┐
 │                                                                  │
 │  DETECTED TOPICS                                                 │
@@ -178,10 +178,10 @@ AI Copilot Tab
 ### Tab Ordering
 
 ```
-[AI Copilot] [Working Memory] [Long-Term Memories] [Summary Views] [Redis Under the Hood]
+[Suggestions] [Working Memory] [Long-Term Memories] [Summary Views] [Redis Under the Hood]
 ```
 
-AI Copilot is the first tab (leftmost). It auto-activates when playback starts. The presenter can switch to other tabs at any time and still see the banner.
+Suggestions is the first tab (leftmost). It auto-activates when playback starts. The presenter can switch to other tabs at any time and still see the banner.
 
 ---
 
@@ -199,9 +199,9 @@ Topics come from two sources:
 | State       | Icon | Meaning                                            |
 | ----------- | ---- | -------------------------------------------------- |
 | `pending`   | ○    | Pre-seeded, not yet discussed                      |
-| `discussed` | ✅   | AI confirmed this topic was covered                |
-| `new`       | 🔄   | AI detected a new topic not in the pre-seeded list |
-| `question`  | ❓   | Client asked a question about this topic           |
+| `discussed` | ✅    | AI confirmed this topic was covered                |
+| `new`       | 🔄    | AI detected a new topic not in the pre-seeded list |
+| `question`  | ❓    | Client asked a question about this topic           |
 
 ### Topic Data Shape
 
@@ -259,7 +259,7 @@ These are the default suggestion types shipped with the wealth-advisor dataset. 
 ### Suggestion Data Shape
 
 ```typescript
-type LiveSuggestion = {
+type Suggestion = {
   id: string;
   type: string;
   title: string;
@@ -272,18 +272,18 @@ type LiveSuggestion = {
 };
 ```
 
-`LiveSuggestion.type` is a free-form `string` that matches a `SuggestionTypeConfig.id` from the config. The frontend resolves the display label and styling by looking up the type in the `suggestionTypes` array.
+`Suggestion.type` is a free-form `string` that matches a `SuggestionTypeConfig.id` from the config. The frontend resolves the display label and styling by looking up the type in the `suggestionTypes` array.
 
 ---
 
 ## Dataset Config Changes (`dataset.config.json`)
 
-Add a `liveSuggestions` section:
+Add a `suggestions` section:
 
 ```json
 {
-  "liveSuggestions": {
-    "title": "AI Copilot",
+  "suggestions": {
+    "title": "Suggestions",
     "description": "Real-time AI suggestions during transcript playback.",
     "bannerLabel": "AI Insight",
     "topicsTitle": "Detected Topics",
@@ -336,7 +336,7 @@ Add a `liveSuggestions` section:
 **Key config values:**
 
 - `triggerEveryNChunks` -- how often to call the suggestion endpoint (default: 5). At 2s per chunk (whether from interval play or **Next**), this means one LLM analysis every ~10 seconds while the transcript is not yet complete.
-- `suggestionTypes` -- object array defining all suggestion types. Each entry has `id` (used in LLM responses and `LiveSuggestion.type`), `label` (display text for badges/chips), `description` (fed into the system prompt to instruct the LLM), and `enabled` (toggle per dataset). The system prompt and frontend rendering are built dynamically from this array -- no hardcoded type keys in code.
+- `suggestionTypes` -- object array defining all suggestion types. Each entry has `id` (used in LLM responses and `Suggestion.type`), `label` (display text for badges/chips), `description` (fed into the system prompt to instruct the LLM), and `enabled` (toggle per dataset). The system prompt and frontend rendering are built dynamically from this array -- no hardcoded type keys in code.
 - All display strings (`title`, `bannerLabel`, etc.) are config-driven as per the project convention.
 
 ---
@@ -574,7 +574,7 @@ This focused query surfaces relevant LT memories like "James expressed concern a
 
 #### `POST /api/listSuggestions`
 
-Returns all stored suggestions **and** the full detected topics state for a session. This is the **complete AI Copilot tab state** in a single call -- used by the frontend to populate the tab when loading an existing session, on initial load, or to sync after reconnection.
+Returns all stored suggestions **and** the full detected topics state for a session. This is the **complete Suggestions tab state** in a single call -- used by the frontend to populate the tab when loading an existing session, on initial load, or to sync after reconnection.
 
 **Request:**
 
@@ -656,12 +656,12 @@ AMS-managed keys (existing, do NOT touch):
   migration/...                                       → (AMS migrations)
 
 App-managed keys (NEW, our custom stores):
-  copilot/suggestions/{namespace}/{userId}/{sessionId}   → JSON array of LiveSuggestion
+  copilot/suggestions/{namespace}/{userId}/{sessionId}   → JSON array of Suggestion
   copilot/topics/{namespace}/{userId}/{sessionId}        → JSON array of DetectedTopic
   copilot/chunks/{namespace}/{userId}/{sessionId}        → JSON array of TranscriptChunk
 ```
 
-The `copilot/` top-level prefix groups all live suggestion data and makes it easy to find in Redis Insight. The `{namespace}/{userId}/{sessionId}` pattern mirrors the AMS key hierarchy for consistency.
+The `copilot/` top-level prefix groups all suggestion data and makes it easy to find in Redis Insight. The `{namespace}/{userId}/{sessionId}` pattern mirrors the AMS key hierarchy for consistency.
 
 Example keys for the wealth-advisor dataset:
 
@@ -673,14 +673,14 @@ copilot/chunks/wealth-advisor/sarah-chen/playback-2026-02-26-google-meet-1774...
 
 #### Store 1: Suggestion Store (`suggestion-store.ts`)
 
-Stores generated `LiveSuggestion` objects per session. Written by `generateSuggestionHandler`, read by `listSuggestionsHandler`.
+Stores generated `Suggestion` objects per session. Written by `generateSuggestionHandler`, read by `listSuggestionsHandler`.
 
 ```typescript
 // suggestion-store.ts
 const KEY_PREFIX = "copilot/suggestions";// (take all constants from constants file)
 
-const add = async (sessionId: string, suggestion: LiveSuggestion): Promise<void> => { ... };
-const list = async (sessionId: string): Promise<LiveSuggestion[]> => { ... };
+const add = async (sessionId: string, suggestion: Suggestion): Promise<void> => { ... };
+const list = async (sessionId: string): Promise<Suggestion[]> => { ... };
 const clear = async (sessionId: string): Promise<void> => { ... };
 const clearAll = async (): Promise<void> => { ... };
 ```
@@ -786,7 +786,7 @@ const buildSuggestionSystemPrompt = (
   config: DatasetConfig,
   detectedTopics: DetectedTopic[],
 ): string => {
-  const enabledTypes = config.liveSuggestions.suggestionTypes.filter(
+  const enabledTypes = config.suggestions.suggestionTypes.filter(
     (t) => t.enabled,
   );
   const pendingTopics = detectedTopics
@@ -840,7 +840,7 @@ backend/src/
 │   ├── system-prompt.ts                    # (unchanged)
 │   └── index.ts                            # (unchanged)
 │
-├── suggestion-agent/                       # NEW: live suggestion agent
+├── suggestion-agent/                       # NEW: suggestion agent
 │   ├── system-prompt.ts                    # System prompt builder for suggestions
 │   ├── query-extraction.ts                 # Fast LLM call to extract search query from chunks
 │   ├── graph.ts                            # LLM call logic (hydrate context + generate)
@@ -851,7 +851,7 @@ backend/src/
 │   └── ... (existing, unchanged)
 │
 ├── services/
-│   ├── suggestion-store.ts                 # NEW: Redis store for LiveSuggestion objects
+│   ├── suggestion-store.ts                 # NEW: Redis store for Suggestion objects
 │   ├── topic-store.ts                      # NEW: Redis store for DetectedTopic state (init + merge)
 │   ├── transcript-chunk-store.ts           # NEW: Redis store for raw transcript chunks
 │   └── ... (existing, unchanged)
@@ -868,15 +868,15 @@ backend/src/
 
 ### Project Structure (Changes Only)
 
-All AI Copilot sub-components and hooks live in a new `ai-copilot/` subfolder under `memory-explorer-panel/`. This keeps them grouped and avoids cluttering the parent folder.
+All Suggestions sub-components and hooks live in a new `ai-copilot/` subfolder under `memory-explorer-panel/`. This keeps them grouped and avoids cluttering the parent folder.
 
 ```
 frontend/src/
 ├── components/
 │   └── business/
 │       └── memory-explorer-panel/
-│           ├── ai-copilot/                             # NEW: AI Copilot subfolder
-│           │   ├── ai-copilot-tab.component.tsx        # AI Copilot tab (read-only)
+│           ├── ai-copilot/                             # NEW: Suggestions subfolder
+│           │   ├── ai-copilot-tab.component.tsx        # Suggestions tab (read-only)
 │           │   ├── ai-copilot-tab.component.css
 │           │   ├── suggestion-card.component.tsx        # Single suggestion card
 │           │   ├── suggestion-card.component.css
@@ -884,7 +884,7 @@ frontend/src/
 │           │   ├── detected-topics.component.css
 │           │   ├── suggestion-banner.component.tsx      # Persistent banner above tabs
 │           │   ├── suggestion-banner.component.css
-│           │   ├── use-live-suggestions.ts              # Suggestion trigger + state hook
+│           │   ├── use-suggestions.ts                   # Suggestion trigger + state hook
 │           │   └── index.ts                             # Barrel: export AiCopilotTab, SuggestionBanner
 │           │
 │           ├── memory-explorer-panel.component.tsx      # MODIFIED: add banner, add tab, auto-switch
@@ -892,32 +892,32 @@ frontend/src/
 │           └── ... (existing sub-components unchanged)
 │
 ├── types/
-│   ├── suggestion.types.ts                             # NEW: LiveSuggestion, DetectedTopic, SuggestionTypeConfig
+│   ├── suggestion.types.ts                             # NEW: Suggestion, DetectedTopic, SuggestionTypeConfig
 │   └── ... (existing, unchanged)
 │
 ├── constants/
-│   └── app.constants.ts                                # MODIFIED: add AI Copilot tab ID
+│   └── app.constants.ts                                # MODIFIED: add Suggestions tab ID
 │
 └── services/
     └── api.service.ts                                  # MODIFIED: add generateSuggestion, listSuggestions
 ```
 
-The `ai-copilot/index.ts` barrel exports only `AiCopilotTab` and `SuggestionBanner` -- the sub-components (`SuggestionCard`, `DetectedTopics`) and the hook (`useLiveSuggestions`) are internal to the subfolder, imported only by `AiCopilotTab`.
+The `ai-copilot/index.ts` barrel exports only `AiCopilotTab` and `SuggestionBanner` -- the sub-components (`SuggestionCard`, `DetectedTopics`) and the hook (`useSuggestions`) are internal to the subfolder, imported only by `AiCopilotTab`.
 
-### Hook: `useLiveSuggestions`
+### Hook: `useSuggestions`
 
 Lives inside `memory-explorer-panel/ai-copilot/`. Manages the suggestion trigger timing, API calls, and state. The hook is a **thin client** -- all data (chunks, topics, suggestions) lives on the backend in Redis. The hook just triggers calls at the right time and renders the response.
 
 ```typescript
-type UseLiveSuggestionsResult = {
-  suggestions: LiveSuggestion[];
-  latestSuggestion: LiveSuggestion | null;
+type UseSuggestionsResult = {
+  suggestions: Suggestion[];
+  latestSuggestion: Suggestion | null;
   detectedTopics: DetectedTopic[];
   isGenerating: boolean;
   error: string | null;
 };
 
-type UseLiveSuggestionsInput = {
+type UseSuggestionsInput = {
   sessionId: string | null;
   currentChunkIndex: number;
   isPlaybackComplete: boolean;
@@ -941,7 +941,7 @@ Topics are **initialized on the backend** during `createWorkingMemory` (pre-seed
 
 ### Wiring: How the Trigger Flows
 
-The frontend already has `chunkIndex` (from `useTranscriptPlayback` inside TranscriptPanel) and `lastAppendResult` flowing to MemoryExplorerPanel. For live suggestions, `chunkIndex` and **`isPlaybackComplete`** must reach `useLiveSuggestions` (inverted from an older `isPlaying` guard: suggestions no longer require continuous play). Since raw chunks are stored in Redis by the backend (during `appendWorkingMemory`), the frontend does **NOT** need to pass the `chunks` array -- only the chunk index and completion flag.
+The frontend already has `chunkIndex` (from `useTranscriptPlayback` inside TranscriptPanel) and `lastAppendResult` flowing to MemoryExplorerPanel. For suggestions, `chunkIndex` and **`isPlaybackComplete`** must reach `useSuggestions` (inverted from an older `isPlaying` guard: suggestions no longer require continuous play). Since raw chunks are stored in Redis by the backend (during `appendWorkingMemory`), the frontend does **NOT** need to pass the `chunks` array -- only the chunk index and completion flag.
 
 ```
 DemoPage
@@ -956,7 +956,7 @@ DemoPage
         props: sessionId, lastAppendResult, datasetConfig,
                currentChunkIndex, isPlaybackComplete
         │
-        └── useLiveSuggestions({
+        └── useSuggestions({
               sessionId,
               currentChunkIndex,
               isPlaybackComplete,
@@ -972,7 +972,7 @@ Persistent banner above the tab bar.
 
 ```typescript
 type SuggestionBannerProps = {
-  suggestion: LiveSuggestion | null;
+  suggestion: Suggestion | null;
   bannerLabel: string;
   onViewDetails: () => void;
 };
@@ -982,7 +982,7 @@ type SuggestionBannerProps = {
 
 - Empty with some placeholder text when `suggestion` is null
 - Shows: type badge + one-line summary + timestamp + "View Details" link
-- "View Details" calls `onViewDetails` which switches to the AI Copilot tab and scrolls to the suggestion
+- "View Details" calls `onViewDetails` which switches to the Suggestions tab and scrolls to the suggestion
 - Animate: some animation on appear, brief highlight flash on update
 
 ### Sub-component: AiCopilotTab (`ai-copilot-tab.component.tsx`)
@@ -993,10 +993,10 @@ Read-only tab content.
 
 ```typescript
 type AiCopilotTabProps = {
-  suggestions: LiveSuggestion[];
+  suggestions: Suggestion[];
   detectedTopics: DetectedTopic[];
   isGenerating: boolean;
-  labels: DatasetConfig["liveSuggestions"];
+  labels: DatasetConfig["suggestions"];
 };
 ```
 
@@ -1029,7 +1029,7 @@ A single suggestion insight card.
 
 ```typescript
 type SuggestionCardProps = {
-  suggestion: LiveSuggestion;
+  suggestion: Suggestion;
   suggestionTypes: SuggestionTypeConfig[];
   isNew: boolean;
 };
@@ -1058,7 +1058,7 @@ TranscriptPanel                DemoPage              MemoryExplorerPanel        
   │                               │ currentChunkIndex=24  │                              │
   │                               │──────────────────────>│                              │
   │                               │                       │                              │
-  │                               │                       │ useLiveSuggestions:           │
+  │                               │                       │ useSuggestions:           │
   │                               │                       │ 24 - 19 = 5 >= triggerN(5)   │
   │                               │                       │ → trigger suggestion call     │
   │                               │                       │                              │
@@ -1087,7 +1087,7 @@ TranscriptPanel                DemoPage              MemoryExplorerPanel        
   │                               │                       │ → Append suggestion to array │
   │                               │                       │ → Replace topics (no merge)  │
   │                               │                       │ → Banner shows new suggestion│
-  │                               │                       │ → AI Copilot tab updates     │
+  │                               │                       │ → Suggestions tab updates     │
 ```
 
 ## Data Flow: Loading Existing Session with Suggestions
@@ -1103,7 +1103,7 @@ TranscriptPanel                DemoPage              MemoryExplorerPanel        
   │                               │ sessionId = "..."     │                              │
   │                               │──────────────────────>│                              │
   │                               │                       │                              │
-  │                               │                       │ useLiveSuggestions:           │
+  │                               │                       │ useSuggestions:           │
   │                               │                       │ session loaded (complete /    │
   │                               │                       │  preloaded transcript)       │
   │                               │                       │ → fetch full tab state        │
@@ -1122,7 +1122,7 @@ TranscriptPanel                DemoPage              MemoryExplorerPanel        
   │                               │                       │                              │
   │                               │                       │ → Populate suggestions array │
   │                               │                       │ → Set detected topics        │
-  │                               │                       │ → Auto-switch to AI Copilot  │
+  │                               │                       │ → Auto-switch to Suggestions  │
   │                               │                       │ → Tab renders fully populated│
 ```
 
@@ -1131,13 +1131,13 @@ TranscriptPanel                DemoPage              MemoryExplorerPanel        
 ## Demo Presenter Flow
 
 1. **Select transcript** -- topic checklist seeds from `meeting.summary.topics` (all ○ pending)
-2. **Click Play** -- AI Copilot tab auto-activates (right panel)
-3. **Chunks stream** (left) -- AI Copilot tab shows "Listening to transcript..."
+2. **Click Play** -- Suggestions tab auto-activates (right panel)
+3. **Chunks stream** (left) -- Suggestions tab shows "Listening to transcript..."
 4. **~Chunk 8** (first trigger) -- suggestion card animates in: "REIT Rebalancing Options -- James is asking about REITs from the Jan 15 meeting..." Topic checklist: ✅ REIT rebalancing
 5. **Presenter narrates**: "Watch the AI copilot -- it's reading the transcript in real-time and pulling insights from past meetings stored in Redis long-term memory."
 6. **~Chunk 24** -- banner updates: "Maya's early retirement detected." New suggestion card in the tab. Topic: 🔄 Spouse retirement (new)
 7. **Switch to Working Memory tab** -- show tokens growing, context window gauge. Banner still shows the latest suggestion above.
-8. **Switch back to AI Copilot** -- show accumulated suggestions, updated topic checklist
+8. **Switch back to Suggestions** -- show accumulated suggestions, updated topic checklist
 9. **After playback** -- explore LT memories, summaries, chatbot as before
 
 ---
@@ -1154,13 +1154,13 @@ TranscriptPanel                DemoPage              MemoryExplorerPanel        
 | 6     | Backend: `suggestion.handlers.ts` (generateSuggestion + listSuggestions) + route registration     | Core backend                  |
 | 7     | Backend: Add store clearing to `resetLifecycle` handler                                           | Reset support                 |
 | 8     | Frontend: `api.service.ts` additions (generateSuggestion, listSuggestions)                        | API connectivity              |
-| 9     | Frontend: `use-live-suggestions.ts` hook (thin client, no merge logic)                            | Core frontend logic           |
+| 9     | Frontend: `use-suggestions.ts` hook (thin client, no merge logic)                                 | Core frontend logic           |
 | 10    | Frontend: `suggestion-card.component.tsx` + `detected-topics.component.tsx`                       | Sub-components                |
 | 11    | Frontend: `ai-copilot-tab.component.tsx`                                                          | Tab content                   |
 | 12    | Frontend: `suggestion-banner.component.tsx`                                                       | Persistent banner             |
 | 13    | Frontend: Wire into `memory-explorer-panel.component.tsx` (add tab, add banner, auto-switch)      | Integration                   |
-| 14    | Frontend: Bridge `currentChunkIndex` / `isPlaybackComplete` from TranscriptPanel through DemoPage   | Playback → suggestions wiring |
-| 15    | Frontend: Auto-activate AI Copilot tab on session load (existing session dropdown)                | Session load support          |
+| 14    | Frontend: Bridge `currentChunkIndex` / `isPlaybackComplete` from TranscriptPanel through DemoPage | Playback → suggestions wiring |
+| 15    | Frontend: Auto-activate Suggestions tab on session load (existing session dropdown)                | Session load support          |
 | 16    | Test end-to-end + tune `triggerEveryNChunks` and system prompt                                    | Polish                        |
 
 ---
@@ -1173,25 +1173,25 @@ When "Clear All Memories & Restart" is clicked:
    - `suggestionStore.clearAll()` -- clear all stored suggestions (`copilot/suggestions/...`)
    - `topicStore.clearAll()` -- clear all detected topic states (`copilot/topics/...`)
    - `transcriptChunkStore.clearAll()` -- clear all raw transcript chunks (`copilot/chunks/...`)
-2. Frontend `useLiveSuggestions` clears its local render state (suggestions array, detected topics, latest suggestion)
+2. Frontend `useSuggestions` clears its local render state (suggestions array, detected topics, latest suggestion)
 3. Banner empty with placeholder text (no suggestion to show)
-4. AI Copilot tab shows the empty/idle state message from config
+4. Suggestions tab shows the empty/idle state message from config
 
 ---
 
 ## Notes
 
-- **Independent from chatbot.** Live suggestions and the CopilotKit chatbot are completely separate systems. Different system prompt, different backend path, different UI. They share only the `AgentMemory` instance for context hydration (`memoryPrompt`, `searchLongTermMemory`).
-- **AI Copilot tab is read-only.** No user input, no buttons, no interactivity beyond scrolling. The tab passively displays what the AI has detected. For interactive Q&A, the user opens the chatbot sidebar.
-- **All live suggestion state is stored in Redis per session** using the `copilot/` key prefix (see [Redis Key Structure](#redis-key-structure)). Three stores: `copilot/suggestions/` (generated insights), `copilot/topics/` (detected topic state), and `copilot/chunks/` (raw transcript chunks). These are separate from AMS keys (`working_memory/`, `memory-server/`, `memory_idx/`, etc.) and easy to identify in Redis Insight. All stores are cleared on reset.
+- **Independent from chatbot.** suggestions and the CopilotKit chatbot are completely separate systems. Different system prompt, different backend path, different UI. They share only the `AgentMemory` instance for context hydration (`memoryPrompt`, `searchLongTermMemory`).
+- **Suggestions tab is read-only.** No user input, no buttons, no interactivity beyond scrolling. The tab passively displays what the AI has detected. For interactive Q&A, the user opens the chatbot sidebar.
+- **All suggestion state is stored in Redis per session** using the `copilot/` key prefix (see [Redis Key Structure](#redis-key-structure)). Three stores: `copilot/suggestions/` (generated insights), `copilot/topics/` (detected topic state), and `copilot/chunks/` (raw transcript chunks). These are separate from AMS keys (`working_memory/`, `memory-server/`, `memory_idx/`, etc.) and easy to identify in Redis Insight. All stores are cleared on reset.
 - **Raw transcript chunks are stored separately from AMS working memory.** AMS auto-compresses messages and creates summaries when the context window fills up, which means the original verbatim transcript may be lost. The `copilot/chunks/` store preserves the full raw transcript history per session, ensuring the suggestion LLM always has access to the exact chunks regardless of AMS compression.
-- **Backend is the single source of truth for topic state.** Topics are pre-seeded on the backend during `createWorkingMemory` (from transcript `meeting.summary.topics`), merged by the backend after each `generateSuggestion` LLM call, and returned as a full state array (not deltas). The frontend never seeds or merges topics -- it just renders what the backend provides. This means `listSuggestions` returns the complete AI Copilot tab state (suggestions + topics) in one call, making session loading trivial.
-- **Config-driven everything.** Suggestion types are an object array in `dataset.config.json` (`liveSuggestions.suggestionTypes[]`), each with `id`, `label`, `description`, and `enabled`. The system prompt is built dynamically from enabled entries. The frontend resolves display labels and styling by looking up `suggestion.type` in the array. No hardcoded type keys in code -- new types can be added purely through config. Trigger frequency, all labels, and display text also come from config. Switching datasets updates the copilot behavior automatically.
+- **Backend is the single source of truth for topic state.** Topics are pre-seeded on the backend during `createWorkingMemory` (from transcript `meeting.summary.topics`), merged by the backend after each `generateSuggestion` LLM call, and returned as a full state array (not deltas). The frontend never seeds or merges topics -- it just renders what the backend provides. This means `listSuggestions` returns the complete Suggestions tab state (suggestions + topics) in one call, making session loading trivial.
+- **Config-driven everything.** Suggestion types are an object array in `dataset.config.json` (`suggestions.suggestionTypes[]`), each with `id`, `label`, `description`, and `enabled`. The system prompt is built dynamically from enabled entries. The frontend resolves display labels and styling by looking up `suggestion.type` in the array. No hardcoded type keys in code -- new types can be added purely through config. Trigger frequency, all labels, and display text also come from config. Switching datasets updates the copilot behavior automatically.
 - **`memoryPrompt` is the key context source.** It combines working memory (what's been said so far) with long-term memory search (what the AI knows from past sessions) into a single hydrated prompt. This gives the LLM rich context for generating relevant suggestions.
 - **Detected topics are backend-managed and hybrid.** Pre-seeded from transcript metadata at session creation, then dynamically updated by the LLM. The backend merges all topic updates. The LLM can confirm pre-seeded topics as "discussed" or add entirely new topics with "new" status.
 - **The LLM should prefer quality over quantity.** The system prompt instructs the LLM to return `null` if nothing noteworthy happened in the recent segment. Not every trigger needs to produce a suggestion.
-- **Banner is the "never miss it" mechanism.** Even if the presenter is on the Working Memory tab watching tokens grow, the banner above the tabs shows the latest suggestion. "View Details" navigates to the AI Copilot tab.
-- **The frontend `useLiveSuggestions` hook is a thin client.** It only decides _when_ to call `generateSuggestion` (based on chunk index, trigger interval, and **`!isPlaybackComplete`**) and stores the response for rendering. No topic seeding, no topic merging, no chunk collection -- all of that lives on the backend. On session load, one `listSuggestions` call gives it the complete tab state.
+- **Banner is the "never miss it" mechanism.** Even if the presenter is on the Working Memory tab watching tokens grow, the banner above the tabs shows the latest suggestion. "View Details" navigates to the Suggestions tab.
+- **The frontend `useSuggestions` hook is a thin client.** It only decides _when_ to call `generateSuggestion` (based on chunk index, trigger interval, and **`!isPlaybackComplete`**) and stores the response for rendering. No topic seeding, no topic merging, no chunk collection -- all of that lives on the backend. On session load, one `listSuggestions` call gives it the complete tab state.
 - The frontend follows the same code style as the rest of the app: arrow functions, consolidated exports, separate type imports, kebab-case files, PascalCase components, CSS-per-component, no emojis in code.
 
 ---

@@ -2,7 +2,7 @@
 
 ## Goal
 
-Systematically test the entire Meeting Memory demo application from transcript loading through memory extraction, summary generation, live suggestions, and UI stats. This plan defines manual test scenarios, expected outcomes, quality checks for LLM-generated content, and an automation strategy.
+Systematically test the entire Meeting Memory demo application from transcript loading through memory extraction, summary generation, suggestions, and UI stats. This plan defines manual test scenarios, expected outcomes, quality checks for LLM-generated content, and an automation strategy.
 
 **Prerequisites for all tests:**
 
@@ -17,18 +17,18 @@ Systematically test the entire Meeting Memory demo application from transcript l
 
 ## Test Areas Overview
 
-| #   | Area                                                            | Sections                                                      |
-| --- | --------------------------------------------------------------- | ------------------------------------------------------------- |
-| 1   | [Transcript Playback](#1-transcript-playback)                   | Load, play, pause, next, speed, reset, load existing session  |
-| 2   | [Working Memory](#2-working-memory)                             | Polling, token growth, context summarization, message display |
-| 3   | [Long-Term Memory Extraction](#3-long-term-memory-extraction)   | Extraction trigger, memory quality, grouping, completeness    |
-| 4   | [Live Suggestions (AI Copilot)](#4-live-suggestions-ai-copilot) | Trigger timing, topic detection, suggestion quality, banner   |
-| 5   | [Summary Views](#5-summary-views)                               | Pre-seeded views, compute, recompute, multiple sessions       |
-| 6   | [Redis Metrics Tab](#6-redis-metrics-tab)                       | Stats accuracy, lifecycle counts                              |
-| 7   | [Chatbot (CopilotKit)](#7-chatbot-copilotkit)                   | Session routing, LT insights, WM insights, summary views, theme |
-| 8   | [Reset & Lifecycle](#8-reset--lifecycle)                        | Full reset, re-creation of views, clean slate                 |
-| 9   | [Edge Cases & Error Handling](#9-edge-cases--error-handling)    | Backend down, slow API, rapid clicking                        |
-| 10  | [Visual & UX Polish](#10-visual--ux-polish)                     | Animations, auto-scroll, theming, layout                      |
+| #   | Area                                                          | Sections                                                        |
+| --- | ------------------------------------------------------------- | --------------------------------------------------------------- |
+| 1   | [Transcript Playback](#1-transcript-playback)                 | Load, play, pause, next, speed, reset, load existing session    |
+| 2   | [Working Memory](#2-working-memory)                           | Polling, token growth, context summarization, message display   |
+| 3   | [Long-Term Memory Extraction](#3-long-term-memory-extraction) | Extraction trigger, memory quality, grouping, completeness      |
+| 4   | [Suggestions](#4-suggestions)                                 | Trigger timing, topic detection, suggestion quality, banner     |
+| 5   | [Summary Views](#5-summary-views)                             | Pre-seeded views, compute, recompute, multiple sessions         |
+| 6   | [Redis Metrics Tab](#6-redis-metrics-tab)                     | Stats accuracy, lifecycle counts                                |
+| 7   | [Chatbot (CopilotKit)](#7-chatbot-copilotkit)                 | Session routing, LT insights, WM insights, summary views, theme |
+| 8   | [Reset & Lifecycle](#8-reset--lifecycle)                      | Full reset, re-creation of views, clean slate                   |
+| 9   | [Edge Cases & Error Handling](#9-edge-cases--error-handling)  | Backend down, slow API, rapid clicking                          |
+| 10  | [Visual & UX Polish](#10-visual--ux-polish)                   | Animations, auto-scroll, theming, layout                        |
 
 ---
 
@@ -72,7 +72,7 @@ Systematically test the entire Meeting Memory demo application from transcript l
 | T-1.4.3 | Next during play          | While playing, click Next                                           | One extra chunk immediately displayed (the next one in sequence); interval timer continues for subsequent chunks |
 | T-1.4.4 | Next at last chunk        | Step through until second-to-last chunk, click Next                 | Last chunk displayed with `isLastChunk: true`; status -> COMPLETED                                               |
 | T-1.4.5 | Rapid next clicks         | Click Next rapidly 10 times                                         | Exactly 10 chunks appended in order; no duplicates; no race conditions; each append call fires                   |
-| T-1.4.6 | Next triggers suggestions | Click Next repeatedly until chunk count = `triggerEveryNChunks` (5) | Live suggestion generation triggered at chunk index 5 (or first N-chunk boundary)                                |
+| T-1.4.6 | Next triggers suggestions | Click Next repeatedly until chunk count = `triggerEveryNChunks` (5) | Suggestion generation triggered at chunk index 5 (or first N-chunk boundary)                                     |
 
 ### 1.5 Load Existing Session
 
@@ -80,7 +80,7 @@ Systematically test the entire Meeting Memory demo application from transcript l
 | ------- | ------------------------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | T-1.5.1 | Load existing session    | After a full playback + reset (keeping sessions), reload page, select existing session from dropdown | Full transcript displayed instantly (no interval playback); status -> COMPLETED; MemoryExplorerPanel shows all memory data (WM, LT, suggestions, topics) |
 | T-1.5.2 | Session ID parsing       | Load session with ID `playback-2026-02-26-google-meet-{timestamp}`                                   | `transcriptId` correctly parsed as `2026-02-26-google-meet`; correct transcript loaded and displayed                                                     |
-| T-1.5.3 | AI Copilot tab populates | Load existing session that had suggestions                                                           | AI Copilot tab shows all previously generated suggestions and detected topics from `listSuggestions`                                                     |
+| T-1.5.3 | Suggestions tab populates | Load existing session that had suggestions                                                           | Suggestions tab shows all previously generated suggestions and detected topics from `listSuggestions`                                                     |
 
 ### 1.6 Clear All & Reset
 
@@ -90,7 +90,7 @@ Systematically test the entire Meeting Memory demo application from transcript l
 | T-1.6.2 | Reset during playback    | Click "Clear All" while playing             | Confirm dialog; on confirm, interval cleared, reset API called, all state cleared, status -> IDLE                    |
 | T-1.6.3 | Reset after completion   | Complete a full playback, then reset        | All WM sessions deleted, all LT memories deleted, all summary views deleted and re-created; frontend clears all data |
 | T-1.6.4 | Cancel reset             | Click "Clear All", then Cancel in dialog    | No changes; playback continues if it was playing                                                                     |
-| T-1.6.5 | Reset clears suggestions | After playback with suggestions, reset      | AI Copilot tab empty; banner shows placeholder; Redis copilot/\* keys cleared                                        |
+| T-1.6.5 | Reset clears suggestions | After playback with suggestions, reset      | Suggestions tab empty; banner shows placeholder; Redis copilot/\* keys cleared                                        |
 
 ---
 
@@ -116,10 +116,10 @@ Systematically test the entire Meeting Memory demo application from transcript l
 
 ### 2.3 Working Memory After Completion
 
-| ID      | Test                           | Steps                                                                  | Expected                                                                                   |
-| ------- | ------------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| ID      | Test                           | Steps                                                                  | Expected                                                                                                                                  |
+| ------- | ------------------------------ | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | T-2.3.1 | Final state                    | Complete playback, check Working Memory tab                            | Shows final token count, full context, all messages; polling should stop after one final fetch (see IMP-1 in `docs/dev-pending-tasks.md`) |
-| T-2.3.2 | Token count from append result | During playback, compare `lastAppendResult.tokens` with polled WM data | Values should be consistent (append result may be slightly ahead due to polling lag)       |
+| T-2.3.2 | Token count from append result | During playback, compare `lastAppendResult.tokens` with polled WM data | Values should be consistent (append result may be slightly ahead due to polling lag)                                                      |
 
 ---
 
@@ -141,16 +141,16 @@ This means **LT memories can appear at any time during playback**, not just afte
 - **After grace period:** Stop polling.
 - See `docs/dev-pending-tasks.md` BUG-1 for the fix details.
 
-| ID | Test | Steps | Expected |
-|----|------|-------|----------|
-| T-3.1.1 | Explicit extraction on last chunk | Complete playback (last chunk with `isLastChunk: true`) | Backend sends `longTermMemoryStrategy: DISCRETE` to AMS; extraction starts in background |
-| T-3.1.2 | AMS auto-extraction mid-playback | Play a long transcript (50+ chunks) at slow speed (1x = 2s); monitor LT Memory tab **during** playback | Memories may start appearing **before playback completes**, when AMS auto-summarizes the context window. This is an AMS-level feature triggered transparently during `putWorkingMemory`. Verify by checking LT tab mid-playback |
-| T-3.1.3 | Polling continues during playback | Start playback; switch to LT tab; note memory count when first memories appear; continue playback | Polling runs at 5s intervals throughout playback. After first memories appear, polling does NOT stop -- it continues detecting additional extraction rounds as more chunks are appended and AMS extracts again |
-| T-3.1.4 | Polling continues through completion | Let playback complete; monitor network tab | After `isLastChunk` is sent, polling continues at 5s intervals for up to `EXTRACTION_MAX_WAIT_MS` (60s) to catch the explicit extraction result |
-| T-3.1.5 | Polling stops after grace period | Complete playback; wait 60s+ | Polling stops after `EXTRACTION_MAX_WAIT_MS` grace period expires. Alternatively, if count stabilization is implemented, polling stops when `total` is unchanged for 2-3 consecutive polls |
-| T-3.1.6 | All extraction rounds auto-detected | Play a long transcript to completion; watch LT tab without clicking Refresh | Both mid-playback AMS auto-extractions AND the explicit last-chunk extraction results are auto-detected by polling -- no manual Refresh needed |
-| T-3.1.7 | Refresh button works at any time | Click Refresh on LT tab at any point | Memories re-fetched on demand; useful after grace period or when user wants immediate update |
-| T-3.1.8 | Short transcript -- no mid-playback extraction | Play a short transcript (< 20 chunks) | Context window never fills during playback; LT memories only appear **after** last chunk triggers explicit extraction. Polling detects them within 5-15s post-completion |
+| ID      | Test                                           | Steps                                                                                                  | Expected                                                                                                                                                                                                                        |
+| ------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T-3.1.1 | Explicit extraction on last chunk              | Complete playback (last chunk with `isLastChunk: true`)                                                | Backend sends `longTermMemoryStrategy: DISCRETE` to AMS; extraction starts in background                                                                                                                                        |
+| T-3.1.2 | AMS auto-extraction mid-playback               | Play a long transcript (50+ chunks) at slow speed (1x = 2s); monitor LT Memory tab **during** playback | Memories may start appearing **before playback completes**, when AMS auto-summarizes the context window. This is an AMS-level feature triggered transparently during `putWorkingMemory`. Verify by checking LT tab mid-playback |
+| T-3.1.3 | Polling continues during playback              | Start playback; switch to LT tab; note memory count when first memories appear; continue playback      | Polling runs at 5s intervals throughout playback. After first memories appear, polling does NOT stop -- it continues detecting additional extraction rounds as more chunks are appended and AMS extracts again                  |
+| T-3.1.4 | Polling continues through completion           | Let playback complete; monitor network tab                                                             | After `isLastChunk` is sent, polling continues at 5s intervals for up to `EXTRACTION_MAX_WAIT_MS` (60s) to catch the explicit extraction result                                                                                 |
+| T-3.1.5 | Polling stops after grace period               | Complete playback; wait 60s+                                                                           | Polling stops after `EXTRACTION_MAX_WAIT_MS` grace period expires. Alternatively, if count stabilization is implemented, polling stops when `total` is unchanged for 2-3 consecutive polls                                      |
+| T-3.1.6 | All extraction rounds auto-detected            | Play a long transcript to completion; watch LT tab without clicking Refresh                            | Both mid-playback AMS auto-extractions AND the explicit last-chunk extraction results are auto-detected by polling -- no manual Refresh needed                                                                                  |
+| T-3.1.7 | Refresh button works at any time               | Click Refresh on LT tab at any point                                                                   | Memories re-fetched on demand; useful after grace period or when user wants immediate update                                                                                                                                    |
+| T-3.1.8 | Short transcript -- no mid-playback extraction | Play a short transcript (< 20 chunks)                                                                  | Context window never fills during playback; LT memories only appear **after** last chunk triggers explicit extraction. Polling detects them within 5-15s post-completion                                                        |
 
 ### 3.2 Memory Quality & Completeness
 
@@ -168,11 +168,11 @@ These tests validate that the LLM extraction produces meaningful, complete memor
 
 ### 3.3 Memory Display
 
-| ID      | Test                 | Steps                               | Expected                                                                             |
-| ------- | -------------------- | ----------------------------------- | ------------------------------------------------------------------------------------ |
-| T-3.3.1 | Grouped by type      | Check Long-Term Memory tab          | Memories grouped into Semantic, Episodic, Message sections with correct count badges |
-| T-3.3.2 | Session vs All scope | Toggle between SESSION and ALL tabs | SESSION shows only current session's memories; ALL shows cross-session total         |
-| T-3.3.3 | Memory card details  | Expand a memory card                | Shows full text, topics as chips, entities as chips, timestamp, memory type badge    |
+| ID      | Test                 | Steps                                                         | Expected                                                                                                                                                                                                                     |
+| ------- | -------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T-3.3.1 | Grouped by type      | Check Long-Term Memory tab                                    | Memories grouped into Semantic, Episodic, Message sections with correct count badges                                                                                                                                         |
+| T-3.3.2 | Session vs All scope | Toggle between SESSION and ALL tabs                           | SESSION shows only current session's memories; ALL shows cross-session total                                                                                                                                                 |
+| T-3.3.3 | Memory card details  | Expand a memory card                                          | Shows full text, topics as chips, entities as chips, timestamp, memory type badge                                                                                                                                            |
 | T-3.3.4 | Search via chatbot   | Open chatbot sidebar; ask "What do we know about retirement?" | Agent uses `searchMemories` tool; response references relevant LT memories. See section 7 for full chatbot tests. Note: `useLongTermMemory.searchByText` exists in the hook but is not wired to any UI element in the LT tab |
 
 ### 3.4 Improving Long-Term Extraction Quality
@@ -188,23 +188,23 @@ If extraction quality is insufficient, these dataset config / prompt improvement
 
 ---
 
-## 4. Live Suggestions (AI Copilot)
+## 4. Suggestions
 
 ### 4.1 Trigger Timing
 
-| ID      | Test                        | Steps                                             | Expected                                                                                                 |
-| ------- | --------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| T-4.1.1 | First trigger at N chunks   | Play transcript; count chunks                     | `generateSuggestion` called when `chunkIndex` reaches `triggerEveryNChunks` (default 5)                  |
-| T-4.1.2 | Subsequent triggers         | Continue playback                                 | Generation triggered at chunk 10, 15, 20, etc. (every N chunks)                                          |
-| T-4.1.3 | Next button triggers        | Use Next to step through 5 chunks                 | Suggestion triggered at the 5th Next click (chunk index boundary)                                        |
-| T-4.1.4 | Mixed play + next           | Play 3 chunks, pause, Next twice more (= 5 total) | Suggestion triggered at chunk 5 regardless of play/next mix                                              |
-| T-4.1.5 | No trigger after completion | Complete playback; advance past last chunk        | No further `generateSuggestion` calls; `isPlaybackComplete` blocks generation                            |
-| T-4.1.6 | Pause does NOT block        | Pause mid-playback; use Next to advance           | Suggestions still fire at N-chunk intervals during paused state (Next advances chunks)                   |
-| T-4.1.7 | Loading existing session    | Load an existing session                          | `listSuggestions` called (not `generateSuggestion`); all prior suggestions + topics populate immediately |
-| T-4.1.8 | Rapid Next through one boundary | Click Next N times (e.g., 5) rapidly in quick succession | Exactly one `generateSuggestion` call fires at chunk N; no duplicate calls; suggestion response is captured and appended to the list |
-| T-4.1.9 | Rapid Next through multiple boundaries | Click Next 2N+ times (e.g., 12) rapidly before the first generation completes | First trigger fires at chunk N; `isGeneratingRef` blocks the chunk 2N trigger. After first generation completes, `gap >= N` re-triggers at the current chunk index. **Verify**: the intermediate N-boundary suggestion (chunk 2N context) is not lost -- a trigger fires as soon as the first completes |
-| T-4.1.10 | No duplicate concurrent calls | Click Next rapidly past a boundary; monitor network | Only one `generateSuggestion` call is in-flight at a time (`isGeneratingRef` guard). No concurrent/duplicate requests |
-| T-4.1.11 | Error recovery on rapid clicks | Simulate generation failure (e.g., stop backend briefly); advance past another N boundary | `lastTriggeredIndexRef` rolls back to the previous value on error; next chunk advance re-triggers generation for the same context window. Suggestion is not permanently lost |
+| ID       | Test                                   | Steps                                                                                     | Expected                                                                                                                                                                                                                                                                                                |
+| -------- | -------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T-4.1.1  | First trigger at N chunks              | Play transcript; count chunks                                                             | `generateSuggestion` called when `chunkIndex` reaches `triggerEveryNChunks` (default 5)                                                                                                                                                                                                                 |
+| T-4.1.2  | Subsequent triggers                    | Continue playback                                                                         | Generation triggered at chunk 10, 15, 20, etc. (every N chunks)                                                                                                                                                                                                                                         |
+| T-4.1.3  | Next button triggers                   | Use Next to step through 5 chunks                                                         | Suggestion triggered at the 5th Next click (chunk index boundary)                                                                                                                                                                                                                                       |
+| T-4.1.4  | Mixed play + next                      | Play 3 chunks, pause, Next twice more (= 5 total)                                         | Suggestion triggered at chunk 5 regardless of play/next mix                                                                                                                                                                                                                                             |
+| T-4.1.5  | No trigger after completion            | Complete playback; advance past last chunk                                                | No further `generateSuggestion` calls; `isPlaybackComplete` blocks generation                                                                                                                                                                                                                           |
+| T-4.1.6  | Pause does NOT block                   | Pause mid-playback; use Next to advance                                                   | Suggestions still fire at N-chunk intervals during paused state (Next advances chunks)                                                                                                                                                                                                                  |
+| T-4.1.7  | Loading existing session               | Load an existing session                                                                  | `listSuggestions` called (not `generateSuggestion`); all prior suggestions + topics populate immediately                                                                                                                                                                                                |
+| T-4.1.8  | Rapid Next through one boundary        | Click Next N times (e.g., 5) rapidly in quick succession                                  | Exactly one `generateSuggestion` call fires at chunk N; no duplicate calls; suggestion response is captured and appended to the list                                                                                                                                                                    |
+| T-4.1.9  | Rapid Next through multiple boundaries | Click Next 2N+ times (e.g., 12) rapidly before the first generation completes             | First trigger fires at chunk N; `isGeneratingRef` blocks the chunk 2N trigger. After first generation completes, `gap >= N` re-triggers at the current chunk index. **Verify**: the intermediate N-boundary suggestion (chunk 2N context) is not lost -- a trigger fires as soon as the first completes |
+| T-4.1.10 | No duplicate concurrent calls          | Click Next rapidly past a boundary; monitor network                                       | Only one `generateSuggestion` call is in-flight at a time (`isGeneratingRef` guard). No concurrent/duplicate requests                                                                                                                                                                                   |
+| T-4.1.11 | Error recovery on rapid clicks         | Simulate generation failure (e.g., stop backend briefly); advance past another N boundary | `lastTriggeredIndexRef` rolls back to the previous value on error; next chunk advance re-triggers generation for the same context window. Suggestion is not permanently lost                                                                                                                            |
 
 ### 4.2 Detected Topics
 
@@ -231,7 +231,7 @@ If extraction quality is insufficient, these dataset config / prompt improvement
 | ID      | Test                        | Steps                          | Expected                                                                                |
 | ------- | --------------------------- | ------------------------------ | --------------------------------------------------------------------------------------- |
 | T-4.4.1 | Banner updates              | Generate a suggestion          | Banner above tabs shows latest suggestion title + timestamp; animates on new suggestion |
-| T-4.4.2 | View Details                | Click "View Details" on banner | Switches to AI Copilot tab; scrolls to the referenced suggestion                        |
+| T-4.4.2 | View Details                | Click "View Details" on banner | Switches to Suggestions tab; scrolls to the referenced suggestion                        |
 | T-4.4.3 | Banner persists across tabs | Switch to Working Memory tab   | Banner still visible above tabs with latest suggestion                                  |
 | T-4.4.4 | Empty banner                | Before any suggestions         | Banner shows placeholder text from config                                               |
 
@@ -310,35 +310,35 @@ If extraction quality is insufficient, these dataset config / prompt improvement
 
 ### 7.3 Long-Term Memory Insights
 
-| ID      | Test                        | Steps                                                               | Expected                                                                                                                                              |
-| ------- | --------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T-7.3.1 | Semantic memory query       | Ask "What are James Morrison's financial preferences?"              | Agent uses `searchMemories`; response cites semantic memories (preferences, facts) with entities like "James Morrison"; scope stated                  |
-| T-7.3.2 | Episodic memory query       | Ask "What key events happened in the last meeting?"                 | Agent uses `searchMemoriesBySession` or `searchMemories`; response cites episodic memories (events with dates)                                       |
-| T-7.3.3 | Entity filter               | Ask "What do we know about Emily?"                                  | Agent uses `searchMemories` with `entities: ["Emily"]`; response references only Emily-related memories                                              |
-| T-7.3.4 | Topic filter                | Ask "What has been discussed about retirement?"                     | Agent uses `searchMemories` with `topics: ["retirement"]` or text query; response covers all retirement-related facts across sessions                |
-| T-7.3.5 | Memory type awareness       | Ask "How many semantic vs episodic memories do we have?"            | Agent uses `searchMemories` (possibly twice with different `memoryType` filters) or interprets results; gives a count breakdown                       |
-| T-7.3.6 | Cross-session comparison    | After two transcripts, ask "How did the topics differ between the two meetings?" | Agent calls `listSessions` then `searchMemoriesBySession` for each; compares and contrasts topics                                   |
-| T-7.3.7 | No memories match           | Ask "What do we know about cryptocurrency?"                         | Agent uses `searchMemories`; response clearly states no relevant memories found                                                                      |
+| ID      | Test                     | Steps                                                                            | Expected                                                                                                                              |
+| ------- | ------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| T-7.3.1 | Semantic memory query    | Ask "What are James Morrison's financial preferences?"                           | Agent uses `searchMemories`; response cites semantic memories (preferences, facts) with entities like "James Morrison"; scope stated  |
+| T-7.3.2 | Episodic memory query    | Ask "What key events happened in the last meeting?"                              | Agent uses `searchMemoriesBySession` or `searchMemories`; response cites episodic memories (events with dates)                        |
+| T-7.3.3 | Entity filter            | Ask "What do we know about Emily?"                                               | Agent uses `searchMemories` with `entities: ["Emily"]`; response references only Emily-related memories                               |
+| T-7.3.4 | Topic filter             | Ask "What has been discussed about retirement?"                                  | Agent uses `searchMemories` with `topics: ["retirement"]` or text query; response covers all retirement-related facts across sessions |
+| T-7.3.5 | Memory type awareness    | Ask "How many semantic vs episodic memories do we have?"                         | Agent uses `searchMemories` (possibly twice with different `memoryType` filters) or interprets results; gives a count breakdown       |
+| T-7.3.6 | Cross-session comparison | After two transcripts, ask "How did the topics differ between the two meetings?" | Agent calls `listSessions` then `searchMemoriesBySession` for each; compares and contrasts topics                                     |
+| T-7.3.7 | No memories match        | Ask "What do we know about cryptocurrency?"                                      | Agent uses `searchMemories`; response clearly states no relevant memories found                                                       |
 
 ### 7.4 Working Memory Insights
 
-| ID      | Test                          | Steps                                                        | Expected                                                                                                                                        |
-| ------- | ----------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| T-7.4.1 | Session context query         | During playback, ask "What's been discussed so far?"         | Agent uses `getMemoryContext` with active session; response includes working memory context summary and any LT memories                         |
-| T-7.4.2 | Token usage query             | Ask "How much of the context window is used?"                | Agent uses `getWorkingMemoryState`; response mentions token count, percentage used, message count                                               |
-| T-7.4.3 | Working memory summary        | After context summarization triggers, ask "Summarize the conversation so far" | Agent uses `getMemoryContext` or `getWorkingMemoryState`; response leverages the auto-generated `context` field         |
-| T-7.4.4 | List sessions                 | After multiple transcripts, ask "What sessions do we have?" | Agent uses `listSessions`; response lists session IDs with meaningful labels                                                                    |
-| T-7.4.5 | Specific session by date      | Ask "What happened in the February 26 meeting?"              | Agent uses `listSessions` to find the matching session, then `getMemoryContext` or `searchMemoriesBySession`; response scoped to that session   |
+| ID      | Test                     | Steps                                                                         | Expected                                                                                                                                      |
+| ------- | ------------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| T-7.4.1 | Session context query    | During playback, ask "What's been discussed so far?"                          | Agent uses `getMemoryContext` with active session; response includes working memory context summary and any LT memories                       |
+| T-7.4.2 | Token usage query        | Ask "How much of the context window is used?"                                 | Agent uses `getWorkingMemoryState`; response mentions token count, percentage used, message count                                             |
+| T-7.4.3 | Working memory summary   | After context summarization triggers, ask "Summarize the conversation so far" | Agent uses `getMemoryContext` or `getWorkingMemoryState`; response leverages the auto-generated `context` field                               |
+| T-7.4.4 | List sessions            | After multiple transcripts, ask "What sessions do we have?"                   | Agent uses `listSessions`; response lists session IDs with meaningful labels                                                                  |
+| T-7.4.5 | Specific session by date | Ask "What happened in the February 26 meeting?"                               | Agent uses `listSessions` to find the matching session, then `getMemoryContext` or `searchMemoriesBySession`; response scoped to that session |
 
 ### 7.5 Summary View Insights
 
-| ID      | Test                           | Steps                                                                 | Expected                                                                                                                           |
-| ------- | ------------------------------ | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| T-7.5.1 | Retrieve computed summary      | After computing summaries, ask "Give me the client memory summary"    | Agent uses `getComputedSummaries` with `viewName: "Client Memory Summary"`; response returns the pre-computed narrative             |
-| T-7.5.2 | List available views           | Ask "What summary views are available?"                               | Agent uses `listSummaryViews`; response lists view names, sources, and groupBy fields                                              |
-| T-7.5.3 | Inspect view definition        | Ask "How is the Session Recap summary configured?"                    | Agent uses `listSummaryViews` then `getSummaryView`; response explains groupBy, source, prompt, time window                        |
-| T-7.5.4 | No computed summaries          | Before computing any summaries, ask "Give me a summary of this client" | Agent uses `getComputedSummaries`; finds no partitions; responds that no summaries have been computed yet and suggests computing one |
-| T-7.5.5 | Session recap vs client summary | Ask "What's the difference between the session recap and client summary?" | Agent uses `listSummaryViews` or `getSummaryView` for both; explains that one is grouped by session, the other by user          |
+| ID      | Test                            | Steps                                                                     | Expected                                                                                                                             |
+| ------- | ------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| T-7.5.1 | Retrieve computed summary       | After computing summaries, ask "Give me the client memory summary"        | Agent uses `getComputedSummaries` with `viewName: "Client Memory Summary"`; response returns the pre-computed narrative              |
+| T-7.5.2 | List available views            | Ask "What summary views are available?"                                   | Agent uses `listSummaryViews`; response lists view names, sources, and groupBy fields                                                |
+| T-7.5.3 | Inspect view definition         | Ask "How is the Session Recap summary configured?"                        | Agent uses `listSummaryViews` then `getSummaryView`; response explains groupBy, source, prompt, time window                          |
+| T-7.5.4 | No computed summaries           | Before computing any summaries, ask "Give me a summary of this client"    | Agent uses `getComputedSummaries`; finds no partitions; responds that no summaries have been computed yet and suggests computing one |
+| T-7.5.5 | Session recap vs client summary | Ask "What's the difference between the session recap and client summary?" | Agent uses `listSummaryViews` or `getSummaryView` for both; explains that one is grouped by session, the other by user               |
 
 ### 7.6 Dark Theme
 
@@ -358,7 +358,7 @@ If extraction quality is insufficient, these dataset config / prompt improvement
 | T-8.1.2 | WM sessions cleared      | After reset, check sessions dropdown    | No existing sessions listed                                                                         |
 | T-8.1.3 | LT memories cleared      | After reset, check Long-Term Memory tab | Zero memories in both SESSION and ALL scope                                                         |
 | T-8.1.4 | Summary views re-created | After reset, check Summary Views tab    | Pre-seeded views present (re-created); no computed summaries                                        |
-| T-8.1.5 | Copilot stores cleared   | After reset, check AI Copilot tab       | No suggestions, no topics; empty state message                                                      |
+| T-8.1.5 | Copilot stores cleared   | After reset, check Suggestions tab       | No suggestions, no topics; empty state message                                                      |
 | T-8.1.6 | Frontend state clean     | After reset, check all panels           | Transcript panel in IDLE state; explorer shows empty states; no stale data                          |
 
 ---
@@ -401,7 +401,7 @@ If extraction quality is insufficient, these dataset config / prompt improvement
 | -------- | ------------------------ | ---------------------- | ---------------------------------------------- |
 | T-10.1.1 | Chunk entrance           | Play transcript        | New chunks fade-up; no animation on old chunks |
 | T-10.1.2 | Memory card entrance     | Wait for LT extraction | Memory cards animate in (scale + fade)         |
-| T-10.1.3 | Suggestion card entrance | Wait for suggestion    | New suggestion cards fade-in in AI Copilot tab |
+| T-10.1.3 | Suggestion card entrance | Wait for suggestion    | New suggestion cards fade-in in Suggestions tab |
 | T-10.1.4 | Banner animation         | New suggestion arrives | Banner highlights/animates briefly             |
 
 ### 10.2 Layout & Theming
@@ -433,7 +433,7 @@ This combines all areas into a single walkthrough test:
 1. **Load app** -> Config loads, title and labels from config, health indicator green
 2. **Select transcript** -> `2026-02-26-google-meet` from dropdown
 3. **Click Play** -> Session created, chunks start streaming at 2s intervals
-4. **Watch AI Copilot tab** (auto-activated) -> Topics pre-seeded as "pending"
+4. **Watch Suggestions tab** (auto-activated) -> Topics pre-seeded as "pending"
 5. **At chunk ~5** -> First suggestion triggers (topic recall about REITs)
 6. **At chunk ~10** -> Topics update: REIT "discussed"
 7. **Switch to Working Memory tab** -> Token count growing, messages visible, banner still shows latest suggestion
@@ -554,7 +554,7 @@ expect(summary.memoryCount).toBeGreaterThan(0);
 - Transcript selection and playback controls (play, pause, next, speed)
 - Chunk rendering and auto-scroll
 - Tab switching and data display
-- Suggestion banner and AI Copilot tab
+- Suggestion banner and Suggestions tab
 - Summary computation flow
 - Reset flow
 - Chatbot sidebar open/close and basic interaction
@@ -630,7 +630,7 @@ tests/
 │   ├── playback.spec.ts        # Play, pause, next, speed, completion
 │   ├── working-memory.spec.ts  # WM tab during and after playback
 │   ├── long-term-memory.spec.ts # LT tab after extraction
-│   ├── suggestions.spec.ts     # AI Copilot tab + banner
+│   ├── suggestions.spec.ts     # Suggestions tab + banner
 │   ├── summary-views.spec.ts   # Compute + display summaries
 │   ├── chatbot.spec.ts         # CopilotKit sidebar
 │   ├── reset.spec.ts           # Full reset flow
@@ -703,8 +703,8 @@ These are implementation details discovered during code review that testers shou
 
 5. **`loadAll` does not call API**: When loading an existing session, `playback.loadAll()` displays all chunks locally but does not re-call `appendWorkingMemory`. The working memory state is already on the server from the original playback.
 
-6. **Suggestion trigger is chunk-index-based, not timer-based**: The `useLiveSuggestions` hook triggers based on chunk index gaps, not time intervals. Both Play (interval) and Next (manual) increment the chunk index.
+6. **Suggestion trigger is chunk-index-based, not timer-based**: The `useSuggestions` hook triggers based on chunk index gaps, not time intervals. Both Play (interval) and Next (manual) increment the chunk index.
 
-7. **`isGenerating` in dependency array**: The live suggestions `useEffect` includes `isGenerating` in its dependency array, which causes extra evaluations when the flag toggles. This is by design but can cause confusion during debugging.
+7. **`isGenerating` in dependency array**: The suggestions `useEffect` includes `isGenerating` in its dependency array, which causes extra evaluations when the flag toggles. This is by design but can cause confusion during debugging.
 
 8. **Summary view `group` construction**: The `summary-views-tab` builds the `group` object from the view's `groupBy` field using a key mapping (`user_id` -> `userId` prop, `session_id` -> `sessionId` prop, `namespace` -> `namespace` prop). If any required key value is missing, the "Compute Summary" button is hidden.

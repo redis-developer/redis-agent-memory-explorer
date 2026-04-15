@@ -72,7 +72,7 @@ const routes: RouteDefinition[] = [
   { path: "/deleteSummaryView", handler: deleteSummaryViewHandler },
   { path: "/getTask", handler: getTaskHandler },
 
-  // Live Suggestions (AI Copilot)
+  // Suggestions
   { path: "/generateSuggestion", handler: generateSuggestionHandler },
   { path: "/listSuggestions", handler: listSuggestionsHandler },
 

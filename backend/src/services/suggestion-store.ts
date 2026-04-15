@@ -1,4 +1,4 @@
-import type { LiveSuggestion } from "../types";
+import type { Suggestion } from "../types";
 
 import { Logger } from "cau-logger";
 
@@ -22,10 +22,10 @@ const ENTITY_PREFIX = COPILOT_SUGGESTIONS_PREFIX;
 
 const add = async (
   sessionId: string,
-  suggestion: LiveSuggestion,
+  suggestion: Suggestion,
 ): Promise<void> => {
   const logger = getLogger();
-  const current = await getItems<LiveSuggestion>(ENTITY_PREFIX, sessionId);
+  const current = await getItems<Suggestion>(ENTITY_PREFIX, sessionId);
   const updated = [...current, suggestion];
   await setItems(ENTITY_PREFIX, sessionId, updated);
   logger.info("Suggestion stored", {
@@ -36,8 +36,8 @@ const add = async (
   });
 };
 
-const list = async (sessionId: string): Promise<LiveSuggestion[]> => {
-  return getItems<LiveSuggestion>(ENTITY_PREFIX, sessionId);
+const list = async (sessionId: string): Promise<Suggestion[]> => {
+  return getItems<Suggestion>(ENTITY_PREFIX, sessionId);
 };
 
 const clear = async (sessionId: string): Promise<void> => {

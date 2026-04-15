@@ -105,10 +105,10 @@ DemoPage
                 datasetConfig ◄── config (for labels only)
                 lastAppendResult ◄── from TranscriptPanel (optional)
                 currentChunkIndex ◄── from playback (optional)
-                isPlaybackComplete ◄── gates live suggestions & UI (optional)
+                isPlaybackComplete ◄── gates suggestions & UI (optional)
 ```
 
-The page owns **small bridge state** (`sessionId`, `lastAppendResult`, `currentChunkIndex`, `isPlaybackComplete`) so MemoryExplorerPanel can run live suggestions and related UI without reaching into TranscriptPanel. Playback timing, toolbar, and transcript feed remain internal to TranscriptPanel. MemoryExplorerPanel reacts to `sessionId` and the bridge fields and manages memory polling, fetching, and metrics tracking internally.
+The page owns **small bridge state** (`sessionId`, `lastAppendResult`, `currentChunkIndex`, `isPlaybackComplete`) so MemoryExplorerPanel can run suggestions and related UI without reaching into TranscriptPanel. Playback timing, toolbar, and transcript feed remain internal to TranscriptPanel. MemoryExplorerPanel reacts to `sessionId` and the bridge fields and manages memory polling, fetching, and metrics tracking internally.
 
 ---
 
@@ -365,7 +365,7 @@ Both panels have a symmetrical 2-row header (title row + controls/tabs row) and 
 │  │ {config.transcriptPanel.title} │  │ [AI Insight banner]           (40px row) ││
 │  │ [session dropdown ▾]  (40px)   │  │                                          ││
 │  ├────────────────────────────────┤  ├──────────────────────────────────────────┤│
-│  │ [Select Meeting ▾] [1x ▾]     │  │ [AI Copilot] [Working Memory]            ││
+│  │ [Select Meeting ▾] [1x ▾]     │   │ [Suggestions] [Working Memory]           ││
 │  │ [Play/Pause] [Next] [Clear All] (40px) │  │ [Long-Term] [Summary] [Redis]  (40px)   ││
 │  ├────────────────────────────────┤  ├──────────────────────────────────────────┤│
 │  │                                │  │                                          ││
@@ -543,7 +543,7 @@ type TranscriptPanelProps = {
 };
 ```
 
-Optional callbacks let the page mirror append results and playback position for MemoryExplorerPanel (live suggestions, copilot UI) without exposing full playback state. The parent always needs: (1) `onSessionCreated` so it can pass `sessionId` to MemoryExplorerPanel, and (2) `onReset` to clear bridge state.
+Optional callbacks let the page mirror append results and playback position for MemoryExplorerPanel (suggestions) without exposing full playback state. The parent always needs: (1) `onSessionCreated` so it can pass `sessionId` to MemoryExplorerPanel, and (2) `onReset` to clear bridge state.
 
 #### Internal State (managed within TranscriptPanel)
 
@@ -571,13 +571,13 @@ Optional callbacks let the page mirror append results and playback position for 
 
 Single-row horizontal controls bar within TranscriptPanel, set to `--panel-header-height` (40px) to align with the right panel's tab bar. Health indicator and status chip have been moved to PlaybackControls (footer) to keep the toolbar compact. **All labels from `datasetConfig.toolbar`.**
 
-| Element                 | Config source                                                   | Type                          | Behavior                                                                                                                                                  |
-| ----------------------- | --------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Transcript dropdown     | `config.toolbar.transcriptDropdownLabel`                        | MUI Select                    | Lists available transcripts                                                                                                                               |
-| Speed dropdown          | `config.toolbar.speedLabel`, `config.playbackDefaults.speeds[]` | MUI Select                    | Speed options from config                                                                                                                                 |
-| Play / Pause toggle     | `config.toolbar.playLabel`, `config.toolbar.pauseLabel`           | MUI IconButton (PlayArrow / Pause) | Starts interval playback when idle/paused; pauses mid-stream while keeping chunks and session                                                             |
-| Next button             | `config.toolbar.nextLabel`                                      | MUI IconButton (skip / step)   | Advances one chunk (same as one tick), for stepping through without continuous play                                                                       |
-| Clear All button        | `config.toolbar.resetLabel`                                     | MUI Button (DeleteSweep, red) | **Prominently styled.** Triggers `POST /api/resetLifecycle` via parent. Shows ConfirmDialog first.                                                        |
+| Element             | Config source                                                   | Type                               | Behavior                                                                                           |
+| ------------------- | --------------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Transcript dropdown | `config.toolbar.transcriptDropdownLabel`                        | MUI Select                         | Lists available transcripts                                                                        |
+| Speed dropdown      | `config.toolbar.speedLabel`, `config.playbackDefaults.speeds[]` | MUI Select                         | Speed options from config                                                                          |
+| Play / Pause toggle | `config.toolbar.playLabel`, `config.toolbar.pauseLabel`         | MUI IconButton (PlayArrow / Pause) | Starts interval playback when idle/paused; pauses mid-stream while keeping chunks and session      |
+| Next button         | `config.toolbar.nextLabel`                                      | MUI IconButton (skip / step)       | Advances one chunk (same as one tick), for stepping through without continuous play                |
+| Clear All button    | `config.toolbar.resetLabel`                                     | MUI Button (DeleteSweep, red)      | **Prominently styled.** Triggers `POST /api/resetLifecycle` via parent. Shows ConfirmDialog first. |
 
 Note: The session picker dropdown is in the transcript panel header row (above the toolbar), not in the toolbar itself.
 
@@ -689,9 +689,9 @@ type MemoryExplorerPanelProps = {
 - `userId` + `namespace` -- identify whose memories to query. Not tied to any transcript concept.
 - `sessionId` -- scopes working memory and session-specific LT memory queries. Can be `null` (shows empty states). The panel reacts to `sessionId` changes as its primary external signal.
 - `datasetConfig` -- used for display labels and branding only. The panel never modifies it.
-- `lastAppendResult`, `currentChunkIndex`, `isPlaybackComplete` -- optional bridge from the page for live suggestions and copilot UI. They do not require importing TranscriptPanel; defaults suit pages that omit live suggestions.
+- `lastAppendResult`, `currentChunkIndex`, `isPlaybackComplete` -- optional bridge from the page for suggestions and copilot UI. They do not require importing TranscriptPanel; defaults suit pages that omit suggestions.
 
-No `playbackStatus` and no `isPlaying` prop. The panel does not run the playback timer itself. It derives memory UI from `sessionId` and its own API calls, and uses the optional bridge fields only where needed (e.g. `useLiveSuggestions` skips generation when `isPlaybackComplete` is true).
+No `playbackStatus` and no `isPlaying` prop. The panel does not run the playback timer itself. It derives memory UI from `sessionId` and its own API calls, and uses the optional bridge fields only where needed (e.g. `useSuggestions` skips generation when `isPlaybackComplete` is true).
 
 #### Internal State (managed within MemoryExplorerPanel)
 
@@ -700,7 +700,7 @@ No `playbackStatus` and no `isPlaying` prop. The panel does not run the playback
 - Working memory data (from `useWorkingMemory` hook)
 - Long-term memory data (from `useLongTermMemory` hook)
 - Summary views data (from `useSummaryViews` hook)
-Data fetching is triggered primarily by `sessionId` changes; live suggestions also use `currentChunkIndex` and `isPlaybackComplete` when provided.
+Data fetching is triggered primarily by `sessionId` changes; suggestions also use `currentChunkIndex` and `isPlaybackComplete` when provided.
 
 #### Internal Behavior (sessionId-driven, no playback knowledge)
 
@@ -1583,22 +1583,22 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 
 ## Implementation Priority (Build Order)
 
-| Phase | What                                                                                                                                                                                  | Layer      | Why                                                                  |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------- |
-| 1     | `layout.tsx`, `globals.css`, `variables.css`, `app.constants.ts`                                                                                                                      | Foundation | Design system, CSS custom properties, playback constants             |
-| 2     | `api.service.ts` + all types (`dataset-config.types.ts`, `transcript.types.ts`, `memory.types.ts`, `api.types.ts`)                                                                    | Shared     | API connectivity + type definitions used by both business components |
-| 3     | `components/core/*` -- StatusDot, EmptyState, MemoryTypeBadge, ConfirmDialog, SectionCard + `core.css`                                                                                | Core       | Generic UI primitives, no domain logic                               |
-| 4     | `hooks/use-dataset-config.ts` + loading/error states in `page.tsx`                                                                                                                    | Page       | Config must load before anything renders                             |
+| Phase | What                                                                                                                                                                                        | Layer      | Why                                                                  |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------- |
+| 1     | `layout.tsx`, `globals.css`, `variables.css`, `app.constants.ts`                                                                                                                            | Foundation | Design system, CSS custom properties, playback constants             |
+| 2     | `api.service.ts` + all types (`dataset-config.types.ts`, `transcript.types.ts`, `memory.types.ts`, `api.types.ts`)                                                                          | Shared     | API connectivity + type definitions used by both business components |
+| 3     | `components/core/*` -- StatusDot, EmptyState, MemoryTypeBadge, ConfirmDialog, SectionCard + `core.css`                                                                                      | Core       | Generic UI primitives, no domain logic                               |
+| 4     | `hooks/use-dataset-config.ts` + loading/error states in `page.tsx`                                                                                                                          | Page       | Config must load before anything renders                             |
 | 5     | **TranscriptPanel shell** -- `transcript-panel.component.tsx` + `toolbar.component.tsx` (transcript picker, play/pause/next/reset, speed, status chip, health dot) + `transcript-panel.css` | Business   | Left panel structure with all controls                               |
-| 6     | **TranscriptPanel internals** -- `transcript-chunk.component.tsx` + `transcript-feed.component.tsx` + `playback-controls.component.tsx`                                               | Business   | Transcript display sub-components                                    |
-| 7     | **TranscriptPanel hooks** -- `use-transcript-playback.ts` (interval + POST /append) + `use-backend-health.ts`                                                                         | Business   | Core playback loop and health check                                  |
-| 8     | **MemoryExplorerPanel shell** -- `memory-explorer-panel.component.tsx` (tab container, tab labels from config) + `memory-explorer-panel.css`                                          | Business   | Right panel structure with tabs                                      |
-| 9     | **WorkingMemoryTab** -- `working-memory-tab.component.tsx` + `working-memory-summary.component.tsx` + `use-working-memory.ts`                                                         | Business   | Working memory display + polling hook                                |
-| 10    | **LongTermMemoryTab** -- `long-term-memory-tab.component.tsx` + `memory-card.component.tsx` + `use-long-term-memory.ts`                                                               | Business   | Extracted memories display                                           |
-| 11    | **SummaryViewsTab** -- `summary-views-tab.component.tsx` + `computed-summary-card.component.tsx` + `use-summary-views.ts`                                                             | Business   | Summary views + computed summaries                                   |
-| 12    | **RedisMetricsTab** -- `redis-metrics-tab.component.tsx`                                                                                                                              | Business   | Under the hood stats (memory lifecycle)                              |
-| 13    | **Integration** -- wire up DemoPage with TranscriptPanel callbacks and MemoryExplorerPanel props (`sessionId`, optional `lastAppendResult`, `currentChunkIndex`, `isPlaybackComplete`) | Page       | Bridge session and playback signals between business components        |
-| 14    | **Polish** -- animations, empty states, error states, loading states, responsive layout, demo readiness                                                                               | All        | Demo-grade visual quality                                            |
+| 6     | **TranscriptPanel internals** -- `transcript-chunk.component.tsx` + `transcript-feed.component.tsx` + `playback-controls.component.tsx`                                                     | Business   | Transcript display sub-components                                    |
+| 7     | **TranscriptPanel hooks** -- `use-transcript-playback.ts` (interval + POST /append) + `use-backend-health.ts`                                                                               | Business   | Core playback loop and health check                                  |
+| 8     | **MemoryExplorerPanel shell** -- `memory-explorer-panel.component.tsx` (tab container, tab labels from config) + `memory-explorer-panel.css`                                                | Business   | Right panel structure with tabs                                      |
+| 9     | **WorkingMemoryTab** -- `working-memory-tab.component.tsx` + `working-memory-summary.component.tsx` + `use-working-memory.ts`                                                               | Business   | Working memory display + polling hook                                |
+| 10    | **LongTermMemoryTab** -- `long-term-memory-tab.component.tsx` + `memory-card.component.tsx` + `use-long-term-memory.ts`                                                                     | Business   | Extracted memories display                                           |
+| 11    | **SummaryViewsTab** -- `summary-views-tab.component.tsx` + `computed-summary-card.component.tsx` + `use-summary-views.ts`                                                                   | Business   | Summary views + computed summaries                                   |
+| 12    | **RedisMetricsTab** -- `redis-metrics-tab.component.tsx`                                                                                                                                    | Business   | Under the hood stats (memory lifecycle)                              |
+| 13    | **Integration** -- wire up DemoPage with TranscriptPanel callbacks and MemoryExplorerPanel props (`sessionId`, optional `lastAppendResult`, `currentChunkIndex`, `isPlaybackComplete`)      | Page       | Bridge session and playback signals between business components      |
+| 14    | **Polish** -- animations, empty states, error states, loading states, responsive layout, demo readiness                                                                                     | All        | Demo-grade visual quality                                            |
 
 ---
 
@@ -1624,14 +1624,14 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 
 ## Key Demo Moments (What Must Look Great)
 
-| Moment                         | Component (Business > Sub)                 | Visual Treatment                      |
-| ------------------------------ | ------------------------------------------ | ------------------------------------- |
-| Transcript chunks streaming in | TranscriptPanel > TranscriptFeed           | Smooth fade-up animation, auto-scroll |
-| Context summary appearing      | MemoryExplorerPanel > WorkingMemorySummary | Highlighted card with subtle glow     |
-| "Extracting..." status         | TranscriptPanel > PlaybackControls (status chip) | Color-coded chip in footer bar  |
-| Long-term memories populating  | MemoryExplorerPanel > LongTermMemoryTab    | Cards animate in one by one           |
-| Summary generated              | MemoryExplorerPanel > ComputedSummaryCard  | Large card, prominent text            |
-| Metrics dashboard              | MemoryExplorerPanel > RedisMetricsTab      | Clean grid, numbers count up          |
+| Moment                         | Component (Business > Sub)                       | Visual Treatment                      |
+| ------------------------------ | ------------------------------------------------ | ------------------------------------- |
+| Transcript chunks streaming in | TranscriptPanel > TranscriptFeed                 | Smooth fade-up animation, auto-scroll |
+| Context summary appearing      | MemoryExplorerPanel > WorkingMemorySummary       | Highlighted card with subtle glow     |
+| "Extracting..." status         | TranscriptPanel > PlaybackControls (status chip) | Color-coded chip in footer bar        |
+| Long-term memories populating  | MemoryExplorerPanel > LongTermMemoryTab          | Cards animate in one by one           |
+| Summary generated              | MemoryExplorerPanel > ComputedSummaryCard        | Large card, prominent text            |
+| Metrics dashboard              | MemoryExplorerPanel > RedisMetricsTab            | Clean grid, numbers count up          |
 
 ---
 
@@ -1640,7 +1640,7 @@ Desktop only. This is a stage/booth demo running on a large screen (1920x1080 or
 ### Component Architecture
 
 - **Two-layer component model:** `core/` (generic UI primitives) and `business/` (domain-specific). Business components export only their main component -- sub-components, hooks, and styles are internal. This enforces encapsulation and prevents cross-component coupling.
-- **MemoryExplorerPanel is fully portable.** It takes `userId`, `sessionId`, `namespace`, and `datasetConfig` as required props, with optional `lastAppendResult`, `currentChunkIndex`, and `isPlaybackComplete` for live suggestions. It owns all memory API calls, polling logic, and metrics tracking internally. When `sessionId` is non-null, it starts polling. When `sessionId` is `null`, it shows empty states. It does not import TranscriptPanel. To integrate it in a chatbot page, pass `sessionId` (or `null` for cross-session exploration) and omit the optional bridge props if unused.
+- **MemoryExplorerPanel is fully portable.** It takes `userId`, `sessionId`, `namespace`, and `datasetConfig` as required props, with optional `lastAppendResult`, `currentChunkIndex`, and `isPlaybackComplete` for suggestions. It owns all memory API calls, polling logic, and metrics tracking internally. When `sessionId` is non-null, it starts polling. When `sessionId` is `null`, it shows empty states. It does not import TranscriptPanel. To integrate it in a chatbot page, pass `sessionId` (or `null` for cross-session exploration) and omit the optional bridge props if unused.
 - **TranscriptPanel owns the entire transcript lifecycle** including the toolbar, transcript picker, playback controls, playback status, session creation, reset, and health check. It requires `onSessionCreated` and `onReset`; optional `onAppendResult` and `onPlaybackStateChange` let the page mirror position and completion for MemoryExplorerPanel without exposing the full hook surface.
 - **DemoPage is a thin orchestrator.** It loads the dataset config (only page-level hook) and bridges `sessionId` plus optional playback-related fields to MemoryExplorerPanel. It has no domain logic of its own.
 
@@ -1692,7 +1692,7 @@ To reuse MemoryExplorerPanel on a future chatbot page that searches across sessi
 />
 ```
 
-No transcript, no playback, no toolbar; omit optional `lastAppendResult`, `currentChunkIndex`, and `isPlaybackComplete` when live suggestions are unused. The panel shows all long-term memories across sessions, supports summary computation, and works independently. Pass a `sessionId` to scope it to one session, or `null` for cross-session exploration.
+No transcript, no playback, no toolbar; omit optional `lastAppendResult`, `currentChunkIndex`, and `isPlaybackComplete` when suggestions are unused. The panel shows all long-term memories across sessions, supports summary computation, and works independently. Pass a `sessionId` to scope it to one session, or `null` for cross-session exploration.
 
 ---
 
@@ -1700,4 +1700,4 @@ No transcript, no playback, no toolbar; omit optional `lastAppendResult`, `curre
 
 - [Frontend Chatbot Plan](./dev-frontend-chatbot-plan.md) -- adds a CopilotKit-powered chatbot sidebar (floating overlay, purely additive, zero changes to existing components)
 - [Backend Chatbot Plan](./dev-backend-chatbot-plan.md) -- LangGraph agent with memory tools powering the chatbot
-- [Live Suggestions Plan](./dev-live-suggestions-brainstorm.md) -- push-based AI copilot that surfaces real-time suggestions as chunks advance; gated by `isPlaybackComplete` rather than continuous play (new AI Copilot tab + persistent banner)
+- [Suggestions Plan](./dev-suggestions-brainstorm.md) -- push-based suggestions that surfaces real-time suggestions as chunks advance; gated by `isPlaybackComplete` rather than continuous play (new Suggestions tab + persistent banner)

@@ -1,9 +1,9 @@
 "use client";
 
 import type {
-  LiveSuggestion,
+  Suggestion,
   DetectedTopic,
-  LiveSuggestionsConfig,
+  SuggestionsConfig,
 } from "@/types/suggestion.types";
 
 import { useRef, useEffect } from "react";
@@ -15,12 +15,12 @@ import { SuggestionCard } from "./suggestion-card.component";
 import "./ai-copilot-tab.component.css";
 
 type AiCopilotTabProps = {
-  suggestions: LiveSuggestion[];
+  suggestions: Suggestion[];
   detectedTopics: DetectedTopic[];
   isGenerating: boolean;
   isActive: boolean;
   isComplete: boolean;
-  labels: LiveSuggestionsConfig;
+  labels: SuggestionsConfig;
   scrollToTopSignal: number;
 };
 

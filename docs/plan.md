@@ -26,7 +26,7 @@
                       │  AI Advisor Agent  │◀────▶│           ▼             │
                       │  (LangGraph)       │      │  ┌───────────────────┐  │
                       │                    │      │  │ Long-term Memory  │  │
-                      │  - live suggestions│      │  │ (durable facts,   │  │
+                      │  - suggestions│      │  │ (durable facts,   │  │
                       │  - Q&A             │      │  │  client prefs,    │  │
                       │  - post-call notes │      │  │  life events)     │  │
                       └────────────────────┘      │  └───────────────────┘  │
@@ -163,7 +163,7 @@ _Sarah clicks into James Morrison's profile. The AI advisor chat panel is on the
 
 ---
 
-### Screen 3 — Live Google Meet Call (Transcript + AI Copilot)
+### Screen 3 — Live Google Meet Call (Transcript + Suggestions)
 
 _Sarah joins a Google Meet call with James. The transcript streams in real time on the left. The AI copilot listens and suggests in real time on the right._
 
@@ -172,9 +172,9 @@ _Sarah joins a Google Meet call with James. The transcript streams in real time 
 │  🔴 LIVE CALL — James Morrison          00:14:32      [End Call]    │
 ├──────────┬──────────────────────────┬────────────────────────────────┤
 │          │                          │                                │
-│          │  LIVE TRANSCRIPT         │  AI COPILOT (live)            │
+│          │  LIVE TRANSCRIPT         │  AI INSIGHTS (live)            │
 │          │                          │                                │
-│ ┌──────┐ │  ┌────────────────────┐  │  LIVE SUGGESTIONS             │
+│ ┌──────┐ │  ┌────────────────────┐  │  SUGGESTIONS             │
 │ │      │ │  │ 00:12:15           │  │  ┌────────────────────────┐   │
 │        │ │  │ James: "...and     │  │  │ 💡 James just          │   │
 │ │      │ │  │ Maya's been        │  │  │ mentioned Maya's early  │   │
@@ -674,7 +674,7 @@ Memory maintenance: 1 item resolved
 Total memory operations: 22  │  Avg latency: 38ms each
 ```
 
-**Demo talking point:** _"Everything you just saw — the live suggestions, the memory extraction, the summary — happened automatically from the Google Meet transcript flowing through Redis. The RM didn't take a single note. Redis working memory captured the conversation in real time, and after the call, it auto-extracted the important facts into long-term memory. 127 transcript chunks, 22 memory operations, average 38 milliseconds each."_
+**Demo talking point:** _"Everything you just saw — the suggestions, the memory extraction, the summary — happened automatically from the Google Meet transcript flowing through Redis. The RM didn't take a single note. Redis working memory captured the conversation in real time, and after the call, it auto-extracted the important facts into long-term memory. 127 transcript chunks, 22 memory operations, average 38 milliseconds each."_
 
 ---
 

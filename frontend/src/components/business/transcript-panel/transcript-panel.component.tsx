@@ -364,7 +364,7 @@ const TranscriptPanel = ({
       <ConfirmDialog
         open={showResetDialog}
         title="Clear all memories and restart"
-        message="This will delete all live suggestions, working memory, long-term memories, and summary views for this dataset. Continue?"
+        message="This will delete all suggestions, working memory, long-term memories, and summary views for this dataset. Continue?"
         confirmLabel={datasetConfig.toolbar.resetLabel}
         onConfirm={handleResetConfirm}
         onCancel={() => setShowResetDialog(false)}

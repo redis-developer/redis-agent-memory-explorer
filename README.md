@@ -1,6 +1,6 @@
 # Redis agent memory explorer
 
-A meeting-memory app that demonstrates [Redis Agent Memory](https://github.com/redis/agent-memory-server) capabilities—working memory, long-term memory, summary views, live suggestions, and a conversational chatbot.
+A meeting-memory app that demonstrates [Redis Agent Memory](https://github.com/redis/agent-memory-server) capabilities—working memory, long-term memory, summary views, suggestions, and a conversational chatbot.
 
 ## Architecture
 

@@ -17,7 +17,7 @@ import { RedisMetricsTab } from "./redis-metrics-tab.component";
 import { useWorkingMemory } from "./use-working-memory";
 import { useLongTermMemory } from "./use-long-term-memory";
 import { useSummaryViews } from "./use-summary-views";
-import { AiCopilotTab, SuggestionBanner, useLiveSuggestions } from "./ai-copilot";
+import { AiCopilotTab, SuggestionBanner, useSuggestions } from "./ai-copilot";
 
 import "./memory-explorer-panel.component.css";
 
@@ -40,10 +40,10 @@ const MemoryExplorerPanel = ({
   currentChunkIndex = 0,
   isPlaybackComplete = false,
 }: MemoryExplorerPanelProps) => {
-  const liveSuggestionsConfig = datasetConfig.liveSuggestions;
-  const hasLiveSuggestions = liveSuggestionsConfig !== undefined;
+  const suggestionsConfig = datasetConfig.suggestions;
+  const hasSuggestions = suggestionsConfig !== undefined;
 
-  const defaultTab = hasLiveSuggestions ? DEMO_TAB.AI_COPILOT : DEMO_TAB.WORKING_MEMORY;
+  const defaultTab = hasSuggestions ? DEMO_TAB.AI_COPILOT : DEMO_TAB.WORKING_MEMORY;
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const hasSession = sessionId !== null;
 
@@ -53,9 +53,9 @@ const MemoryExplorerPanel = ({
   const longTermMemory = useLongTermMemory(sessionId, isPlaybackComplete);
   const summaryViews = useSummaryViews();
 
-  const triggerEveryN = liveSuggestionsConfig?.triggerEveryNChunks ?? DEFAULT_TRIGGER_EVERY_N_CHUNKS;
+  const triggerEveryN = suggestionsConfig?.triggerEveryNChunks ?? DEFAULT_TRIGGER_EVERY_N_CHUNKS;
 
-  const liveSuggestions = useLiveSuggestions({
+  const suggestions = useSuggestions({
     sessionId,
     currentChunkIndex,
     isPlaybackComplete: isPlaybackComplete,
@@ -68,7 +68,7 @@ const MemoryExplorerPanel = ({
     if (sessionChanged) {
       summaryViews.resetAndRefresh();
 
-      const shouldAutoSwitch = hasLiveSuggestions && sessionId !== null;
+      const shouldAutoSwitch = hasSuggestions && sessionId !== null;
       if (shouldAutoSwitch) {
         setActiveTab(DEMO_TAB.AI_COPILOT);
       }
@@ -98,11 +98,11 @@ const MemoryExplorerPanel = ({
 
   return (
     <div className="memory-explorer-panel">
-      {hasLiveSuggestions && (
+      {hasSuggestions && (
         <SuggestionBanner
-          suggestion={liveSuggestions.latestSuggestion}
-          bannerLabel={liveSuggestionsConfig.bannerLabel}
-          noSuggestionsMessage={liveSuggestionsConfig.noSuggestionsMessage}
+          suggestion={suggestions.latestSuggestion}
+          bannerLabel={suggestionsConfig.bannerLabel}
+          noSuggestionsMessage={suggestionsConfig.noSuggestionsMessage}
           onViewDetails={handleViewSuggestionDetails}
         />
       )}
@@ -131,8 +131,8 @@ const MemoryExplorerPanel = ({
           },
         }}
       >
-        {hasLiveSuggestions && (
-          <Tab label={liveSuggestionsConfig.title} value={DEMO_TAB.AI_COPILOT} />
+        {hasSuggestions && (
+          <Tab label={suggestionsConfig.title} value={DEMO_TAB.AI_COPILOT} />
         )}
         <Tab label={tabLabels.workingMemory.title} value={DEMO_TAB.WORKING_MEMORY} />
         <Tab label={tabLabels.longTermMemory.title} value={DEMO_TAB.LONG_TERM_MEMORY} />
@@ -143,12 +143,12 @@ const MemoryExplorerPanel = ({
       <div className="memory-explorer-panel__content">
         {activeTab === DEMO_TAB.AI_COPILOT && (
           <AiCopilotTab
-            suggestions={liveSuggestions.suggestions}
-            detectedTopics={liveSuggestions.detectedTopics}
-            isGenerating={liveSuggestions.isGenerating}
+            suggestions={suggestions.suggestions}
+            detectedTopics={suggestions.detectedTopics}
+            isGenerating={suggestions.isGenerating}
             isActive={currentChunkIndex > 0 && !isPlaybackComplete}
             isComplete={isPlaybackComplete}
-            labels={liveSuggestionsConfig!}
+            labels={suggestionsConfig!}
             scrollToTopSignal={scrollToTopSignal}
           />
         )}

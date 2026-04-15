@@ -1,13 +1,13 @@
 "use client";
 
-import type { LiveSuggestion, SuggestionTypeConfig } from "@/types/suggestion.types";
+import type { Suggestion, SuggestionTypeConfig } from "@/types/suggestion.types";
 
 import Chip from "@mui/material/Chip";
 
 import "./suggestion-card.component.css";
 
 type SuggestionCardProps = {
-  suggestion: LiveSuggestion;
+  suggestion: Suggestion;
   suggestionTypes: SuggestionTypeConfig[];
   isNew: boolean;
 };

@@ -1,4 +1,4 @@
-import type { LiveSuggestionsConfig } from "@/types/suggestion.types";
+import type { SuggestionsConfig } from "@/types/suggestion.types";
 
 type RoleConfig = {
   label: string;
@@ -89,7 +89,7 @@ type DatasetConfig = {
     intervalMs: number;
     speeds: Array<{ label: string; intervalMs: number }>;
   };
-  liveSuggestions?: LiveSuggestionsConfig;
+  suggestions?: SuggestionsConfig;
   chatbot: ChatbotConfig;
 };
 

@@ -2,7 +2,7 @@ import type {
   TranscriptChunk,
   DetectedTopic,
   DatasetConfig,
-  LiveSuggestion,
+  Suggestion,
   SuggestionLlmResponse,
   TopicUpdate,
   GenerateSuggestionResult,
@@ -118,7 +118,7 @@ const fetchMemoryContext = async (
 const invokeSuggestionLlm = async (
   datasetConfig: DatasetConfig,
   detectedTopics: DetectedTopic[],
-  previousSuggestions: LiveSuggestion[],
+  previousSuggestions: Suggestion[],
   recentChunks: TranscriptChunk[],
   memoryContext: string,
 ): Promise<SuggestionLlmResponse> => {
@@ -160,13 +160,13 @@ const persistSuggestion = async (
   parsed: SuggestionLlmResponse,
   chunkIndex: number,
   recentChunks: TranscriptChunk[],
-): Promise<LiveSuggestion | null> => {
-  let liveSuggestion: LiveSuggestion | null = null;
+): Promise<Suggestion | null> => {
+  let suggestion: Suggestion | null = null;
 
   const hasSuggestion = parsed.suggestion !== null;
   if (hasSuggestion) {
     const lastChunk = recentChunks[recentChunks.length - 1];
-    liveSuggestion = {
+    suggestion = {
       id: `sug-${Date.now()}-${chunkIndex}`,
       type: parsed.suggestion!.type,
       title: parsed.suggestion!.title,
@@ -178,10 +178,10 @@ const persistSuggestion = async (
       createdAt: new Date().toISOString(),
     };
 
-    await SuggestionStore.add(sessionId, liveSuggestion);
+    await SuggestionStore.add(sessionId, suggestion);
   }
 
-  return liveSuggestion;
+  return suggestion;
 };
 
 // Reconciles LLM-reported topic updates with the stored topic state.
@@ -252,7 +252,7 @@ const generateSuggestion = async (
     chunkIndex,
   );
 
-  let liveSuggestion: LiveSuggestion | null = null;
+  let suggestion: Suggestion | null = null;
   let updatedTopics = detectedTopics;
 
   const hasChunks = recentChunks.length > 0;
@@ -269,7 +269,7 @@ const generateSuggestion = async (
       memoryContext,
     );
 
-    liveSuggestion = await persistSuggestion(
+    suggestion = await persistSuggestion(
       sessionId,
       parsed,
       chunkIndex,
@@ -291,12 +291,12 @@ const generateSuggestion = async (
   logger.info("Suggestion pipeline completed", {
     sessionId,
     chunkIndex,
-    hasSuggestion: liveSuggestion !== null,
+    hasSuggestion: suggestion !== null,
     topicCount: updatedTopics.length,
     totalLatencyMs: Date.now() - pipelineStartMs,
   });
 
-  return { suggestion: liveSuggestion, detectedTopics: updatedTopics };
+  return { suggestion: suggestion, detectedTopics: updatedTopics };
 };
 
 export { generateSuggestion };

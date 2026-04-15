@@ -7,7 +7,7 @@ type SuggestionTypeConfig = {
   enabled: boolean;
 };
 
-type LiveSuggestionsConfig = {
+type SuggestionsConfig = {
   title: string;
   description: string;
   bannerLabel: string;
@@ -36,7 +36,7 @@ type DetectedTopic = {
   history: TopicMention[];
 };
 
-type LiveSuggestion = {
+type Suggestion = {
   id: string;
   type: string;
   title: string;
@@ -49,22 +49,22 @@ type LiveSuggestion = {
 };
 
 type GenerateSuggestionResponse = {
-  suggestion: LiveSuggestion | null;
+  suggestion: Suggestion | null;
   detectedTopics: DetectedTopic[];
 };
 
 type ListSuggestionsResponse = {
-  suggestions: LiveSuggestion[];
+  suggestions: Suggestion[];
   detectedTopics: DetectedTopic[];
   total: number;
 };
 
 export type {
   SuggestionTypeConfig,
-  LiveSuggestionsConfig,
+  SuggestionsConfig,
   TopicMention,
   DetectedTopic,
-  LiveSuggestion,
+  Suggestion,
   GenerateSuggestionResponse,
   ListSuggestionsResponse,
 };

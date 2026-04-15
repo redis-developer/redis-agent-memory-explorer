@@ -1,11 +1,11 @@
 "use client";
 
-import type { LiveSuggestion } from "@/types/suggestion.types";
+import type { Suggestion } from "@/types/suggestion.types";
 
 import "./suggestion-banner.component.css";
 
 type SuggestionBannerProps = {
-  suggestion: LiveSuggestion | null;
+  suggestion: Suggestion | null;
   bannerLabel: string;
   noSuggestionsMessage: string;
   onViewDetails: () => void;

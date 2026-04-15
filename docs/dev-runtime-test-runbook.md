@@ -391,7 +391,7 @@ The frontend uses BEM-style CSS classes. No `data-testid` attributes exist. Key 
 | Card by type    | `.memory-card--semantic`, `--episodic`, `--message` |
 | Card text       | `.memory-card__text`                |
 
-**AI Copilot tab:**
+**Suggestions tab:**
 
 | Element            | Selector                              |
 | ------------------ | ------------------------------------- |
@@ -510,7 +510,7 @@ Open the app at `http://localhost:3000` and walk through each item:
 - [ ] Suggestion banner animates when new suggestion arrives
 - [ ] Memory type badges: semantic = blue tint, episodic = warm/yellow, message = neutral
 - [ ] Memory cards animate in on first appearance
-- [ ] Suggestion cards in AI Copilot tab fade in
+- [ ] Suggestion cards in Suggestions tab fade in
 - [ ] Detected topics show correct status icons (checkmark for discussed, circle for pending)
 
 ### 4.4 CopilotKit Sidebar

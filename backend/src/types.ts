@@ -59,7 +59,7 @@ type DatasetConfig = {
       description: string;
     };
   };
-  liveSuggestions?: LiveSuggestionsConfig;
+  suggestions?: SuggestionsConfig;
   transcriptPanel: {
     title: string;
     playingLabel: string;
@@ -211,7 +211,7 @@ type ForgetLifecycleInput = {
   dryRun?: boolean;
 };
 
-// --- Live Suggestions ---
+// --- Suggestions ---
 
 type SuggestionTypeConfig = {
   id: string;
@@ -220,7 +220,7 @@ type SuggestionTypeConfig = {
   enabled: boolean;
 };
 
-type LiveSuggestionsConfig = {
+type SuggestionsConfig = {
   title: string;
   description: string;
   bannerLabel: string;
@@ -247,7 +247,7 @@ type DetectedTopic = {
   history: TopicMention[];
 };
 
-type LiveSuggestion = {
+type Suggestion = {
   id: string;
   type: string;
   title: string;
@@ -282,7 +282,7 @@ type GenerateSuggestionInput = {
 };
 
 type GenerateSuggestionResult = {
-  suggestion: LiveSuggestion | null;
+  suggestion: Suggestion | null;
   detectedTopics: DetectedTopic[];
 };
 
@@ -315,10 +315,10 @@ export type {
   DatasetConfig,
   DatasetSummary,
   SuggestionTypeConfig,
-  LiveSuggestionsConfig,
+  SuggestionsConfig,
   TopicMention,
   DetectedTopic,
-  LiveSuggestion,
+  Suggestion,
   TopicUpdate,
   SuggestionLlmResponse,
   GenerateSuggestionInput,

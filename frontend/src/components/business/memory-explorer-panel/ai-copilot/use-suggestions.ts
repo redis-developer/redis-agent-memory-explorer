@@ -1,21 +1,21 @@
 "use client";
 
-import type { LiveSuggestion, DetectedTopic } from "@/types/suggestion.types";
+import type { Suggestion, DetectedTopic } from "@/types/suggestion.types";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
 import { generateSuggestion, listSuggestions } from "@/services/api.service";
 
-type UseLiveSuggestionsInput = {
+type UseSuggestionsInput = {
   sessionId: string | null;
   currentChunkIndex: number;
   isPlaybackComplete: boolean;
   triggerEveryNChunks: number;
 };
 
-type UseLiveSuggestionsResult = {
-  suggestions: LiveSuggestion[];
-  latestSuggestion: LiveSuggestion | null;
+type UseSuggestionsResult = {
+  suggestions: Suggestion[];
+  latestSuggestion: Suggestion | null;
   detectedTopics: DetectedTopic[];
   isGenerating: boolean;
   error: string | null;
@@ -30,13 +30,13 @@ type UseLiveSuggestionsResult = {
  * the current generation completes, the next queued trigger fires immediately,
  * chaining until the queue is drained. No boundary is permanently skipped.
  */
-const useLiveSuggestions = ({
+const useSuggestions = ({
   sessionId,
   currentChunkIndex,
   isPlaybackComplete,
   triggerEveryNChunks,
-}: UseLiveSuggestionsInput): UseLiveSuggestionsResult => {
-  const [suggestions, setSuggestions] = useState<LiveSuggestion[]>([]);
+}: UseSuggestionsInput): UseSuggestionsResult => {
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [detectedTopics, setDetectedTopics] = useState<DetectedTopic[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -189,6 +189,6 @@ const useLiveSuggestions = ({
   };
 };
 
-export { useLiveSuggestions };
+export { useSuggestions as useSuggestions };
 
-export type { UseLiveSuggestionsResult };
+export type { UseSuggestionsResult as UseSuggestionsResult };
