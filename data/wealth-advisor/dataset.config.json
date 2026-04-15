@@ -91,7 +91,7 @@
     "playLabel": "Play transcript",
     "pauseLabel": "Pause",
     "nextLabel": "Next message",
-    "resetLabel": "Clear all memories and restart",
+    "resetLabel": "Restart",
     "speedLabel": "Playback speed"
   },
   "statusLabels": {
