@@ -55,7 +55,7 @@ Returns the active dataset configuration. First call the frontend makes on page 
     },
     "transcriptPanel": { "title": "Meeting Transcript", "playingLabel": "Live Call Simulation", "completedLabel": "Call Ended" },
     "toolbar": {
-      "transcriptDropdownLabel": "Select Meeting",
+      "transcriptDropdownLabel": "Select a meeting",
       "playLabel": "Play Transcript",
       "pauseLabel": "Pause",
       "nextLabel": "Next Message",

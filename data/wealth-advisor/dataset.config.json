@@ -86,7 +86,7 @@
     "completedLabel": "Call ended"
   },
   "toolbar": {
-    "transcriptDropdownLabel": "Select meeting",
+    "transcriptDropdownLabel": "Select a meeting",
     "sessionDropdownLabel": "Load existing session",
     "playLabel": "Play transcript",
     "pauseLabel": "Pause",
