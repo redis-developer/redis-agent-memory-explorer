@@ -59,6 +59,11 @@ const AMS_PARTITION_KEY_SEPARATOR = ":";
 const AMS_PARTITION_SUMMARY_SEGMENT = "summary";
 const AMS_PARTITION_SCAN_BATCH = 100;
 
+const ROLE_TO_MEMORY_ROLE: Record<string, string> = {
+  client: "user",
+  rm: "assistant",
+};
+
 const DEFAULT_STATIC_DIR = "../public";
 
 const DEFAULT_LOG_DIR = "../../logs";
@@ -124,6 +129,7 @@ export {
   DEFAULT_STATIC_DIR,
   DEFAULT_LOG_DIR,
   DEFAULT_LOG_FILE,
+  ROLE_TO_MEMORY_ROLE,
   DetectedTopicStatus,
   DetectedTopicSource,
 };
