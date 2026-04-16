@@ -66,7 +66,8 @@ const useSuggestions = ({
 
       generateSuggestion(targetSessionId, chunkIndex)
         .then((result) => {
-          if (!result) return;
+          const isStale = sessionIdRef.current !== targetSessionId;
+          if (!result || isStale) return;
           const hasSuggestion = result.suggestion !== null;
           if (hasSuggestion) {
             setSuggestions((prev) => [...prev, result.suggestion!]);
@@ -123,8 +124,11 @@ const useSuggestions = ({
       return;
     }
 
+    const requestedSessionId = sessionId;
     listSuggestions(sessionId)
       .then((result) => {
+        const isStale = sessionIdRef.current !== requestedSessionId;
+        if (isStale) return;
         setSuggestions(result.suggestions);
         setDetectedTopics(result.detectedTopics);
         const hasExisting = result.suggestions.length > 0;
