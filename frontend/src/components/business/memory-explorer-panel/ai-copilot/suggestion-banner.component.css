@@ -1,3 +1,32 @@
+@keyframes banner-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  55% {
+    background: rgba(220, 255, 30, 0.06);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+@keyframes banner-label-pulse {
+  0% {
+    color: var(--fg-default);
+  }
+  30% {
+    color: var(--yellow);
+  }
+  100% {
+    color: var(--fg-default);
+  }
+}
+
 .suggestion-banner {
   display: flex;
   align-items: center;
@@ -24,6 +53,15 @@
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
 
+  .suggestion-banner__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    animation: banner-enter 800ms ease-out;
+    border-radius: var(--border-radius-sm);
+  }
+
   .suggestion-banner__content {
     display: flex;
     align-items: center;
@@ -40,6 +78,7 @@
     text-transform: none;
     letter-spacing: normal;
     flex-shrink: 0;
+    animation: banner-label-pulse 1.2s ease-out;
   }
 
   .suggestion-banner__summary {
