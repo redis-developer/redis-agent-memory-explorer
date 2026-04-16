@@ -37,14 +37,53 @@
 
   .computed-summary-card__body {
     padding: var(--space-xs);
-  }
-
-  .computed-summary-card__text {
     font-size: var(--font-size-rg);
     color: var(--fg-body);
     line-height: 1.7;
-    margin: 0;
-    white-space: pre-wrap;
+
+    > :first-child {
+      margin-top: 0;
+    }
+
+    > :last-child {
+      margin-bottom: 0;
+    }
+
+    p {
+      margin: var(--space-3xs) 0;
+    }
+
+    strong {
+      color: var(--fg-default);
+      font-weight: var(--font-weight-bold);
+    }
+
+    ul, ol {
+      margin: var(--space-3xs) 0;
+      padding-left: var(--space-sm);
+    }
+
+    li {
+      margin: var(--space-2xs) 0;
+
+      > ul, > ol {
+        margin: var(--space-2xs) 0 0;
+      }
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      color: var(--fg-default);
+      margin: var(--space-3xs) 0 var(--space-2xs);
+      font-weight: var(--font-weight-bold);
+    }
+
+    code {
+      font-family: var(--secondary-font);
+      font-size: var(--font-size-xs);
+      background: color-mix(in srgb, var(--sky-blue) 10%, transparent);
+      padding: 1px var(--space-2xs);
+      border-radius: var(--border-radius-sm);
+    }
   }
 
   .computed-summary-card__footer {

@@ -5,6 +5,7 @@ import type { ComputedSummaryData } from "@/types/memory.types";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import { RefreshCw } from "lucide-react";
+import Markdown from "react-markdown";
 
 import "./computed-summary-card.component.css";
 
@@ -70,7 +71,7 @@ const ComputedSummaryCard = ({
       </div>
 
       <div className="computed-summary-card__body">
-        <p className="computed-summary-card__text">{summary.summary}</p>
+        <Markdown>{summary.summary}</Markdown>
       </div>
 
       <div className="computed-summary-card__footer">
