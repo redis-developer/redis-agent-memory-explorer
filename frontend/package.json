@@ -19,7 +19,7 @@
     "next": "^15.3.0",
     "react": "^19.1.0",
     "react-dom": "^19.2.5",
-    "react-markdown": "^8.0.7"
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
