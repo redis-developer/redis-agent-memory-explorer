@@ -11,12 +11,6 @@
     margin-bottom: var(--space-2xs);
   }
 
-  .suggestion-card__timestamp {
-    font-family: var(--secondary-font);
-    font-size: var(--font-size-2xs);
-    color: var(--fg-muted);
-  }
-
   .suggestion-card__title {
     font-size: var(--font-size-rg);
     font-weight: var(--font-weight-semibold);

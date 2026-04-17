@@ -16,7 +16,7 @@
 
   .playback-controls__health-label {
     font-size: var(--font-size-2xs);
-    color: var(--fg-muted);
+    color: var(--yellow);
   }
 
   .playback-controls__progress {
@@ -35,33 +35,17 @@
   .playback-controls__status-chip {
     font-family: var(--secondary-font) !important;
     font-size: var(--font-size-2xs) !important;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-radius: var(--btn-border-radius-rounded) !important;
-    background-color: var(--bg-surface-hover) !important;
+    text-transform: none;
+    letter-spacing: normal;
+    border-radius: var(--border-radius-sm) !important;
+    background-color: var(--dusk-09) !important;
     color: var(--fg-body) !important;
-    border: none !important;
-    height: 20px !important;
+    border: 1px solid var(--dusk) !important;
+    height: auto !important;
     flex-shrink: 0;
 
-    &.playback-controls__status-chip--playing {
-      background-color: color-mix(in srgb, var(--color-episodic) 15%, transparent) !important;
-      color: var(--color-episodic) !important;
-    }
-
-    &.playback-controls__status-chip--paused {
-      background-color: color-mix(in srgb, var(--color-episodic) 15%, transparent) !important;
-      color: var(--color-episodic) !important;
-    }
-
-    &.playback-controls__status-chip--completed {
-      background-color: color-mix(in srgb, var(--sky-blue) 15%, transparent) !important;
-      color: var(--sky-blue) !important;
-    }
-
-    &.playback-controls__status-chip--error {
-      background-color: color-mix(in srgb, var(--hyper-05) 15%, transparent) !important;
-      color: var(--hyper-05) !important;
+    .MuiChip-label {
+      padding: 3px 12px !important;
     }
   }
 }

@@ -7,10 +7,9 @@ import type { PlaybackStatusValue } from "./use-transcript-playback";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
-import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import CircularProgress from "@mui/material/CircularProgress";
-import { Play, ChevronLast, SkipForward, RotateCcw } from "lucide-react";
+import { ChevronLast, Play, Pause, RotateCcw } from "lucide-react";
 import { DropdownIcon } from "@/components/core";
 
 import { PLAYBACK_STATUS, SPEED_SELECT_MIN_WIDTH } from "@/constants/app.constants";
@@ -138,7 +137,7 @@ const Toolbar = ({
               className="toolbar__play-pause-btn"
               size="small"
             >
-              {isPlaying ? <ChevronLast size={20} /> : <Play size={20} />}
+              {isPlaying ? <Pause size={20} /> : <Play size={20} />}
             </IconButton>
           </span>
         </Tooltip>
@@ -151,28 +150,29 @@ const Toolbar = ({
               className="toolbar__next-btn"
               size="small"
             >
-              <SkipForward size={20} />
+              <ChevronLast size={20} />
             </IconButton>
           </span>
         </Tooltip>
       </div>
 
-      <Button
-        onClick={onReset}
-        disabled={isResetting}
-        variant="contained"
-        size="small"
-        className="toolbar__reset-btn"
-        startIcon={
-          isResetting ? (
-            <CircularProgress size={14} sx={{ color: "var(--base-white)" }} />
-          ) : (
-            <RotateCcw size={14} />
-          )
-        }
-      >
-        {config.toolbar.resetLabel}
-      </Button>
+      <Tooltip title={config.toolbar.resetLabel}>
+        <span className="toolbar__reset-wrapper">
+          <IconButton
+            onClick={onReset}
+            disabled={isResetting}
+            size="small"
+            className="toolbar__reset-btn"
+            aria-label={config.toolbar.resetLabel}
+          >
+            {isResetting ? (
+              <CircularProgress size={14} sx={{ color: "var(--base-white)" }} />
+            ) : (
+              <RotateCcw size={20} />
+            )}
+          </IconButton>
+        </span>
+      </Tooltip>
     </div>
   );
 };

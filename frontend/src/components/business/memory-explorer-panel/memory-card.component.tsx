@@ -58,8 +58,8 @@ const MemoryCard = ({ memory }: MemoryCardProps) => {
           )}
         </div>
         <div className="memory-card__date-group">
-          <span className="memory-card__date-pill">{createdDatePart}</span>
-          <span className="memory-card__date-pill">{createdTimePart}</span>
+          <span className="timestamp-pill">{createdDatePart}</span>
+          <span className="timestamp-pill">{createdTimePart}</span>
         </div>
       </div>
 
@@ -78,7 +78,7 @@ const MemoryCard = ({ memory }: MemoryCardProps) => {
 
       {memory.eventDate && (
         <div className="memory-card__event-date">
-          Event date: {memory.eventDate}
+          Event date: <span className="timestamp-pill">{memory.eventDate}</span>
         </div>
       )}
 

@@ -1,22 +1,9 @@
 .memory-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border);
+  background-color: var(--dusk-09);
+  border: 1px solid var(--dusk);
   border-radius: var(--border-radius);
   padding: var(--space-xs);
-  border-left: 3px solid var(--border);
   animation: fade-in var(--transition-normal) ease-out;
-
-  &.memory-card--semantic {
-    border-left-color: var(--color-semantic);
-  }
-
-  &.memory-card--episodic {
-    border-left-color: var(--color-episodic);
-  }
-
-  &.memory-card--message {
-    border-left-color: var(--color-message);
-  }
 
   .memory-card__header {
     display: flex;
@@ -54,17 +41,6 @@
     align-items: center;
     gap: var(--space-2xs);
     flex-shrink: 0;
-  }
-
-  .memory-card__date-pill {
-    font-family: var(--secondary-font);
-    font-size: var(--font-size-2xs);
-    color: var(--fg-body);
-    background-color: var(--dusk-09);
-    border: 1px solid var(--dusk);
-    border-radius: var(--border-radius-sm);
-    padding: 2px var(--space-2xs);
-    white-space: nowrap;
   }
 
   .memory-card__text {
@@ -112,10 +88,14 @@
   .memory-card__tag-label {
     font-family: var(--secondary-font);
     font-size: var(--font-size-2xs);
-    color: var(--fg-muted);
-    text-transform: uppercase;
+    color: var(--color-semantic);
+    text-transform: capitalize;
     letter-spacing: 0.05em;
     width: 100%;
+  }
+
+  .memory-card__tags--entities .memory-card__tag-label {
+    color: var(--color-episodic);
   }
 
   .memory-card__topic-chip,

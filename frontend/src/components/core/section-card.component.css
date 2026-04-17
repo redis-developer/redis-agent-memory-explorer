@@ -1,6 +1,6 @@
 .section-card {
   background-color: var(--bg-surface);
-  border: 1px solid var(--border);
+  border-top: 1px solid var(--border);
   border-radius: var(--border-radius);
   overflow: hidden;
 
@@ -9,7 +9,6 @@
     align-items: flex-start;
     justify-content: space-between;
     padding: var(--space-xs);
-    border-bottom: 1px solid var(--border);
     gap: var(--space-3xs);
   }
 

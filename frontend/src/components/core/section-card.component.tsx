@@ -9,11 +9,20 @@ type SectionCardProps = {
   description?: string;
   actions?: ReactNode;
   children: ReactNode;
+  className?: string;
 };
 
-const SectionCard = ({ title, description, actions, children }: SectionCardProps) => {
+const SectionCard = ({
+  title,
+  description,
+  actions,
+  children,
+  className,
+}: SectionCardProps) => {
+  const rootClassName = className ? `section-card ${className}` : "section-card";
+
   return (
-    <div className="section-card">
+    <div className={rootClassName}>
       <div className="section-card__header">
         <div className="section-card__header-text">
           <h3 className="section-card__title">{title}</h3>

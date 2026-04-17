@@ -86,10 +86,4 @@
     flex: 1;
   }
 
-  .detected-topics__timestamp {
-    font-family: var(--secondary-font);
-    font-size: var(--font-size-2xs);
-    color: var(--fg-muted);
-  }
-
 }

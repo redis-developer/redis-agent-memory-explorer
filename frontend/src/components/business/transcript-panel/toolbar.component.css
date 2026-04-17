@@ -36,7 +36,7 @@
   }
 
   .toolbar__play-pause-btn {
-    color: var(--color-episodic) !important;
+    color: var(--fg-body) !important;
 
     &:disabled {
       color: var(--fg-muted) !important;
@@ -64,23 +64,17 @@
     font-style: italic;
   }
 
-  .toolbar__reset-btn {
-    margin-left: auto !important;
-    background-color: var(--btn-primary-bg) !important;
-    color: var(--btn-primary-text) !important;
-    border: 1px solid var(--btn-primary-border) !important;
-    border-radius: var(--btn-border-radius-rounded) !important;
-    font-size: var(--font-size-xs) !important;
-    text-transform: none !important;
-    box-shadow: var(--shadow-sm) !important;
+  .toolbar__reset-wrapper {
+    margin-left: auto;
+    display: inline-flex;
+  }
 
-    &:hover {
-      background-color: var(--btn-primary-hover-bg) !important;
-      border-color: var(--btn-primary-hover-border) !important;
-    }
+  .toolbar__reset-btn {
+    color: var(--fg-body) !important;
 
     &:disabled {
-      opacity: 0.5;
+      color: var(--fg-muted) !important;
+      opacity: 0.4;
     }
   }
 }

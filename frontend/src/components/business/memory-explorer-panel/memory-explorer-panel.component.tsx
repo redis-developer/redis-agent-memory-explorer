@@ -119,6 +119,7 @@ const MemoryExplorerPanel = ({
           "& .MuiTab-root": {
             color: "var(--fg-muted)",
             fontSize: "var(--font-size-xs)",
+            fontWeight: 400,
             textTransform: "none",
             minHeight: 40,
             padding: "8px 16px",

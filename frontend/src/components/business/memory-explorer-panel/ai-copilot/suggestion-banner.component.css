@@ -99,7 +99,7 @@
 
   .suggestion-banner__view-btn {
     background: none;
-    border: 1px solid var(--dusk-90);
+    border: 1px solid var(--dusk);
     color: var(--fg-body);
     font-size: var(--font-size-2xs);
     padding: 2px 8px;
@@ -112,10 +112,5 @@
     }
   }
 
-  .suggestion-banner__timestamp {
-    font-family: var(--secondary-font);
-    font-size: var(--font-size-2xs);
-    color: var(--fg-muted);
-  }
 }
 

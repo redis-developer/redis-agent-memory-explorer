@@ -139,7 +139,10 @@ const WorkingMemoryTab = ({
         </SectionCard>
       ) : null}
 
-      <SectionCard title={`Messages (${messageCount})`}>
+      <SectionCard
+        title={`Messages (${messageCount})`}
+        className="working-memory-tab__messages-card"
+      >
         <div className="working-memory-tab__messages">
           {lastMessages.map((msg, idx) => (
             <div key={idx} className="working-memory-tab__message">

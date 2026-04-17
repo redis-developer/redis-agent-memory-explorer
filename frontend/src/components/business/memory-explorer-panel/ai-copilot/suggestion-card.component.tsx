@@ -37,7 +37,7 @@ const SuggestionCard = ({ suggestion, suggestionTypes, isNew }: SuggestionCardPr
             height: 22,
           }}
         />
-        <span className="suggestion-card__timestamp">{suggestion.timestamp}</span>
+        <span className="suggestion-card__timestamp timestamp-pill">{suggestion.timestamp}</span>
       </div>
 
       <h4 className="suggestion-card__title">{suggestion.title}</h4>

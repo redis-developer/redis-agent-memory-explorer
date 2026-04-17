@@ -39,7 +39,7 @@ const SuggestionBanner = ({
             >
               View details
             </button>
-            <span className="suggestion-banner__timestamp">{suggestion.timestamp}</span>
+            <span className="suggestion-banner__timestamp timestamp-pill">{suggestion.timestamp}</span>
           </div>
         </div>
       ) : (

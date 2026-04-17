@@ -38,11 +38,6 @@
     color: var(--fg-muted);
   }
 
-  .transcript-chunk__timestamp {
-    font-family: var(--secondary-font);
-    color: var(--fg-muted);
-  }
-
   .transcript-chunk__speaker {
     font-weight: var(--font-weight-medium);
     color: var(--fg-body);

@@ -2,7 +2,8 @@
 
 import type { ComputedSummaryData } from "@/types/memory.types";
 
-import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 import CircularProgress from "@mui/material/CircularProgress";
 import { RefreshCw } from "lucide-react";
 import Markdown from "react-markdown";
@@ -34,29 +35,23 @@ const ComputedSummaryCard = ({
       <div className="computed-summary-card__header">
         <div className="computed-summary-card__header-row">
           <h4 className="computed-summary-card__title">{viewName}</h4>
-          <Button
-            size="small"
-            onClick={onRecompute}
-            disabled={isAnyComputing}
-            variant="outlined"
-            startIcon={
-              isRecomputing
-                ? <CircularProgress size={12} sx={{ color: "var(--sky-blue)" }} />
-                : <RefreshCw size={12} />
-            }
-            sx={{
-              borderColor: "var(--sky-blue-09)",
-              color: "var(--sky-blue)",
-              textTransform: "none",
-              fontSize: "var(--font-size-2xs)",
-              padding: "2px 8px",
-              minWidth: "auto",
-              "&:hover": { borderColor: "var(--sky-blue)", backgroundColor: "color-mix(in srgb, var(--sky-blue) 10%, transparent)" },
-              "&.Mui-disabled": { borderColor: "var(--sky-blue-09)", color: "var(--sky-blue)", opacity: 0.4 },
-            }}
-          >
-            {isRecomputing ? "Recomputing..." : "Recompute"}
-          </Button>
+          <Tooltip title={isRecomputing ? "Recomputing..." : "Recompute"}>
+            <span>
+              <IconButton
+                size="small"
+                onClick={onRecompute}
+                disabled={isAnyComputing}
+                aria-label="Recompute"
+                sx={{ color: "var(--fg-body)" }}
+              >
+                {isRecomputing ? (
+                  <CircularProgress size={14} sx={{ color: "var(--fg-body)" }} />
+                ) : (
+                  <RefreshCw size={16} />
+                )}
+              </IconButton>
+            </span>
+          </Tooltip>
         </div>
         <div className="computed-summary-card__meta">
           <span>Source: {source}</span>

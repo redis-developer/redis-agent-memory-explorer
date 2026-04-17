@@ -108,6 +108,19 @@ a:hover {
   background: var(--stroke-divider);
 }
 
+.timestamp-pill {
+  display: inline-block;
+  font-family: var(--secondary-font);
+  font-size: var(--font-size-2xs);
+  color: var(--fg-body);
+  background-color: var(--dusk-09);
+  border: 1px solid var(--dusk);
+  border-radius: var(--border-radius-sm);
+  padding: 3px 12px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

@@ -26,7 +26,7 @@ const TranscriptChunkComponent = ({
       className={`transcript-chunk transcript-chunk--${role} ${isNew ? "transcript-chunk--new" : ""}`}
     >
       <div className="transcript-chunk__meta">
-        <span className="transcript-chunk__timestamp">{timestamp}</span>
+        <span className="transcript-chunk__timestamp timestamp-pill">{timestamp}</span>
         <span className="transcript-chunk__speaker">
           {speaker} <span className="transcript-chunk__role">({roleLabel})</span>
         </span>

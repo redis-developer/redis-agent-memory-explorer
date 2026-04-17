@@ -107,7 +107,7 @@ const DetectedTopics = ({ topics, title, emptyTitle, emptyDescription }: Detecte
                 </span>
                 <span className="detected-topics__name">{topic.name}</span>
                 {hasPlaybackTimestamp && (
-                  <span className="detected-topics__timestamp">
+                  <span className="detected-topics__timestamp timestamp-pill">
                     {formatTimestamp(topic.detectedAtTimestamp!)}
                   </span>
                 )}
