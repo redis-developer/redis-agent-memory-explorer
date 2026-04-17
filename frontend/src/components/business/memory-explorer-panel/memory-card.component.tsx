@@ -6,7 +6,11 @@ import { useState } from "react";
 import Chip from "@mui/material/Chip";
 
 import { MemoryTypeBadge } from "@/components/core";
-import { MAX_MEMORY_TEXT_LENGTH } from "@/constants/app.constants";
+import {
+  MAX_MEMORY_TEXT_LENGTH,
+  MEMORY_TYPE,
+  MEMORY_TYPE_LABEL,
+} from "@/constants/app.constants";
 
 import "./memory-card.component.css";
 
@@ -16,19 +20,47 @@ type MemoryCardProps = {
 
 const dedupe = (items: string[]): string[] => [...new Set(items)];
 
+const MEMORY_TYPE_ICON: Partial<Record<MemoryRecordData["memoryType"], string>> = {
+  [MEMORY_TYPE.SEMANTIC]: "/icons/icon-semantic-routing-64-white.svg",
+  [MEMORY_TYPE.EPISODIC]: "/icons/icon-access-to-memory-64-white.svg",
+};
+
 const MemoryCard = ({ memory }: MemoryCardProps) => {
   const [expanded, setExpanded] = useState(false);
   const isLong = memory.text.length > MAX_MEMORY_TEXT_LENGTH;
   const displayText = expanded ? memory.text : memory.text.slice(0, MAX_MEMORY_TEXT_LENGTH);
-  const createdDate = new Date(memory.createdAt).toLocaleString();
+  const createdAt = new Date(memory.createdAt);
+  const createdDatePart = createdAt.toLocaleDateString();
+  const createdTimePart = createdAt.toLocaleTimeString();
   const uniqueTopics = dedupe(memory.topics);
   const uniqueEntities = dedupe(memory.entities);
+  const iconSrc = MEMORY_TYPE_ICON[memory.memoryType];
+  const isMessage = memory.memoryType === MEMORY_TYPE.MESSAGE;
 
   return (
     <div className={`memory-card memory-card--${memory.memoryType}`}>
       <div className="memory-card__header">
-        <MemoryTypeBadge memoryType={memory.memoryType} />
-        <span className="memory-card__date">{createdDate}</span>
+        <div className="memory-card__title-group">
+          {iconSrc && (
+            <img
+              src={iconSrc}
+              alt=""
+              aria-hidden="true"
+              className="memory-card__title-icon"
+            />
+          )}
+          {isMessage ? (
+            <MemoryTypeBadge memoryType={memory.memoryType} />
+          ) : (
+            <h3 className="memory-card__title">
+              {MEMORY_TYPE_LABEL[memory.memoryType]}
+            </h3>
+          )}
+        </div>
+        <div className="memory-card__date-group">
+          <span className="memory-card__date-pill">{createdDatePart}</span>
+          <span className="memory-card__date-pill">{createdTimePart}</span>
+        </div>
       </div>
 
       <p className="memory-card__text">

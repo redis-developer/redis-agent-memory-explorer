@@ -29,8 +29,10 @@ const SuggestionCard = ({ suggestion, suggestionTypes, isNew }: SuggestionCardPr
           size="small"
           className="suggestion-card__type-badge"
           sx={{
-            backgroundColor: "var(--dusk-90)",
-            color: "var(--sky-blue)",
+            backgroundColor: "var(--base-white)",
+            color: "var(--midnight)",
+            border: "1px solid var(--dusk-30)",
+            borderRadius: "2.5px",
             fontSize: "var(--font-size-2xs)",
             height: 22,
           }}
@@ -60,8 +62,10 @@ const SuggestionCard = ({ suggestion, suggestionTypes, isNew }: SuggestionCardPr
               size="small"
               variant="outlined"
               sx={{
-                borderColor: "var(--border)",
-                color: "var(--fg-muted)",
+                backgroundColor: "var(--dusk)",
+                borderColor: "var(--dusk-90)",
+                borderRadius: "2.5px",
+                color: "var(--fg-body)",
                 fontSize: "var(--font-size-2xs)",
                 height: 20,
               }}

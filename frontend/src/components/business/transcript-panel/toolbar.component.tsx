@@ -10,7 +10,7 @@ import IconButton from "@mui/material/IconButton";
 import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import CircularProgress from "@mui/material/CircularProgress";
-import { Play, Pause, SkipForward, RotateCcw } from "lucide-react";
+import { Play, ChevronLast, SkipForward, RotateCcw } from "lucide-react";
 import { DropdownIcon } from "@/components/core";
 
 import { PLAYBACK_STATUS, SPEED_SELECT_MIN_WIDTH } from "@/constants/app.constants";
@@ -138,7 +138,7 @@ const Toolbar = ({
               className="toolbar__play-pause-btn"
               size="small"
             >
-              {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+              {isPlaying ? <ChevronLast size={20} /> : <Play size={20} />}
             </IconButton>
           </span>
         </Tooltip>

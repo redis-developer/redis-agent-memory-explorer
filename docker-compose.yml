@@ -43,7 +43,7 @@ services:
       AGENT_MEMORY_BASE_URL: http://agent-memory:8000
       REDIS_URL: redis://redis:6379
       MEETING_MEMORY_DATA_DIR: /app/data
-      MEETING_MEMORY_ALLOWED_ORIGINS: "*"
+      MEETING_MEMORY_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:3001"
       LANGGRAPH_DEPLOYMENT_URL: http://demo-langgraph:2024
     volumes:
       - ./logs:/app/logs

@@ -45,13 +45,18 @@ const SCOPE_TABS_SX = {
     padding: "2px 10px",
     lineHeight: 1.4,
     minWidth: "auto",
+    textUnderlineOffset: "4px",
+  },
+  "& .MuiTab-root:hover": {
+    color: "var(--yellow)",
+    textDecoration: "underline",
   },
   "& .Mui-selected": {
     color: "var(--yellow) !important",
+    textDecoration: "underline",
   },
   "& .MuiTabs-indicator": {
-    backgroundColor: "var(--yellow)",
-    height: 2,
+    display: "none",
   },
 } as const;
 

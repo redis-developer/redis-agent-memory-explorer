@@ -18,6 +18,7 @@ RUN npm run build:packages
 # ── Stage 3: Build frontend static export ──
 FROM packages AS frontend-build
 COPY frontend/ frontend/
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_API_BASE_URL=""
 ENV NEXT_PUBLIC_COPILOTKIT_RUNTIME_URL="/copilotkit"
 RUN npm run build -w frontend
@@ -42,6 +43,7 @@ COPY data/ data/
 COPY --from=frontend-build /app/frontend/out/ backend/public/
 
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV MEETING_MEMORY_PORT=3001
 ENV MEETING_MEMORY_DATA_DIR=/app/data
 ENV MEETING_MEMORY_ALLOWED_ORIGINS=*

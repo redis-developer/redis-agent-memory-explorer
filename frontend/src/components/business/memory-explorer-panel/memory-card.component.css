@@ -22,13 +22,49 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--space-2xs);
     margin-bottom: var(--space-3xs);
   }
 
-  .memory-card__date {
+  .memory-card__title-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-width: 0;
+  }
+
+  .memory-card__title-icon {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    display: block;
+  }
+
+  .memory-card__title {
+    font-family: var(--primary-font);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    color: var(--base-white);
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .memory-card__date-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    flex-shrink: 0;
+  }
+
+  .memory-card__date-pill {
     font-family: var(--secondary-font);
     font-size: var(--font-size-2xs);
-    color: var(--fg-muted);
+    color: var(--fg-body);
+    background-color: var(--dusk-09);
+    border: 1px solid var(--dusk);
+    border-radius: var(--border-radius-sm);
+    padding: 2px var(--space-2xs);
+    white-space: nowrap;
   }
 
   .memory-card__text {
@@ -82,19 +118,19 @@
     width: 100%;
   }
 
-  .memory-card__topic-chip {
-    font-size: var(--font-size-2xs) !important;
-    color: var(--sky-blue) !important;
-    background-color: color-mix(in srgb, var(--sky-blue) 12%, transparent) !important;
-    border: none !important;
-    height: 22px !important;
-  }
-
+  .memory-card__topic-chip,
   .memory-card__entity-chip {
     font-size: var(--font-size-2xs) !important;
-    color: var(--color-episodic) !important;
-    background-color: color-mix(in srgb, var(--color-episodic) 12%, transparent) !important;
-    border: none !important;
+    color: var(--base-white) !important;
+    background-color: var(--dusk) !important;
+    border: 1px solid var(--dusk-90) !important;
+    border-radius: 999px !important;
     height: 22px !important;
+    padding: 0 var(--space-2xs) !important;
+  }
+
+  .memory-card__topic-chip .MuiChip-label,
+  .memory-card__entity-chip .MuiChip-label {
+    padding: 0 var(--space-3xs) !important;
   }
 }

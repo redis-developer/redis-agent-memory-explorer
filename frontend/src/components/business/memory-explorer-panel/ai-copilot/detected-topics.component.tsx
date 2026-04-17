@@ -1,8 +1,10 @@
 "use client";
 
 import type { DetectedTopic } from "@/types/suggestion.types";
+import type { ReactNode } from "react";
 
 import { useState } from "react";
+import { ArrowRight } from "lucide-react";
 
 import { EmptyState } from "@/components/core";
 import { DETECTED_TOPIC_STATUS, DETECTED_TOPIC_SOURCE } from "@/constants/app.constants";
@@ -43,8 +45,16 @@ const TOPIC_TITLE: Record<string, Record<string, string>> = {
   },
 };
 
-const getTopicIcon = (topic: DetectedTopic): string => {
+const getTopicIcon = (topic: DetectedTopic): ReactNode => {
   const isAiDetected = topic.source === DETECTED_TOPIC_SOURCE.AI_DETECTED;
+
+  if (
+    !isAiDetected &&
+    topic.status === DETECTED_TOPIC_STATUS.DISCUSSED
+  ) {
+    return <ArrowRight size={14} strokeWidth={2} />;
+  }
+
   const icons = isAiDetected ? AI_DETECTED_ICON : PRE_SEEDED_ICON;
 
   return icons[topic.status] ?? "○";
