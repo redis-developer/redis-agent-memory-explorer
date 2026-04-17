@@ -14,6 +14,7 @@ import {
   SESSION_ID_PREFIX,
   DEFAULT_LIST_LIMIT,
   DEFAULT_LIST_OFFSET,
+  ROLE_TO_MEMORY_ROLE,
   DetectedTopicStatus,
   DetectedTopicSource,
 } from "../constants";
@@ -31,8 +32,10 @@ const formatChunkAsMessage = (chunk: AppendWorkingMemoryInput["chunk"]): {
   role: string;
   content: string;
 } => {
+  const memoryRole = ROLE_TO_MEMORY_ROLE[chunk.role] ?? "user";
+
   return {
-    role: "user",
+    role: memoryRole,
     content: `[${chunk.timestamp}] ${chunk.speaker}: ${chunk.text}`,
   };
 };

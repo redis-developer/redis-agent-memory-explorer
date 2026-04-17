@@ -26,7 +26,7 @@ const SuggestionBanner = ({
   return (
     <div className={className}>
       {hasSuggestion ? (
-        <>
+        <div key={suggestion.id} className="suggestion-banner__inner">
           <div className="suggestion-banner__content">
             <span className="suggestion-banner__label">{bannerLabel}</span>
             <span className="suggestion-banner__summary">{suggestion.summary}</span>
@@ -41,7 +41,7 @@ const SuggestionBanner = ({
             </button>
             <span className="suggestion-banner__timestamp">{suggestion.timestamp}</span>
           </div>
-        </>
+        </div>
       ) : (
         <span className="suggestion-banner__placeholder">{noSuggestionsMessage}</span>
       )}

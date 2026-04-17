@@ -153,3 +153,5 @@ dist/
 temp/
 
 tests/
+
+**/*.mov

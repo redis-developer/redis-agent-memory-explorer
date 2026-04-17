@@ -438,7 +438,7 @@ Response `data`:
 Implementation:
 
 1. Read current working memory: `getWorkingMemory(sessionId, { userId: USER_ID, namespace: NAMESPACE })`
-2. Format chunk as message: `{ role: "user", content: "[{timestamp}] {speaker}: {text}" }`
+2. Format chunk as message: `{ role: chunk.role === "rm" ? "assistant" : "user", content: "[{timestamp}] {speaker}: {text}" }`
 3. Append to existing messages
 4. Build the `putWorkingMemory` payload:
    - If `isLastChunk` is true, add `longTermMemoryStrategy: { strategy: ExtractionStrategy.DISCRETE }` to trigger background extraction
