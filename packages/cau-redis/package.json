@@ -17,7 +17,8 @@
     "pretest": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
   },
   "engines": {
     "node": ">=18.0.0"

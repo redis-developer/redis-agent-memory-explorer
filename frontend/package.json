@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --port 3000",
     "build": "next build",
-    "start": "npx serve out -l 3000"
+    "start": "npx serve out -l 3000",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@copilotkit/react-core": "^1.54.0",

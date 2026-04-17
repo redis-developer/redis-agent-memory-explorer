@@ -17,7 +17,8 @@
     "dev": "npm run build:packages && concurrently -n langgraph,api,frontend -c blue,green,magenta \"npm run dev:langgraph\" \"npm run dev:api\" \"npm run dev:frontend\"",
     "dev:frontend": "npm run dev -w frontend",
     "dev:api": "npm run dev -w backend",
-    "dev:langgraph": "npm run dev:langgraph -w backend"
+    "dev:langgraph": "npm run dev:langgraph -w backend",
+    "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -17,7 +17,8 @@
     "pretest": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
     "knex": ">=3.0.0",
