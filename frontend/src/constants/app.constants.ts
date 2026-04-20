@@ -107,6 +107,7 @@ const TOAST_SEVERITY = {
 type ToastSeverity = (typeof TOAST_SEVERITY)[keyof typeof TOAST_SEVERITY];
 
 const TOAST_AUTO_HIDE_MS = 5000;
+const TOAST_MAX_VISIBLE = 3;
 
 const API_ERROR_EVENT = "api-error";
 
@@ -151,6 +152,7 @@ export {
   DEFAULT_TRIGGER_EVERY_N_CHUNKS,
   TOAST_SEVERITY,
   TOAST_AUTO_HIDE_MS,
+  TOAST_MAX_VISIBLE,
   API_ERROR_EVENT,
 };
 

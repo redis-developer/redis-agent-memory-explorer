@@ -11,6 +11,14 @@
     box-shadow: var(--shadow-md);
   }
 
+  .count {
+    font-family: var(--secondary-font);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    margin-left: var(--space-3xs);
+    opacity: 0.7;
+  }
+
   .alert--error {
     background-color: var(--hyper-10);
     color: var(--hyper-04);

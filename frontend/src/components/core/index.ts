@@ -11,4 +11,4 @@ export type { EmptyStateProps } from "./empty-state.component";
 export type { MemoryTypeBadgeProps } from "./memory-type-badge.component";
 export type { ConfirmDialogProps } from "./confirm-dialog.component";
 export type { SectionCardProps } from "./section-card.component";
-export type { ToastContextValue, ToastState } from "./toast.component";
+export type { ToastContextValue, ToastItem } from "./toast.component";
