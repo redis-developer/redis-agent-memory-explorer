@@ -72,6 +72,15 @@
   color: var(--dusk-90) !important;
 }
 
+.copilotKitHeaderCloseButton {
+  color: var(--fg-muted) !important;
+  cursor: pointer;
+}
+
+.copilotKitHeaderCloseButton:hover {
+  color: var(--fg-default) !important;
+}
+
 .copilotKitButton {
   background: var(--dusk) !important;
   border-color: var(--dusk-90) !important;

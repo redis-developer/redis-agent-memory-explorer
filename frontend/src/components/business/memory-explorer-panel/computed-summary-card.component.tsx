@@ -42,7 +42,10 @@ const ComputedSummaryCard = ({
                 onClick={onRecompute}
                 disabled={isAnyComputing}
                 aria-label="Recompute"
-                sx={{ color: "var(--fg-body)" }}
+                sx={{
+                  color: "var(--fg-body)",
+                  "&.Mui-disabled": { color: "var(--fg-body)", opacity: 0.4 },
+                }}
               >
                 {isRecomputing ? (
                   <CircularProgress size={14} sx={{ color: "var(--fg-body)" }} />
