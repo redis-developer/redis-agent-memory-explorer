@@ -123,19 +123,20 @@ const MemoryExplorerPanel = ({
             textTransform: "none",
             minHeight: 40,
             padding: "8px 16px",
+            textUnderlineOffset: "4px",
           },
           "& .MuiTab-root:hover": {
             color: "var(--fg-default)",
           },
           "& .Mui-selected": {
             color: "var(--yellow) !important",
+            textDecoration: "underline",
           },
           "& .Mui-selected:hover": {
             color: "var(--yellow) !important",
           },
           "& .MuiTabs-indicator": {
-            backgroundColor: "var(--yellow)",
-            height: 2,
+            display: "none",
           },
         }}
       >

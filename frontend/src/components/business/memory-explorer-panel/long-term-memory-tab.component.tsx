@@ -48,8 +48,7 @@ const SCOPE_TABS_SX = {
     textUnderlineOffset: "4px",
   },
   "& .MuiTab-root:hover": {
-    color: "var(--yellow)",
-    textDecoration: "underline",
+    color: "var(--fg-default)",
   },
   "& .Mui-selected": {
     color: "var(--yellow) !important",
