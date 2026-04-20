@@ -1,8 +1,11 @@
 .computed-summary-card {
   animation: fade-in var(--transition-normal) ease-out;
+  background-color: var(--dusk);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--dusk-09);
 
   .computed-summary-card__header {
-    padding: var(--space-xs);
+    padding: var(--space-xs) var(--space-xs) 0;
   }
 
   .computed-summary-card__header-row {
@@ -33,7 +36,7 @@
     font-size: var(--font-size-2xs);
     color: var(--fg-body);
     background-color: var(--dusk-09);
-    border: 1px solid var(--dusk);
+    border: 1px solid var(--dusk-90);
     border-radius: var(--border-radius-sm);
     padding: 3px 12px;
     white-space: nowrap;
@@ -42,8 +45,6 @@
 
   .computed-summary-card__body {
     padding: var(--space-xs);
-    background-color: var(--dusk);
-    border-radius: 10px;
     font-size: var(--font-size-rg);
     color: var(--fg-body);
     line-height: 1.7;
