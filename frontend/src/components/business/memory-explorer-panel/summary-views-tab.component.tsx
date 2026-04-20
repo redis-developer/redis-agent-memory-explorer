@@ -2,6 +2,7 @@
 
 import type { SummaryViewData, ComputedSummaryData } from "@/types/memory.types";
 import type { DatasetConfig } from "@/types/dataset-config.types";
+import type { ComputingTarget } from "./use-summary-views";
 
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -16,7 +17,7 @@ type SummaryViewsTabProps = {
   views: SummaryViewData[];
   summaries: Map<string, ComputedSummaryData[]>;
   isLoading: boolean;
-  computingViewId: string | null;
+  computingTarget: ComputingTarget | null;
   userId: string;
   sessionId: string | null;
   namespace: string;
@@ -63,7 +64,7 @@ const SummaryViewsTab = (props: SummaryViewsTabProps) => {
     views,
     summaries,
     isLoading,
-    computingViewId,
+    computingTarget,
     config,
     onComputeSummary,
     error,
@@ -88,9 +89,11 @@ const SummaryViewsTab = (props: SummaryViewsTabProps) => {
 
       {views.map((view) => {
         const viewSummaries = summaries.get(view.viewId) ?? [];
-        const isComputing = computingViewId === view.viewId;
-        const isAnyComputing = computingViewId !== null;
+        const isAnyComputing = computingTarget !== null;
         const group = buildGroupForView(view.groupBy ?? [], props);
+        const groupJson = group !== null ? JSON.stringify(group) : null;
+        const isTargetingView = computingTarget !== null && computingTarget.viewId === view.viewId;
+        const isComputingCurrentPartition = isTargetingView && groupJson === JSON.stringify(computingTarget.group);
         const canCompute = group !== null;
         const currentGroupExists = hasPartitionForGroup(viewSummaries, group);
         const showComputeButton = canCompute && !currentGroupExists;
@@ -113,7 +116,7 @@ const SummaryViewsTab = (props: SummaryViewsTabProps) => {
                   disabled={isAnyComputing}
                   variant="contained"
                   startIcon={
-                    isComputing
+                    isComputingCurrentPartition
                       ? <CircularProgress size={14} sx={{ color: "var(--base-white)" }} />
                       : <Sparkles size={14} />
                   }
@@ -131,7 +134,7 @@ const SummaryViewsTab = (props: SummaryViewsTabProps) => {
                     },
                   }}
                 >
-                  {isComputing ? "Computing..." : "Compute summary"}
+                  {isComputingCurrentPartition ? "Computing..." : "Compute summary"}
                 </Button>
               )}
               {!canCompute && (
@@ -143,7 +146,7 @@ const SummaryViewsTab = (props: SummaryViewsTabProps) => {
 
             {viewSummaries.map((s) => {
               const partitionKey = JSON.stringify(s.group);
-              const isRecomputing = isComputing && JSON.stringify(group) === partitionKey;
+              const isRecomputing = isTargetingView && JSON.stringify(computingTarget.group) === partitionKey;
 
               return (
                 <ComputedSummaryCard

@@ -12,11 +12,16 @@ import {
   deleteSummaryView,
 } from "@/services/api.service";
 
+type ComputingTarget = {
+  viewId: string;
+  group: Record<string, string>;
+};
+
 type UseSummaryViewsResult = {
   views: SummaryViewData[];
   summaries: Map<string, ComputedSummaryData[]>;
   isLoading: boolean;
-  computingViewId: string | null;
+  computingTarget: ComputingTarget | null;
   error: string | null;
   computedSummaryCount: number;
   summaryViewCount: number;
@@ -43,7 +48,7 @@ const useSummaryViews = (): UseSummaryViewsResult => {
   const [views, setViews] = useState<SummaryViewData[]>([]);
   const [summaries, setSummaries] = useState<Map<string, ComputedSummaryData[]>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
-  const [computingViewId, setComputingViewId] = useState<string | null>(null);
+  const [computingTarget, setComputingTarget] = useState<ComputingTarget | null>(null);
   const [error, setError] = useState<string | null>(null);
   const computedSummaryCount = Array.from(summaries.values()).reduce(
     (acc, list) => acc + list.length,
@@ -87,7 +92,7 @@ const useSummaryViews = (): UseSummaryViewsResult => {
 
   const doComputeSummary = useCallback(
     async (viewId: string, group: Record<string, string>) => {
-      setComputingViewId(viewId);
+      setComputingTarget({ viewId, group });
       setError(null);
 
       try {
@@ -119,7 +124,7 @@ const useSummaryViews = (): UseSummaryViewsResult => {
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
-        setComputingViewId(null);
+        setComputingTarget(null);
       }
     },
     [],
@@ -188,7 +193,7 @@ const useSummaryViews = (): UseSummaryViewsResult => {
     views,
     summaries,
     isLoading,
-    computingViewId,
+    computingTarget,
     error,
     computedSummaryCount,
     summaryViewCount,
@@ -202,4 +207,4 @@ const useSummaryViews = (): UseSummaryViewsResult => {
 };
 
 export { useSummaryViews };
-export type { UseSummaryViewsResult };
+export type { UseSummaryViewsResult, ComputingTarget };
