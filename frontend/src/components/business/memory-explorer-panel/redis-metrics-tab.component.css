@@ -7,7 +7,7 @@
   overflow-y: auto;
 
   .redis-metrics-tab__title {
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
     color: var(--fg-default);
     text-transform: uppercase;

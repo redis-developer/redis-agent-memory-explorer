@@ -21,15 +21,15 @@
   }
 
   .memory-card__title-icon {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
     display: block;
   }
 
   .memory-card__title {
     font-family: var(--primary-font);
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     color: var(--base-white);
     margin: 0;
