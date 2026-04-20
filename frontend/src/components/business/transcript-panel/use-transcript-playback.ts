@@ -8,7 +8,8 @@ import { useState, useRef, useCallback } from "react";
 import { appendChunk } from "@/services/api.service";
 import { PLAYBACK_STATUS } from "@/constants/app.constants";
 
-type PlaybackStatusValue = (typeof PLAYBACK_STATUS)[keyof typeof PLAYBACK_STATUS];
+type PlaybackStatusValue =
+  (typeof PLAYBACK_STATUS)[keyof typeof PLAYBACK_STATUS];
 
 type UseTranscriptPlaybackResult = {
   displayedChunks: TranscriptChunk[];
@@ -19,7 +20,6 @@ type UseTranscriptPlaybackResult = {
   isComplete: boolean;
   status: PlaybackStatusValue;
   lastAppendResult: AppendResult | null;
-  error: string | null;
   start: () => void;
   pause: () => void;
   next: () => void;
@@ -34,9 +34,12 @@ const useTranscriptPlayback = (
 ): UseTranscriptPlaybackResult => {
   const [displayedChunks, setDisplayedChunks] = useState<TranscriptChunk[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [status, setStatus] = useState<PlaybackStatusValue>(PLAYBACK_STATUS.IDLE);
-  const [lastAppendResult, setLastAppendResult] = useState<AppendResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<PlaybackStatusValue>(
+    PLAYBACK_STATUS.IDLE,
+  );
+  const [lastAppendResult, setLastAppendResult] = useState<AppendResult | null>(
+    null,
+  );
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const indexRef = useRef(0);
@@ -64,13 +67,9 @@ const useTranscriptPlayback = (
     setCurrentIndex(idx + 1);
     indexRef.current = idx + 1;
 
-    appendChunk(sessionId!, chunk, isLastChunk)
-      .then((result) => {
-        setLastAppendResult(result);
-      })
-      .catch((err: Error) => {
-        console.error("Append chunk failed:", err.message);
-      });
+    appendChunk(sessionId!, chunk, isLastChunk).then((result) => {
+      setLastAppendResult(result);
+    });
 
     if (isLastChunk) {
       clearTimer();
@@ -84,7 +83,6 @@ const useTranscriptPlayback = (
     if (hasNoSession || hasNoChunks) return;
 
     setStatus(PLAYBACK_STATUS.PLAYING);
-    setError(null);
     indexRef.current = currentIndex;
 
     intervalRef.current = setInterval(advanceOne, intervalMs);
@@ -101,7 +99,6 @@ const useTranscriptPlayback = (
     const isFinished = indexRef.current >= chunks.length;
     if (hasNoSession || hasNoChunks || isFinished) return;
 
-    setError(null);
     indexRef.current = currentIndex;
     setStatus(PLAYBACK_STATUS.PAUSED);
     advanceOne();
@@ -114,7 +111,6 @@ const useTranscriptPlayback = (
     indexRef.current = 0;
     setStatus(PLAYBACK_STATUS.IDLE);
     setLastAppendResult(null);
-    setError(null);
   }, [clearTimer]);
 
   const loadAll = useCallback(() => {
@@ -127,7 +123,6 @@ const useTranscriptPlayback = (
     setCurrentIndex(total);
     indexRef.current = total;
     setStatus(PLAYBACK_STATUS.COMPLETED);
-    setError(null);
   }, [chunks, clearTimer]);
 
   return {
@@ -139,7 +134,6 @@ const useTranscriptPlayback = (
     isComplete: status === PLAYBACK_STATUS.COMPLETED,
     status,
     lastAppendResult,
-    error,
     start,
     pause,
     next,

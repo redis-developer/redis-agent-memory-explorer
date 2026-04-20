@@ -1,0 +1,37 @@
+.toast {
+  .MuiSnackbar-root {
+    z-index: 9999;
+  }
+
+  .alert {
+    font-family: var(--primary-font);
+    font-size: var(--font-size-rg);
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-md);
+  }
+
+  .alert--error {
+    background-color: var(--hyper-10);
+    color: var(--hyper-04);
+    border: 1px solid var(--hyper-09);
+  }
+
+  .alert--warning {
+    background-color: var(--yellow-11, #4e5f02);
+    color: var(--yellow-50);
+    border: 1px solid var(--yellow-08);
+  }
+
+  .alert--info {
+    background-color: var(--dusk);
+    color: var(--sky-blue-50);
+    border: 1px solid var(--dusk-90);
+  }
+
+  .alert--success {
+    background-color: var(--dusk);
+    color: var(--yellow);
+    border: 1px solid var(--dusk-90);
+  }
+}

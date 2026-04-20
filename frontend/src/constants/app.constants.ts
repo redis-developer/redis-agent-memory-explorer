@@ -76,13 +76,15 @@ const DETECTED_TOPIC_STATUS = {
   NEW: "new",
   QUESTION: "question",
 } as const;
-type DetectedTopicStatus = (typeof DETECTED_TOPIC_STATUS)[keyof typeof DETECTED_TOPIC_STATUS];
+type DetectedTopicStatus =
+  (typeof DETECTED_TOPIC_STATUS)[keyof typeof DETECTED_TOPIC_STATUS];
 
 const DETECTED_TOPIC_SOURCE = {
   PRE_SEEDED: "pre-seeded",
   AI_DETECTED: "ai-detected",
 } as const;
-type DetectedTopicSource = (typeof DETECTED_TOPIC_SOURCE)[keyof typeof DETECTED_TOPIC_SOURCE];
+type DetectedTopicSource =
+  (typeof DETECTED_TOPIC_SOURCE)[keyof typeof DETECTED_TOPIC_SOURCE];
 
 const STABILIZATION_POLL_COUNT = 3;
 const DEFAULT_TRIGGER_EVERY_N_CHUNKS = 5;
@@ -95,6 +97,18 @@ const MAX_MEMORY_TEXT_LENGTH = 200;
 
 const SESSION_ID_PREFIX = "playback";
 const SESSION_ID_PATTERN = /^playback-(.+)-(\d{13,})$/;
+
+const TOAST_SEVERITY = {
+  SUCCESS: "success",
+  ERROR: "error",
+  WARNING: "warning",
+  INFO: "info",
+} as const;
+type ToastSeverity = (typeof TOAST_SEVERITY)[keyof typeof TOAST_SEVERITY];
+
+const TOAST_AUTO_HIDE_MS = 5000;
+
+const API_ERROR_EVENT = "api-error";
 
 const DEFAULT_CHATBOT_TITLE = "Memory assistant";
 const DEFAULT_CHATBOT_INITIAL =
@@ -135,6 +149,16 @@ export {
   DEFAULT_CHATBOT_INSTRUCTIONS,
   STABILIZATION_POLL_COUNT,
   DEFAULT_TRIGGER_EVERY_N_CHUNKS,
+  TOAST_SEVERITY,
+  TOAST_AUTO_HIDE_MS,
+  API_ERROR_EVENT,
 };
 
-export type { MemoryType, HealthStatus, LtScope, DetectedTopicStatus, DetectedTopicSource };
+export type {
+  MemoryType,
+  HealthStatus,
+  LtScope,
+  DetectedTopicStatus,
+  DetectedTopicSource,
+  ToastSeverity,
+};

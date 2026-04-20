@@ -13,6 +13,8 @@ import {
   DEFAULT_RATE_LIMIT_MAX,
   DEFAULT_STATIC_DIR,
   DEFAULT_LOG_FILE,
+  DEFAULT_ERROR_LOG_FILE,
+  DEFAULT_LOG_MAX_FILES,
 } from "./constants";
 import { routes } from "./routes";
 import { setAppState } from "./app-state";
@@ -29,7 +31,15 @@ const logger = Logger.create({
       type: "file",
       path: join(ENV.LOG_DIR, DEFAULT_LOG_FILE),
       rotation: "daily",
-      maxFiles: 7,
+      maxFiles: DEFAULT_LOG_MAX_FILES,
+      mkdir: true,
+    },
+    {
+      type: "file",
+      level: "error",
+      path: join(ENV.LOG_DIR, DEFAULT_ERROR_LOG_FILE),
+      rotation: "daily",
+      maxFiles: DEFAULT_LOG_MAX_FILES,
       mkdir: true,
     },
   ],

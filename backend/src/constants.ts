@@ -68,6 +68,8 @@ const DEFAULT_STATIC_DIR = "../public";
 
 const DEFAULT_LOG_DIR = "../../logs";
 const DEFAULT_LOG_FILE = "meeting-memory.log";
+const DEFAULT_ERROR_LOG_FILE = "meeting-memory-error.log";
+const DEFAULT_LOG_MAX_FILES = 14;
 
 const DetectedTopicStatus = {
   PENDING: "pending",
@@ -75,13 +77,15 @@ const DetectedTopicStatus = {
   NEW: "new",
   QUESTION: "question",
 } as const;
-type DetectedTopicStatus = (typeof DetectedTopicStatus)[keyof typeof DetectedTopicStatus];
+type DetectedTopicStatus =
+  (typeof DetectedTopicStatus)[keyof typeof DetectedTopicStatus];
 
 const DetectedTopicSource = {
   PRE_SEEDED: "pre-seeded",
   AI_DETECTED: "ai-detected",
 } as const;
-type DetectedTopicSource = (typeof DetectedTopicSource)[keyof typeof DetectedTopicSource];
+type DetectedTopicSource =
+  (typeof DetectedTopicSource)[keyof typeof DetectedTopicSource];
 
 export {
   CONFIG_FILENAME,
@@ -129,6 +133,8 @@ export {
   DEFAULT_STATIC_DIR,
   DEFAULT_LOG_DIR,
   DEFAULT_LOG_FILE,
+  DEFAULT_LOG_MAX_FILES,
+  DEFAULT_ERROR_LOG_FILE,
   ROLE_TO_MEMORY_ROLE,
   DetectedTopicStatus,
   DetectedTopicSource,

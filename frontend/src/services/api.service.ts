@@ -23,7 +23,7 @@ import type {
   ListSuggestionsResponse,
 } from "@/types/suggestion.types";
 
-import { API_BASE_URL } from "@/constants/app.constants";
+import { API_BASE_URL, API_ERROR_EVENT } from "@/constants/app.constants";
 
 const API_PATH = {
   GET_DATASET: "/api/getDataset",
@@ -48,25 +48,43 @@ const API_PATH = {
   HEALTH: "/health",
 } as const;
 
+const emitApiError = (message: string): void => {
+  window.dispatchEvent(
+    new CustomEvent(API_ERROR_EVENT, { detail: { message } }),
+  );
+};
+
 const apiPost = async <T>(path: string, body: unknown = {}): Promise<T> => {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const json: ApiResponse<T> = await response.json();
-  if (json.error) {
-    throw new Error(json.error);
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const json: ApiResponse<T> = await response.json();
+    if (json.error) {
+      throw new Error(json.error);
+    }
+
+    return json.data as T;
+  } catch (err) {
+    emitApiError((err as Error).message);
+    throw err;
   }
-  return json.data as T;
 };
 
 const apiGet = async <T>(path: string): Promise<T> => {
-  const response = await fetch(`${API_BASE_URL}${path}`);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (err) {
+    emitApiError((err as Error).message);
+    throw err;
   }
-  return response.json();
 };
 
 const fetchDatasetConfig = (): Promise<DatasetConfig> =>
