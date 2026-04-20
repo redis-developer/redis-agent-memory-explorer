@@ -117,6 +117,7 @@ const appendChunk = (
 const fetchWorkingMemory = (sessionId: string): Promise<WorkingMemoryData> =>
   apiPost<WorkingMemoryData>(API_PATH.GET_WORKING_MEMORY, { sessionId });
 
+// Not yet used -- available for manual session cleanup from the UI
 const deleteWorkingMemory = (sessionId: string): Promise<void> =>
   apiPost<void>(API_PATH.DELETE_WORKING_MEMORY, { sessionId });
 
@@ -174,9 +175,11 @@ const fetchComputedSummaries = (
     { viewId },
   );
 
+// Not yet used -- wired in use-summary-views.ts but reserved for a future per-view delete button
 const deleteSummaryView = (viewId: string): Promise<void> =>
   apiPost<void>(API_PATH.DELETE_SUMMARY_VIEW, { viewId });
 
+// Not yet used -- reserved for polling async task status (e.g. long-term memory extraction, summary recomputes)
 const fetchTask = (
   taskId: string,
 ): Promise<{ id: string; status: string; result: unknown }> =>
@@ -205,8 +208,6 @@ const fetchHealth = (): Promise<HealthResponse> =>
   apiGet<HealthResponse>(API_PATH.HEALTH);
 
 export {
-  apiPost,
-  apiGet,
   fetchDatasetConfig,
   fetchTranscripts,
   fetchTranscript,
