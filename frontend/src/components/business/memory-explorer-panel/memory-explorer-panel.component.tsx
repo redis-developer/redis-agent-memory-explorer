@@ -126,12 +126,14 @@ const MemoryExplorerPanel = ({
             textUnderlineOffset: "4px",
           },
           "& .MuiTab-root:hover": {
-            color: "var(--yellow)",
-            textDecoration: "underline",
+            color: "var(--fg-default)",
           },
           "& .Mui-selected": {
             color: "var(--yellow) !important",
             textDecoration: "underline",
+          },
+          "& .Mui-selected:hover": {
+            color: "var(--yellow) !important",
           },
           "& .MuiTabs-indicator": {
             display: "none",
