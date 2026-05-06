@@ -8,15 +8,14 @@ The cloud product is being built by the core engineering team as a managed servi
 
 ### Strategy: New Package (`cau-redis-agent-memory-cloud`)
 
-Rather than rewriting the existing `cau-redis-agent-memory` package (which works fine for OSS), we create a **new parallel package** `cau-redis-agent-memory-cloud` that:
+Create a **new package** `cau-redis-agent-memory-cloud` that fully replaces `cau-redis-agent-memory`:
 
 - Wraps the `@redis-ai/agent-memory` cloud SDK
-- Exposes the **same public interface** as `cau-redis-agent-memory` (same types, same method signatures)
-- Handles all cloud-specific adaptation (event-append model, local emulation of missing features)
-- Allows both packages to coexist in the monorepo
-- Backend swaps which package it imports based on `MEMORY_PROVIDER` config
+- **Builds custom logic** for features the cloud doesn't have (memoryPrompt, extraction, summary views) using the data we already have from the cloud + local LLM calls
+- Backend imports **only** from this new package (no toggle, no dual-mode)
+- The old `cau-redis-agent-memory` package is left in place but unused (can be removed later)
 
-This keeps the OSS package untouched (no regression risk) and provides a clean separation for the cloud path.
+**Why custom logic works**: The cloud SDK gives us full access to session events (short-term) and long-term memories. The OSS server's "smart" features (memoryPrompt, extraction, summaries) were just LLM calls over that same data. We can replicate and even improve on them locally.
 
 ---
 
@@ -164,49 +163,56 @@ Frontend (Next.js static)
               └─> Redis (same instance or separate)
 ```
 
-### Target Architecture (Cloud mode)
+### Target Architecture
 
 ```
 Frontend (Next.js static)
   └─> Backend API (Express via cau-api-server)
-        ├─> cau-redis-agent-memory-cloud (NEW PACKAGE)
-        │     ├─> @redis-ai/agent-memory SDK (cloud)
+        ├─> cau-redis-agent-memory-cloud (NEW PACKAGE -- sole memory layer)
+        │     ├─> @redis-ai/agent-memory SDK
         │     │     └─> Redis Agent Memory Cloud (RAM_ENDPOINT)
-        │     └─> Local LLM Emulation Layer
-        │           └─> OpenAI API (for extraction, memoryPrompt, summaries)
+        │     └─> Custom Logic Layer (local LLM)
+        │           └─> OpenAI API (memoryPrompt, extraction, summaries)
         └─> cau-redis (copilot stores, local state)
               └─> Redis (REDIS_URL -- still needed for app state)
 ```
 
 ### Key Design Decisions
 
-1. **New package, not a rewrite.** Create `packages/cau-redis-agent-memory-cloud/` as a brand-new package. The existing `cau-redis-agent-memory` stays untouched -- zero regression risk for OSS mode.
+1. **Cloud-only.** No dual-mode, no toggle, no fallback to OSS. The backend imports exclusively from `cau-redis-agent-memory-cloud`.
 
-2. **Same public interface.** `cau-redis-agent-memory-cloud` exports the same `AgentMemory` class, same method signatures, same return types. Backend code can swap imports with no logic changes.
+2. **Custom logic for "smart" features.** Since the cloud SDK provides raw data access (session events + long-term memories), we build memoryPrompt, extraction, and summaries ourselves using OpenAI. This gives us full control and the ability to customize behavior beyond what OSS offered.
 
-3. **Backend uses conditional import.** Based on `MEMORY_PROVIDER` env var, the backend imports from either `cau-redis-agent-memory` (OSS) or `cau-redis-agent-memory-cloud` (cloud). This swap happens at startup in one place (`backend/src/index.ts` or a new provider factory).
+3. **Same public interface.** `cau-redis-agent-memory-cloud` exports an `AgentMemory` class with the same method signatures as the old package. Backend handler code requires minimal changes (just update import paths).
 
-4. **Both packages coexist.** During transition, both packages live in `packages/`. When OSS is fully deprecated, `cau-redis-agent-memory` can be removed.
+4. **Old package left in place.** `cau-redis-agent-memory` stays in the repo untouched (for reference / rollback if needed) but is no longer imported by the backend.
 
-### Package Relationship
+### Package Structure
 
 ```
 packages/
-  cau-redis-agent-memory/          # EXISTING - untouched, works with OSS AMS
-    src/
-      agent-memory.ts              # AgentMemory class (OSS)
-      operations/                  # OSS operation implementations
-      types.ts                     # Public types (SHARED CONTRACT)
-      constants.ts                 # Enums (SHARED CONTRACT)
+  cau-redis-agent-memory/          # EXISTING - left untouched (deprecated, for reference)
 
-  cau-redis-agent-memory-cloud/    # NEW - cloud adapter
+  cau-redis-agent-memory-cloud/    # NEW - sole memory package
     src/
-      agent-memory.ts              # AgentMemory class (cloud) -- same interface
-      operations/                  # Cloud operation implementations
-      emulation/                   # Local LLM emulation (memoryPrompt, extraction, summaries)
-      types.ts                     # Re-exports same types for compatibility
-      constants.ts                 # Re-exports same constants
-    package.json                   # depends on @redis-ai/agent-memory, openai
+      index.ts                     # public exports
+      agent-memory.ts              # AgentMemory singleton (cloud)
+      config.ts                    # RAM_ENDPOINT, RAM_API_KEY, RAM_STORE_ID
+      types.ts                     # public types (mirrored from old package)
+      constants.ts                 # enums (MemoryType, ExtractionStrategy, etc.)
+      operations/
+        working-memory.ts          # session event operations
+        long-term-memory.ts        # LTM CRUD + search
+        memory-prompt.ts           # CUSTOM: build LLM prompt from session + LTM
+        summary-view.ts            # CUSTOM: compute summaries from LTM
+        forget.ts                  # CUSTOM: search + bulk delete by policy
+        extraction.ts              # CUSTOM: extract facts from session into LTM
+      helpers/
+        map-records.util.ts        # cloud SDK types <-> package types
+        build-search-filters.util.ts
+        token-counter.util.ts      # local token estimation for context window
+        llm.util.ts                # shared OpenAI call helper
+    package.json                   # @redis-ai/agent-memory, openai
 ```
 
 ---
@@ -254,23 +260,43 @@ LONG_TERM_MEMORY=true
 GENERATION_MODEL=gpt-4o-mini
 ```
 
-### New (Cloud mode additions)
+### New (Cloud -- replaces OSS vars)
 
 ```env
-# Provider toggle
-MEMORY_PROVIDER=cloud   # "oss" | "cloud"
+# ── Required ──
+OPENAI_API_KEY=sk-...
 
-# Redis Agent Memory Cloud
+# ── App (backend) ──
+MEETING_MEMORY_PORT=3001
+MEETING_MEMORY_ACTIVE_DATASET=wealth-advisor
+MEETING_MEMORY_MODEL_NAME=gpt-4o-mini
+MEETING_MEMORY_CONTEXT_WINDOW_MAX=1500
+MEETING_MEMORY_CHATBOT_MODEL=gpt-4o-mini
+
+# ── Redis Agent Memory Cloud ──
 RAM_ENDPOINT=https://gcp-us-east4.memory.redis.io
 RAM_API_KEY=mem1_...
-RAM_STORE_ID=<store-id>   # TBD: may be derived from REDIS_URL or separately provisioned
+RAM_STORE_ID=<store-id>
 
-# Redis (still needed for copilot stores, topic stores, chunk stores)
+# ── Redis (for app's copilot stores, topic stores, chunk stores) ──
 REDIS_URL=redis://default:...@geese-crown-supersteady-16768.db.redis.io:18074
 
-# OpenAI (needed for local emulation of extraction/memoryPrompt/summaries)
-OPENAI_API_KEY=...
+# ── LangSmith (optional) ──
+LANGSMITH_API_KEY=lsv2_...
+LANGSMITH_TRACING=true
 ```
+
+**Removed** (no longer needed -- these were for the self-hosted AMS container):
+- `AGENT_MEMORY_BASE_URL`
+- `AGENT_MEMORY_API_KEY`
+- `AGENT_MEMORY_BEARER_TOKEN`
+- `AGENT_MEMORY_TIMEOUT_MS`
+- `LONG_TERM_MEMORY`
+- `GENERATION_MODEL`
+- `FAST_MODEL`
+- `EMBEDDING_MODEL`
+- `LOG_LEVEL`
+- `DISABLE_AUTH`
 
 ---
 
@@ -390,55 +416,109 @@ CreatedAt(">", date)    → { createdAt: { gt: dateMs } }
 
 ---
 
-### Phase 4: Local Emulation of Missing Features
+### Phase 4: Custom Logic for "Smart" Features
 
-#### Phase 4a: Memory Prompt Emulation
+The cloud SDK gives us raw data (session events + long-term memories). The OSS server's "smart" features were just LLM calls over that same data. We build them ourselves -- with full control over prompts, models, and behavior.
 
-**What `memoryPrompt` does in OSS**: Server-side endpoint that combines working memory context + long-term memory search into a ready-to-use LLM prompt (array of `{ role, content }` messages).
+#### Phase 4a: Memory Prompt (Custom Logic)
 
-**Local emulation**:
-1. Call `getSessionMemory` to get recent conversation events
-2. Call `searchLongTermMemory` with the query
-3. Build system messages containing:
-   - Conversation context (last N events summarized)
-   - Relevant long-term memories as bullet points
-4. Return `{ messages: [{ role: "system", content: "..." }] }`
+**What it does**: Combines conversation context (short-term) + relevant long-term memories into a ready-to-use LLM prompt for the chatbot.
 
-**File**: `packages/cau-redis-agent-memory-cloud/src/emulation/memory-prompt.service.ts`
+**How we build it**:
+1. Fetch session events via `getSessionMemory(sessionId)` -- this is our short-term context
+2. Run `searchLongTermMemory({ text: query })` -- this finds relevant long-term facts
+3. Compose a system message that includes:
+   - Recent conversation (last N events, formatted as dialogue)
+   - Relevant long-term memories as structured context (bullet points)
+   - Optional: user preferences / key facts section
+4. Return `{ messages: [{ role: "system", content: composedPrompt }] }`
 
-#### Phase 4b: LTM Extraction Emulation
+**Advantages over OSS**: We control the prompt template, can customize per-dataset, can add weighting/prioritization logic, and can tune the balance between short-term vs long-term context.
 
-**What `longTermMemoryStrategy: { strategy: "discrete" }` does in OSS**: Server triggers an LLM call to extract discrete facts/preferences from working memory into long-term memory.
+**File**: `packages/cau-redis-agent-memory-cloud/src/operations/memory-prompt.ts`
 
-**Local emulation**:
-1. After `putWorkingMemory` is called with a strategy, gather all session events
-2. Call OpenAI with a fact-extraction system prompt:
-   ```
-   Extract key facts, user preferences, decisions, and important information
-   from the following conversation. Return each fact as a separate line.
-   ```
-3. Parse the response into individual memory records
-4. Call `bulkCreateLongTermMemories` with extracted facts (tagged with sessionId, namespace, ownerId)
+```typescript
+// Pseudocode
+const memoryPromptOp = async (client, request) => {
+  const sessionEvents = await client.getSessionMemory(request.session.sessionId);
+  const ltmResults = await client.searchLongTermMemory({ text: request.query, limit: 10 });
 
-**File**: `packages/cau-redis-agent-memory-cloud/src/emulation/memory-extraction.service.ts`
+  const conversationContext = formatEventsAsDialogue(sessionEvents.events);
+  const longTermContext = formatMemoriesAsBullets(ltmResults.memories);
 
-#### Phase 4c: Summary Views
+  const systemPrompt = `
+You are a helpful assistant with access to conversation history and long-term memory.
 
-**Options**:
-- **Option A (full emulation)**: Store view definitions in Redis (app's `REDIS_URL`), compute summaries via OpenAI, store results in Redis hashes. Maintains full demo functionality.
-- **Option B (graceful degradation)**: Return empty/stub responses in cloud mode; frontend shows "Summary Views not available in cloud mode" or hides the panel.
+## Recent Conversation
+${conversationContext}
 
-**Recommendation**: Option B initially (stubs that return empty arrays), upgrade to Option A if demo requires it.
+## Relevant Knowledge (from long-term memory)
+${longTermContext}
 
-**File**: `packages/cau-redis-agent-memory-cloud/src/operations/summary-view.ts` (stubs or full emulation)
+Use the above context to answer the user's question accurately.
+`;
 
-#### Phase 4d: Forget Policy Emulation
+  return { messages: [{ role: "system", content: systemPrompt }] };
+};
+```
 
-**Local emulation**:
-1. Search LTM with date/session filters matching the policy criteria
-2. Collect all matching memory IDs
-3. Bulk delete matching records
-4. Return counts matching the `ForgetResult` shape
+#### Phase 4b: Long-Term Memory Extraction (Custom Logic)
+
+**What it does**: After a conversation (or on the last transcript chunk), extract discrete facts/preferences/decisions into long-term memory.
+
+**How we build it**:
+1. Triggered when `putWorkingMemory` is called with `longTermMemoryStrategy: { strategy: "discrete" }`
+2. Gather all session events for this session
+3. Call OpenAI with a structured extraction prompt
+4. Parse response into individual memory records
+5. Call `bulkCreateLongTermMemories` to persist them
+
+**Extraction prompt approach**:
+```
+Given the following conversation transcript, extract key facts that should be
+remembered long-term. Focus on:
+- User preferences and constraints
+- Decisions made
+- Important facts mentioned
+- Action items or commitments
+- Personal details shared
+
+Return as JSON array: [{ "text": "...", "topics": ["..."] }]
+```
+
+**Advantages over OSS**: We can customize extraction prompts per dataset/vertical (e.g., wealth-advisor extracts different things than a support agent), add confidence scoring, filter duplicates before storing.
+
+**File**: `packages/cau-redis-agent-memory-cloud/src/operations/extraction.ts`
+
+#### Phase 4c: Summary Views (Custom Logic)
+
+**What it does**: Computes structured summaries of memories grouped by session/user/topic.
+
+**How we build it**:
+1. Store view definitions locally (in Redis via `cau-redis`, or in-memory for demo)
+2. When a summary is requested:
+   - Search LTM with the view's filters (session, user, namespace, topic)
+   - Group results by the view's `groupBy` fields
+   - For each group, call OpenAI to summarize the memories into a paragraph
+3. Cache computed summaries in Redis (with TTL)
+
+**Simplified approach for demo**:
+- View definitions stored as JSON in Redis (key: `summary-view:{viewId}`)
+- Partition results stored in Redis (key: `summary-partition:{viewId}:{group}`)
+- Compute on-demand when requested (no background tasks needed for demo)
+
+**File**: `packages/cau-redis-agent-memory-cloud/src/operations/summary-view.ts`
+
+#### Phase 4d: Forget Policy (Custom Logic)
+
+**What it does**: Deletes memories matching age/inactivity/budget criteria.
+
+**How we build it**:
+1. Parse the policy (e.g., `{ age: { days: 30 } }` or `{ budget: { maxMemories: 100 } }`)
+2. Search LTM with appropriate date filters (`createdAt: { lt: cutoffMs }`)
+3. Collect matching memory IDs
+4. Call `bulkDeleteLongTermMemories({ memoryIds: [...] })`
+5. Return `{ deleted: count, scanned: total }`
 
 **File**: `packages/cau-redis-agent-memory-cloud/src/operations/forget.ts`
 
@@ -446,29 +526,46 @@ CreatedAt(">", date)    → { createdAt: { gt: dateMs } }
 
 ### Phase 5: AgentMemory Singleton (Cloud Version)
 
-**Goal**: The cloud package's `AgentMemory` class mirrors the OSS one's interface.
+**Goal**: The cloud package's `AgentMemory` class provides the same interface as the old one.
 
 **Pattern**:
 ```typescript
 import { AgentMemory as CloudSDK } from "@redis-ai/agent-memory";
+import OpenAI from "openai";
 import { ENV } from "./config";
 
 class AgentMemory {
   private static instance: AgentMemory;
   private client: CloudSDK;
+  private openai: OpenAI;
 
-  static create(config?: AgentMemoryConfig): AgentMemory { ... }
-  static getInstance(): AgentMemory { ... }
-
-  async healthCheck(): Promise<HealthResult> {
-    const res = await this.client.health();
-    return { status: res.status };
+  static create(config?: AgentMemoryConfig): AgentMemory {
+    const client = new CloudSDK({
+      serverURL: config?.baseUrl ?? ENV.RAM_ENDPOINT,
+      apiKey: config?.apiKey ?? ENV.RAM_API_KEY,
+      storeId: config?.storeId ?? ENV.RAM_STORE_ID,
+      timeoutMs: config?.timeout ?? ENV.RAM_TIMEOUT_MS,
+    });
+    const openai = new OpenAI({ apiKey: ENV.OPENAI_API_KEY });
+    // ... instantiate singleton
   }
 
+  static getInstance(): AgentMemory { ... }
+
+  // Cloud SDK direct calls
+  async healthCheck() { return this.client.health(); }
   async getWorkingMemory(sessionId, options) { ... }
   async putWorkingMemory(sessionId, payload, options) { ... }
-  async getOrCreateWorkingMemory(sessionId, options) { ... }
-  // ... all other methods using cloud operations
+  async listSessions(options) { ... }
+  async searchLongTermMemory(options) { ... }
+  async createLongTermMemories(memories, options) { ... }
+  async deleteLongTermMemories(ids) { ... }
+
+  // Custom logic (uses cloud data + OpenAI)
+  async memoryPrompt(request) { ... }
+  async extractMemories(sessionId, options) { ... }
+  async computeSummary(viewId, group) { ... }
+  async forgetLongTermMemories(policy, options) { ... }
 }
 ```
 
@@ -476,51 +573,49 @@ class AgentMemory {
 
 ---
 
-### Phase 6: Backend Provider Swap
+### Phase 6: Backend Integration
 
-**Goal**: Backend dynamically imports the correct package based on `MEMORY_PROVIDER`.
+**Goal**: Replace all `cau-redis-agent-memory` imports with `cau-redis-agent-memory-cloud`.
 
-**Implementation** in `backend/src/index.ts` (or a new `backend/src/memory-provider.ts`):
+Since this is cloud-only (no toggle), the change is straightforward:
 
-```typescript
-// backend/src/memory-provider.ts
-import { ENV } from "./config";
+1. **`backend/package.json`**: Replace `cau-redis-agent-memory` dependency with `cau-redis-agent-memory-cloud`
+2. **All handler files**: Find-and-replace import path:
+   ```
+   - import { AgentMemory, ExtractionStrategy } from "cau-redis-agent-memory";
+   + import { AgentMemory, ExtractionStrategy } from "cau-redis-agent-memory-cloud";
+   ```
+3. **`backend/src/index.ts`**: Update the `AgentMemory.create()` call with cloud config:
+   ```typescript
+   AgentMemory.create({
+     baseUrl: ENV.RAM_ENDPOINT,
+     apiKey: ENV.RAM_API_KEY,
+     storeId: ENV.RAM_STORE_ID,
+   });
+   ```
+4. **`backend/src/config.ts`**: Replace `AGENT_MEMORY_BASE_URL` with `RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`
+5. **Remove `ams-partition-cleanup.ts`** usage (no AMS Redis keys to clean)
 
-const loadAgentMemory = async () => {
-  if (ENV.MEMORY_PROVIDER === "cloud") {
-    const { AgentMemory } = await import("cau-redis-agent-memory-cloud");
-    return AgentMemory;
-  }
-  const { AgentMemory } = await import("cau-redis-agent-memory");
-  return AgentMemory;
-};
-```
-
-**Changes**:
-- `backend/package.json` -- add `cau-redis-agent-memory-cloud` as workspace dependency
-- `backend/src/config.ts` -- add `MEMORY_PROVIDER` to `ENV`
-- `backend/src/index.ts` -- use dynamic import or provider factory
-- All handler files that import `from "cau-redis-agent-memory"` -- import from the factory instead
-
-**Alternative** (simpler): Use a barrel re-export:
-```typescript
-// backend/src/agent-memory.ts (new file -- single import point)
-export { AgentMemory, ExtractionStrategy, ... } from ENV.MEMORY_PROVIDER === "cloud"
-  ? "cau-redis-agent-memory-cloud"
-  : "cau-redis-agent-memory";
-```
-
-Then all handlers import from `"../agent-memory"` instead of the package directly.
+**Files changed**:
+- `backend/package.json`
+- `backend/src/config.ts`
+- `backend/src/index.ts`
+- `backend/src/handlers/working-memory.handlers.ts`
+- `backend/src/handlers/long-term-memory.handlers.ts`
+- `backend/src/handlers/summary-views.handlers.ts`
+- `backend/src/handlers/lifecycle.handlers.ts`
+- `backend/src/chatbot-agent/tools.ts`
+- `backend/src/chatbot-agent/graph.ts`
 
 ---
 
 ### Phase 7: Docker / Deployment Updates
 
-- Create `docker-compose.cloud.yml` override that omits the `agent-memory` service
-- Update `.env.example` with new cloud variables (`MEMORY_PROVIDER`, `RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`)
-- The app still needs local Redis (`REDIS_URL`) for copilot stores, topic stores, chunk stores
-- `ams-partition-cleanup.ts` skipped in cloud mode (no AMS Redis keys exist)
-- Cloud mode: `docker compose -f docker-compose.yml -f docker-compose.cloud.yml up`
+- Remove `agent-memory` service from `docker-compose.yml` entirely (no longer needed)
+- Remove AMS-related env vars (`LONG_TERM_MEMORY`, `GENERATION_MODEL`, `FAST_MODEL`, `EMBEDDING_MODEL`, `LOG_LEVEL`, `DISABLE_AUTH`)
+- Update `.env.example` with cloud variables (`RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`)
+- The app still needs Redis (`REDIS_URL`) for copilot stores, topic stores, chunk stores
+- Simpler deployment: just the Node app + Redis (no Python AMS container)
 
 ---
 
@@ -543,12 +638,12 @@ Then all handlers import from `"../agent-memory"` instead of the package directl
 
 The LangGraph chatbot tools (`backend/src/chatbot-agent/tools.ts`) call:
 - `AgentMemory.getInstance().searchLongTermMemory(...)` -- works via cloud operations
-- `AgentMemory.getInstance().memoryPrompt(...)` -- works via Phase 4a emulation
+- `AgentMemory.getInstance().memoryPrompt(...)` -- works via custom logic (Phase 4a)
 - `AgentMemory.getInstance().getWorkingMemory(...)` -- works via Phase 2
 - `AgentMemory.getInstance().listSessions(...)` -- works via Phase 2
-- `AgentMemory.getInstance().listSummaryViews(...)` -- works via Phase 4c (stubs or emulation)
+- `AgentMemory.getInstance().listSummaryViews(...)` -- works via custom logic (Phase 4c)
 
-No changes needed to tool definitions since the cloud package exposes the same interface.
+No changes needed to tool definitions since the cloud package exposes the same method signatures.
 
 ---
 
@@ -556,16 +651,18 @@ No changes needed to tool definitions since the cloud package exposes the same i
 
 | Area | Files Affected | Change Type |
 |---|---|---|
-| `packages/cau-redis-agent-memory-cloud/` (NEW) | All files in the new package | **New package** |
-| `packages/cau-redis-agent-memory/` | **None** -- untouched | No change |
-| `backend/package.json` | Add `cau-redis-agent-memory-cloud` workspace dep | Addition |
-| `backend/src/config.ts` | Add `MEMORY_PROVIDER` | Minor addition |
-| `backend/src/index.ts` or new `memory-provider.ts` | Dynamic import based on provider | New file or minor edit |
-| `backend/src/handlers/*.ts` | Change import source to provider factory | Import path update |
-| `backend/src/chatbot-agent/tools.ts` | Change import source to provider factory | Import path update |
+| `packages/cau-redis-agent-memory-cloud/` (NEW) | All files in the new package (~15-20 files) | **New package** |
+| `packages/cau-redis-agent-memory/` | **None** -- left untouched | No change |
+| `backend/package.json` | Replace `cau-redis-agent-memory` dep with `cau-redis-agent-memory-cloud` | Dependency swap |
+| `backend/src/config.ts` | Replace `AGENT_MEMORY_*` vars with `RAM_*` | Rewrite config section |
+| `backend/src/index.ts` | Update `AgentMemory.create()` with cloud config | Minor edit |
+| `backend/src/handlers/*.ts` | Change import path to `cau-redis-agent-memory-cloud` | Import path update |
+| `backend/src/chatbot-agent/tools.ts` | Change import path | Import path update |
+| `backend/src/chatbot-agent/graph.ts` | Change import path + config | Import path update |
+| `backend/src/services/ams-partition-cleanup.ts` | Remove or dead-code (no AMS keys to clean) | Removal |
 | Root `package.json` | Workspaces already includes `packages/*` | No change |
-| `.env.example` | Add cloud variables | Addition |
-| `docker-compose.yml` / `docker-compose.cloud.yml` | Cloud override without AMS container | New file |
+| `.env` / `.env.example` | Replace AMS vars with cloud vars | Rewrite |
+| `docker-compose.yml` | Remove `agent-memory` service | Simplification |
 
 ---
 
@@ -575,39 +672,57 @@ No changes needed to tool definitions since the cloud package exposes the same i
 
 2. **`storeId` provisioning** -- How is a store created? Is it linked to the `REDIS_URL` database? Need to confirm with engineering team. For now, assume it's a separate identifier provided at cloud setup.
 
-3. **No server-side context windowing** -- The OSS server manages `context_window_max` and returns `tokens`, `contextPercentageTotalUsed`, `contextPercentageUntilSummarization`. In cloud mode, these must be computed locally or stubbed. The frontend uses these for the context utilization bar.
+3. **No server-side context windowing** -- The OSS server returns `tokens`, `contextPercentageTotalUsed`, `contextPercentageUntilSummarization`. We must compute these locally. The frontend uses these for the context utilization bar -- we can estimate with character count or use `tiktoken`.
 
-4. **Extraction latency** -- Local extraction (Phase 4b) adds an OpenAI round-trip that previously happened asynchronously server-side. Consider running it in a background task (existing task polling infrastructure).
+4. **Extraction quality** -- Our custom extraction prompt needs tuning to match OSS quality. Advantage: we can iterate on prompts faster and customize per-dataset.
 
-5. **Summary Views complexity** -- Full local emulation is significant engineering effort. If the cloud team plans to add this feature soon, consider Option B (disable/stubs) for now.
+5. **Deduplication** -- OSS supports content-hash deduplication server-side on LTM create. Cloud SDK has no equivalent. Implement client-side: hash `text` field, check existing before bulk create, or use the client-generated `id` field as a content hash for idempotency.
 
-6. **`deduplicate` flag on LTM creation** -- OSS supports content-hash deduplication server-side. Cloud SDK has no equivalent. Must implement client-side dedup if needed (hash text before bulk create, skip duplicates).
+6. **Summary Views scope** -- Full implementation requires Redis storage for view definitions + partition caches + OpenAI for summarization. Meaningful engineering effort but doable since we already have `cau-redis` for Redis access.
 
-7. **AMS partition cleanup** -- `backend/src/services/ams-partition-cleanup.ts` does direct Redis SCAN/DEL on `summary_view:*` keys. Not needed in cloud mode. The backend provider swap should skip this service initialization.
-
-8. **Type drift** -- If `cau-redis-agent-memory` types evolve, the cloud package's copied types must stay in sync. Consider a shared types package long-term.
+7. **Event-append ordering** -- The cloud SDK appends events one at a time. If the backend sends multiple events rapidly (e.g., batch playback), ordering is guaranteed by sequential awaits but latency increases. Consider batching multiple `addSessionEvent` calls with `Promise.all` if the API supports concurrent writes to the same session.
 
 ---
 
 ## Migration Checklist
 
-- [ ] Scaffold `packages/cau-redis-agent-memory-cloud/` (package.json, tsconfig, index.ts, stubs)
-- [ ] Install `@redis-ai/agent-memory` + `openai` as dependencies in new package
-- [ ] Copy/mirror types and constants from `cau-redis-agent-memory`
-- [ ] Implement config (`RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`)
+### Package Creation (Phase 1)
+- [ ] Scaffold `packages/cau-redis-agent-memory-cloud/` (package.json, tsconfig, index.ts)
+- [ ] Install `@redis-ai/agent-memory` + `openai` as dependencies
+- [ ] Copy/mirror types and constants from old package
+- [ ] Implement config (`RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`, `OPENAI_API_KEY`)
 - [ ] Implement `AgentMemory` singleton with cloud SDK client instantiation
-- [ ] Implement cloud working memory operations (event-append model)
-- [ ] Implement cloud LTM operations (new filter syntax, client-generated IDs, pageToken pagination)
-- [ ] Build memory prompt emulation (local LLM)
-- [ ] Build LTM extraction emulation (local LLM on last chunk)
-- [ ] Implement summary view stubs (or full emulation if needed)
-- [ ] Implement forget policy emulation (search + bulk delete)
-- [ ] Add `MEMORY_PROVIDER` to backend config
-- [ ] Create backend provider factory (dynamic import)
-- [ ] Update handler imports to use factory
-- [ ] Update chatbot tool imports to use factory
-- [ ] Update `.env.example` with all new variables
-- [ ] Create `docker-compose.cloud.yml` override
-- [ ] Test full demo flow end-to-end in cloud mode
-- [ ] Verify chatbot tools work through the cloud package
+- [ ] Implement `healthCheck`
+
+### Core Operations (Phases 2-3)
+- [ ] Implement session memory operations (get, put via event-append, getOrCreate, delete, list)
+- [ ] Implement local token counting / context window estimation
+- [ ] Implement LTM create (bulk, with client-generated IDs)
+- [ ] Implement LTM search (new TagFilter syntax, pageToken pagination)
+- [ ] Implement LTM searchAll (loop with pageToken)
+- [ ] Implement LTM get / edit / delete
+
+### Custom Logic (Phase 4)
+- [ ] Build memoryPrompt: fetch session + search LTM + compose system prompt via OpenAI
+- [ ] Build extraction: gather session events + OpenAI extraction + bulkCreate LTM
+- [ ] Build summary views: store definitions + compute via OpenAI + cache results
+- [ ] Build forget: search by policy criteria + bulk delete
+
+### Backend Integration (Phases 5-7)
+- [ ] Replace `cau-redis-agent-memory` import with `cau-redis-agent-memory-cloud` in all handler files
+- [ ] Update `backend/src/config.ts` with `RAM_*` env vars
+- [ ] Update `backend/src/index.ts` AgentMemory.create() call
+- [ ] Update chatbot tools and graph imports
+- [ ] Remove `ams-partition-cleanup.ts` usage
+- [ ] Remove `agent-memory` service from `docker-compose.yml`
+- [ ] Update `.env` / `.env.example`
+
+### Verification (Phases 8-9)
+- [ ] Test session create + append + get flow
+- [ ] Test LTM extraction on last transcript chunk
+- [ ] Test LTM search from memory explorer panel
+- [ ] Test memoryPrompt via chatbot
+- [ ] Test summary views computation
+- [ ] Test lifecycle reset (delete sessions + LTM)
+- [ ] Test full demo end-to-end
 - [ ] Update README with cloud setup instructions
