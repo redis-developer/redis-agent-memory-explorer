@@ -1,0 +1,84 @@
+import type { MemoryFilter } from "../types";
+
+import { FilterOp } from "../constants";
+
+// Locally defined to match cloud SDK's expected shapes (avoids subpath import issues)
+type TagFilter = {
+  eq?: string;
+  ne?: string;
+  in?: string[];
+  all?: string[];
+};
+
+type NumericFilter = {
+  gt?: number;
+  lt?: number;
+  gte?: number;
+  lte?: number;
+  eq?: number;
+};
+
+type CloudLongTermMemoryFilter = {
+  sessionId?: TagFilter;
+  ownerId?: TagFilter;
+  namespace?: TagFilter;
+  topics?: TagFilter;
+  memoryType?: TagFilter;
+  createdAt?: NumericFilter;
+};
+
+type CloudFilterConjunction = "all" | "any";
+
+const buildLongTermMemoryFilter = (filter?: MemoryFilter): CloudLongTermMemoryFilter | undefined => {
+  if (!filter) {
+    return undefined;
+  }
+
+  const cloudFilter: CloudLongTermMemoryFilter = {};
+
+  if (filter.sessionId) {
+    cloudFilter.sessionId = { eq: filter.sessionId };
+  }
+  if (filter.ownerId) {
+    cloudFilter.ownerId = { eq: filter.ownerId };
+  }
+  if (filter.namespace) {
+    cloudFilter.namespace = { eq: filter.namespace };
+  }
+  if (filter.topics && filter.topics.length > 0) {
+    cloudFilter.topics = { all: filter.topics };
+  }
+  if (filter.memoryType) {
+    cloudFilter.memoryType = { eq: filter.memoryType };
+  }
+  if (filter.createdAfter) {
+    cloudFilter.createdAt = { gt: filter.createdAfter };
+  }
+  if (filter.createdBefore) {
+    cloudFilter.createdAt = { lt: filter.createdBefore };
+  }
+
+  const hasAnyFilter = Object.keys(cloudFilter).length > 0;
+  if (!hasAnyFilter) {
+    return undefined;
+  }
+
+  return cloudFilter;
+};
+
+const mapFilterOp = (filterOp?: string): CloudFilterConjunction | undefined => {
+  if (!filterOp) {
+    return undefined;
+  }
+  if (filterOp === FilterOp.ALL) {
+    return "all";
+  }
+  if (filterOp === FilterOp.ANY) {
+    return "any";
+  }
+
+  return undefined;
+};
+
+export { buildLongTermMemoryFilter, mapFilterOp };
+export type { CloudLongTermMemoryFilter, CloudFilterConjunction };

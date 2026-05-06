@@ -152,21 +152,57 @@ The Redis Agent Memory cloud product is a **data store with semantic search**. I
    - You can update/delete records
    - The cloud handles embedding and indexing
 
-### What it does NOT provide: Intelligence
+### Background Extraction (Discovered via Testing)
 
-The cloud product has **zero intelligence layer**. There is:
+The cloud product **does** have background extraction with built-in intelligence. When session events are inserted, the platform automatically extracts long-term memories after a delay of ~5-7 minutes. Observed behavior:
 
-- **No automatic extraction** -- session events do NOT automatically become long-term memories. LTM is only populated when YOUR code explicitly calls `bulkCreateLongTermMemories`.
+- Extracted memories have `memoryType: "episodic"`
+- They reference the source `sessionId` and `ownerId`
+- They include a `text_vector` (embedding is handled server-side)
+- No `namespace` or `topics` are populated by the auto-extraction
+- The extraction is not instant -- it runs asynchronously with a multi-minute delay
+- There is no API to trigger or configure this extraction
+
+**Deduplication & Contradiction Resolution (Confirmed via Testing):**
+
+The cloud handles both deduplication and contradictions intelligently:
+
+- **Deduplication**: Re-inserting identical session messages does NOT create duplicate LTMs. The count stays the same.
+- **Contradiction resolution**: When new messages contradict earlier facts, existing LTM records are **updated in-place** (same `id`, same `createdAt`, new `updatedAt`). Examples observed:
+  - "favorite language is TypeScript" → updated to "favorite programming language is Python"
+  - "prefer dark mode" → updated to "prefers light mode"
+  - "team uses LangGraph" → updated to "team uses CrewAI"
+  - "meeting with VP tomorrow at 3pm" → updated to "meeting...was cancelled"
+- Total LTM count remained at 8 despite 16 session events (8 original + 8 contradictions).
+- The cloud understands negation, preference changes, and cancellation semantics.
+
+**What the cloud extraction does NOT do:**
+
+- No `topics` or `namespace` tagging on extracted memories
+- No control over extraction granularity or prompt
+- No session compaction (events accumulate until TTL)
+- No way to trigger extraction on-demand
+
+**Implication**: The cloud's extraction is significantly more capable than initially assumed. For this demo, we can likely **rely on cloud extraction for basic fact management** and only supplement with client-side logic for:
+- Adding `topics`/`namespace` metadata to memories
+- Providing immediate extraction (vs. waiting 5-7 min)
+- Building memory prompts and summary views
+- Managing session compaction
+
+### What it does NOT provide: Intelligence APIs
+
+The cloud product has **no intelligence APIs**. There is:
+
 - **No summarization** -- there's no server-side summarization of sessions or memories. No summary views, no computed summaries.
 - **No memory prompt** -- there's no endpoint that combines session + LTM into an LLM-ready prompt. You get raw data back; you format it yourself.
 - **No context windowing** -- the server doesn't manage token budgets or trim old messages. It stores everything you send and returns everything you ask for.
-- **No extraction strategies** -- no "discrete" or "continuous" extraction modes. If you want facts extracted from conversations, you do it yourself.
+- **No extraction configuration** -- extraction happens automatically with dedup/contradiction resolution, but there's no control over granularity, topic tagging, or what gets extracted.
 - **No forget policies** -- no age-based, budget-based, or inactivity-based cleanup. You delete memories manually.
-- **No background tasks** -- no async compute, no task polling.
+- **No task polling** -- no way to check extraction status or trigger it on-demand.
 
 ### Implication for this demo
 
-In the OSS version, the Agent Memory Server was a **smart middleware** -- it stored data AND processed it (extraction, summarization, prompt building). The cloud version is **dumb storage** -- it stores and retrieves, nothing more.
+In the OSS version, the Agent Memory Server was a **smart middleware** -- it stored data AND processed it (extraction, summarization, prompt building). The cloud version is **mostly storage** -- it stores, retrieves, and does basic background extraction (~5-7 min delay), but provides no APIs for summarization, prompt building, or extraction control.
 
 This means **all intelligence must live in our code**:
 
@@ -175,7 +211,7 @@ This means **all intelligence must live in our code**:
 | Store session messages                | AMS server                    | Cloud service                      |
 | Store long-term memories              | AMS server                    | Cloud service                      |
 | Semantic search                       | AMS server                    | Cloud service                      |
-| Extract facts from conversation → LTM | AMS server (LLM call)         | **Our code** (OpenAI call)         |
+| Extract facts from conversation → LTM | AMS server (LLM call)         | Cloud (auto, ~5-7 min delay, with dedup + contradiction resolution) |
 | Build LLM-ready prompt from memory    | AMS server (`/memory/prompt`) | **Our code** (fetch data + format) |
 | Summarize memories into views         | AMS server (background task)  | **Our code** (OpenAI call)         |
 | Manage context window / token budget  | AMS server                    | **Our code** (local counting)      |
@@ -1096,23 +1132,23 @@ Old calls (OSS, `cau-redis-agent-memory`) → New calls (`cau-ram`):
 
 ## Migration Checklist
 
-### Phase A: Core Package (Cloud SDK Wraps)
+### Phase A: Core Package (Cloud SDK Wraps) -- DONE
 
-- [ ] A1: Scaffold `packages/cau-ram/` (package.json, tsconfig, index.ts, config, singleton)
-- [ ] A1: `ram.health()` works against real cloud endpoint
-- [ ] A2: `addSessionEvent` / `getSessionMemory` / `deleteSessionMemory` / `listSessions`
-- [ ] A3: `createLongTermMemories` / `searchLongTermMemory` / `searchAllLongTermMemory`
-- [ ] A3: `getLongTermMemory` / `updateLongTermMemory` / `deleteLongTermMemories`
-- [ ] A4: All session memory unit tests pass against real cloud
-- [ ] A4: All long-term memory unit tests pass against real cloud
+- [x] A1: Scaffold `packages/cau-ram/` (package.json, tsconfig, index.ts, config, singleton)
+- [x] A1: `ram.health()` works against real cloud endpoint
+- [x] A2: `addSessionEvent` / `getSessionMemory` / `getSessionEvent` / `deleteSessionEvent` / `deleteSessionMemory` / `listSessions`
+- [x] A3: `createLongTermMemories` / `searchLongTermMemory` / `searchAllLongTermMemory`
+- [x] A3: `getLongTermMemory` / `updateLongTermMemory` / `deleteLongTermMemories`
+- [x] A4: All session memory unit tests pass against real cloud (9 tests)
+- [x] A4: All long-term memory unit tests pass against real cloud (8 tests)
 
 ### Phase B: Custom Logic (Intelligence Layer)
 
-- [ ] B1: `extractMemories` -- LLM extraction + structured output + bulkCreate
+- ~~B1: `extractMemories` -- LLM extraction + structured output + bulkCreate~~ **NOT NEEDED** -- cloud handles extraction automatically (with dedup + contradiction resolution, ~5-7 min delay)
 - [ ] B2: `buildMemoryPrompt` -- session + LTM search + template composition
 - [ ] B3: Summary views -- create/list/compute/cache in Redis
 - [ ] B4: `forgetMemories` -- search + bulk delete by policy
-- [ ] B5: All custom logic unit tests pass (extraction, prompt, forget, summary)
+- [ ] B5: All custom logic unit tests pass (prompt, forget, summary)
 
 ### Phase C: Backend Integration
 
@@ -1120,7 +1156,7 @@ Old calls (OSS, `cau-redis-agent-memory`) → New calls (`cau-ram`):
 - [ ] C1: Config rewritten (RAM_* + LLM_* vars)
 - [ ] C1: `RedisAgentMemory.create(...)` + health check on startup
 - [ ] C2: All handlers rewritten to use `cau-ram` method names
-- [ ] C3: Chatbot tools use `buildMemoryPrompt` + `extractMemories`
+- [ ] C3: Chatbot tools use `buildMemoryPrompt`
 - [ ] C4: Docker cleaned, `.env.example` updated, `ams-partition-cleanup` removed
 - [ ] C5: Full demo end-to-end verification
 - [ ] C5: README updated with cloud setup instructions
