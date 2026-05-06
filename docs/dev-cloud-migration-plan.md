@@ -23,7 +23,8 @@ Create a **new package** `cau-ram` (Redis Agent Memory) that fully replaces `cau
 ## Cloud SDK Reference
 
 - **Package**: `@redis-ai/agent-memory` (v0.0.1, Speakeasy-generated)
-- **Source**: `/Users/prasanrajpurohit/Downloads/agent-memory-ts-sdk`
+- **Location**: `packages/agent-memory-ts-sdk/` (vendored into monorepo -- NOT on npm, DO NOT MODIFY)
+- **Install**: Referenced as workspace dependency: `"@redis-ai/agent-memory": "workspace:*"`
 - **Auth**: HTTP Bearer token via `apiKey`
 - **Routing**: All routes scoped under `/v1/stores/{storeId}/...`
 - **Config env vars**: `RAM_ENDPOINT` (serverURL), `RAM_API_KEY` (apiKey), `RAM_STORE_ID` (storeId)
@@ -319,8 +320,11 @@ RedisAgentMemory.create({
   endpoint: "https://gcp-us-east4.memory.redis.io",
   apiKey: "mem1_...",
   storeId: "store-abc",
-  openAiApiKey: "sk-...",      // for custom logic
-  modelName: "gpt-4o-mini",   // for custom logic
+  llm: {
+    provider: "openai", // "openai" | "anthropic" | "google" | "azure" | etc.
+    model: "gpt-4o-mini",
+    apiKey: "sk-...",
+  },
 });
 
 const ram = RedisAgentMemory.getInstance();
@@ -445,14 +449,17 @@ OPENAI_API_KEY=sk-...
 # ── App (backend) ──
 MEETING_MEMORY_PORT=3001
 MEETING_MEMORY_ACTIVE_DATASET=wealth-advisor
-MEETING_MEMORY_MODEL_NAME=gpt-4o-mini
-MEETING_MEMORY_CONTEXT_WINDOW_MAX=1500
 MEETING_MEMORY_CHATBOT_MODEL=gpt-4o-mini
 
 # ── Redis Agent Memory Cloud ──
 RAM_ENDPOINT=https://gcp-us-east4.memory.redis.io
 RAM_API_KEY=mem1_...
 RAM_STORE_ID=<store-id>
+
+# ── LLM for custom logic (extraction, memoryPrompt, summaries) ──
+LLM_PROVIDER=openai              # "openai" | "anthropic" | "google" | "azure"
+LLM_MODEL=gpt-4o-mini           # model name for the provider
+LLM_API_KEY=sk-...               # API key for the provider (can reuse OPENAI_API_KEY)
 
 # ── Redis (for app's copilot stores, topic stores, chunk stores) ──
 REDIS_URL=redis://default:...@geese-crown-supersteady-16768.db.redis.io:18074
@@ -479,15 +486,19 @@ LANGSMITH_TRACING=true
 
 ## Phased Implementation Plan
 
-The plan is split into two major stages:
-- **Phase A (Cloud SDK Wraps)**: Wrap available cloud features, integrate into backend, test end-to-end with real cloud.
-- **Phase B (Custom Logic)**: Build intelligence layer on top of cloud data (extraction, memoryPrompt, summaries, forget).
+The plan is split into three stages -- demo code is NOT touched until Phase C:
 
-This ensures we have a working foundation before adding complexity.
+- **Phase A (Core Package)**: Build `cau-ram` package wrapping cloud SDK features. Unit tests against real cloud endpoint. Zero demo code changes.
+- **Phase B (Custom Logic)**: Build intelligence layer (extraction, memoryPrompt, summaries, forget) in the same package. Unit tests against real endpoint + LLM. Zero demo code changes.
+- **Phase C (Backend Integration)**: Wire `cau-ram` into the demo backend, rewrite handlers, update config, cleanup Docker. All demo code changes happen here.
+
+This ensures the package is fully developed and tested in isolation before touching any working demo code.
 
 ---
 
-## PHASE A: Cloud SDK Integration
+## PHASE A: Core Package (Cloud SDK Wraps)
+
+> **No demo code changes in this phase.** All work is inside `packages/cau-ram/`.
 
 ### A1. Scaffold `cau-ram` Package
 
@@ -496,18 +507,23 @@ This ensures we have a working foundation before adding complexity.
 **Create**: `packages/cau-ram/`
 
 **Dependencies** (`package.json`):
-- `@redis-ai/agent-memory` (cloud SDK)
+
+- `@redis-ai/agent-memory` (cloud SDK, workspace)
+- `@langchain/core` (base types + model abstraction)
+- `@langchain/openai` (default provider -- others added as needed)
 - `dotenv`
 
 **Files to create**:
+
 - `package.json` (name: `cau-ram`)
 - `tsconfig.json`
 - `vitest.config.ts`
 - `src/index.ts` -- public exports
 - `src/redis-agent-memory.ts` -- singleton class with stubs
-- `src/config.ts` -- ENV: `RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`
+- `src/config.ts` -- ENV: `RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`, `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`
 - `src/types.ts` -- fresh types (cloud-native naming)
 - `src/constants.ts` -- `MessageRole`, `MemoryType` enums
+- `src/helpers/llm.util.ts` -- creates LangChain ChatModel from config
 
 **Acceptance**: `RedisAgentMemory.create({ endpoint, apiKey, storeId })` connects and `ram.health()` returns `{ status: "ok" }` against the real cloud endpoint.
 
@@ -519,12 +535,12 @@ This ensures we have a working foundation before adding complexity.
 
 **Methods on `RedisAgentMemory`**:
 
-| Method | Cloud SDK call | Notes |
-|--------|---------------|-------|
-| `addSessionEvent(params)` | `client.addSessionEvent(request)` | Wrap `content: string` → `[{ text }]` |
-| `getSessionMemory(sessionId)` | `client.getSessionMemory(sessionId)` | Unwrap `[{ text }]` → `string` |
-| `deleteSessionMemory(sessionId)` | `client.deleteSessionMemory(sessionId)` | Direct |
-| `listSessions(options?)` | `client.listSessions(limit, offset)` | Direct |
+| Method                           | Cloud SDK call                          | Notes                                 |
+| -------------------------------- | --------------------------------------- | ------------------------------------- |
+| `addSessionEvent(params)`        | `client.addSessionEvent(request)`       | Wrap `content: string` → `[{ text }]` |
+| `getSessionMemory(sessionId)`    | `client.getSessionMemory(sessionId)`    | Unwrap `[{ text }]` → `string`        |
+| `deleteSessionMemory(sessionId)` | `client.deleteSessionMemory(sessionId)` | Direct                                |
+| `listSessions(options?)`         | `client.listSessions(limit, offset)`    | Direct                                |
 
 **Types** (fresh, cloud-native):
 
@@ -532,9 +548,9 @@ This ensures we have a working foundation before adding complexity.
 type SessionEventInput = {
   sessionId: string;
   actorId: string;
-  role: MessageRole;       // "user" | "assistant" | "system"
-  content: string;         // we wrap into [{ text }] internally
-  createdAt?: number;      // defaults to Date.now()
+  role: MessageRole; // "user" | "assistant" | "system"
+  content: string; // we wrap into [{ text }] internally
+  createdAt?: number; // defaults to Date.now()
   metadata?: Record<string, unknown>;
 };
 
@@ -543,7 +559,7 @@ type SessionEvent = {
   sessionId: string;
   actorId: string;
   role: MessageRole;
-  content: string;         // unwrapped from [{ text }]
+  content: string; // unwrapped from [{ text }]
   createdAt: number;
   metadata?: Record<string, unknown>;
 };
@@ -572,21 +588,21 @@ type SessionListResult = {
 
 **Methods on `RedisAgentMemory`**:
 
-| Method | Cloud SDK call | Notes |
-|--------|---------------|-------|
-| `createLongTermMemories(records)` | `client.bulkCreateLongTermMemories(...)` | Auto-generates `id` (UUID) per record |
-| `searchLongTermMemory(options)` | `client.searchLongTermMemory(request)` | Maps our `MemoryFilter` to `TagFilter` objects |
-| `searchAllLongTermMemory(options)` | Loop with `nextPageToken` | Fetches all pages into flat array |
-| `getLongTermMemory(memoryId)` | `client.getLongTermMemory(memoryId)` | Direct |
-| `updateLongTermMemory(memoryId, updates)` | `client.updateLongTermMemory(memoryId, body)` | Direct |
-| `deleteLongTermMemories(memoryIds)` | `client.bulkDeleteLongTermMemories(...)` | Direct |
+| Method                                    | Cloud SDK call                                | Notes                                          |
+| ----------------------------------------- | --------------------------------------------- | ---------------------------------------------- |
+| `createLongTermMemories(records)`         | `client.bulkCreateLongTermMemories(...)`      | Auto-generates `id` (UUID) per record          |
+| `searchLongTermMemory(options)`           | `client.searchLongTermMemory(request)`        | Maps our `MemoryFilter` to `TagFilter` objects |
+| `searchAllLongTermMemory(options)`        | Loop with `nextPageToken`                     | Fetches all pages into flat array              |
+| `getLongTermMemory(memoryId)`             | `client.getLongTermMemory(memoryId)`          | Direct                                         |
+| `updateLongTermMemory(memoryId, updates)` | `client.updateLongTermMemory(memoryId, body)` | Direct                                         |
+| `deleteLongTermMemories(memoryIds)`       | `client.bulkDeleteLongTermMemories(...)`      | Direct                                         |
 
 **Types**:
 
 ```typescript
 type CreateMemoryInput = {
   text: string;
-  memoryType?: MemoryType;    // "semantic" | "episodic" | "message"
+  memoryType?: MemoryType; // "semantic" | "episodic" | "message"
   sessionId?: string;
   ownerId?: string;
   namespace?: string;
@@ -616,13 +632,13 @@ type MemorySearchOptions = {
 
 // Ergonomic filter -- we convert to TagFilter/NumericFilter internally
 type MemoryFilter = {
-  sessionId?: string;         // shorthand → { eq: value }
+  sessionId?: string; // shorthand → { eq: value }
   ownerId?: string;
   namespace?: string;
-  topics?: string[];          // shorthand → { all: values }
+  topics?: string[]; // shorthand → { all: values }
   memoryType?: MemoryType;
-  createdAfter?: number;      // unix ms → { gt: value }
-  createdBefore?: number;     // unix ms → { lt: value }
+  createdAfter?: number; // unix ms → { gt: value }
+  createdBefore?: number; // unix ms → { lt: value }
 };
 
 type MemorySearchResult = {
@@ -632,6 +648,7 @@ type MemorySearchResult = {
 ```
 
 **Helper**: `build-filters.util.ts` converts `MemoryFilter` → cloud `LongTermMemoryFilter`:
+
 ```
 filter.sessionId = "abc"     → { sessionId: { eq: "abc" } }
 filter.ownerId = "user1"     → { ownerId: { eq: "user1" } }
@@ -646,51 +663,46 @@ filter.createdAfter = 123    → { createdAt: { gt: 123 } }
 
 ---
 
-### A4. Backend Integration (Cloud SDK features only)
+### A4. Unit Tests (Core Operations)
 
-**Goal**: Backend uses `cau-ram` for session + LTM operations. Custom logic methods are stubbed.
+**Goal**: Comprehensive tests proving all Phase A operations work against the real Redis Agent Memory cloud.
 
-**Changes**:
+**Test file**: `packages/cau-ram/src/operations/__tests__/session-memory.test.ts`
 
-1. **`backend/package.json`**: Add `cau-ram` as workspace dep, remove `cau-redis-agent-memory`
-2. **`backend/src/config.ts`**: Add `RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`; remove `AGENT_MEMORY_*`
-3. **`backend/src/index.ts`**: Initialize:
-   ```typescript
-   import { RedisAgentMemory } from "cau-ram";
-   RedisAgentMemory.create({
-     endpoint: ENV.RAM_ENDPOINT,
-     apiKey: ENV.RAM_API_KEY,
-     storeId: ENV.RAM_STORE_ID,
-   });
-   await RedisAgentMemory.getInstance().health();
-   ```
-4. **Handler rewrites** (method names change to match cloud):
-   - `working-memory.handlers.ts` → uses `addSessionEvent`, `getSessionMemory`, `deleteSessionMemory`, `listSessions`
-   - `long-term-memory.handlers.ts` → uses `searchLongTermMemory`, `searchAllLongTermMemory`
-   - `lifecycle.handlers.ts` → uses `deleteLongTermMemories`, `deleteSessionMemory`
-5. **Chatbot tools** (`tools.ts`): Update imports + method calls
-6. **Remove**: `ams-partition-cleanup.ts` usage
+```typescript
+describe("session memory operations", () => {
+  it("should add event and retrieve session");
+  it("should list sessions after creation");
+  it("should delete session");
+  it("should handle non-existent session gracefully");
+});
+```
 
-**Stubs for Phase B**: `extractMemories`, `buildMemoryPrompt`, `computeSummary`, `forgetMemories` return placeholder results so the app doesn't crash but marks those features as "coming in Phase B".
+**Test file**: `packages/cau-ram/src/operations/__tests__/long-term-memory.test.ts`
 
-**Test**: Full flow against real cloud -- create session, append events, get session, create LTM, search LTM.
+```typescript
+describe("long-term memory operations", () => {
+  it("should create memories and return records with IDs");
+  it("should search by text and find relevant memories");
+  it("should search with filters (namespace, ownerId, sessionId)");
+  it("should paginate with searchAll");
+  it("should get single memory by ID");
+  it("should update memory text/topics");
+  it("should delete memories by IDs");
+});
+```
 
----
+**Test config**: Tests use real env vars (`RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`) from `.env` or test env. Each test cleans up after itself.
 
-### A5. Docker / Deployment Cleanup
-
-- Remove `agent-memory` service from `docker-compose.yml`
-- Remove all AMS-related env vars
-- Update `.env.example` with cloud vars
-- Simpler stack: Node app + Redis (for copilot stores)
+**Acceptance**: All tests pass against real cloud. Package core is production-ready.
 
 ---
 
 ## PHASE B: Custom Logic (Intelligence Layer)
 
-All Phase B operations use data from Phase A (session events + LTM) combined with OpenAI.
+All Phase B operations are implemented inside `packages/cau-ram/`. They use data from Phase A (session events + LTM) combined with LLM calls. **No demo code changes in this phase.**
 
-**Add dependency**: `openai` to `packages/cau-ram/package.json`
+**Dependencies already in place** from Phase A1: `@langchain/core`, `@langchain/openai` (or other provider package).
 
 ---
 
@@ -698,7 +710,7 @@ All Phase B operations use data from Phase A (session events + LTM) combined wit
 
 **Goal**: Extract facts from session conversations into long-term memory.
 
-**Trigger**: Called by the backend after the last transcript chunk (replaces OSS `longTermMemoryStrategy`).
+**Trigger** (in Phase C): Called by the backend after the last transcript chunk (replaces OSS `longTermMemoryStrategy`).
 
 **Method**: `ram.extractMemories(sessionId, options)`
 
@@ -708,8 +720,7 @@ All Phase B operations use data from Phase A (session events + LTM) combined wit
 type ExtractionOptions = {
   namespace?: string;
   ownerId?: string;
-  modelName?: string;
-  topics?: string[];     // seed topics from transcript metadata
+  topics?: string[]; // seed topics from transcript metadata
 };
 
 type ExtractionResult = {
@@ -717,26 +728,33 @@ type ExtractionResult = {
   count: number;
 };
 
-const extractMemories = async (sessionId, options): Promise<ExtractionResult> => {
+// Uses LangChain's withStructuredOutput for reliable JSON extraction
+const extractMemories = async (
+  sessionId,
+  options,
+): Promise<ExtractionResult> => {
   // 1. Get all session events
   const session = await ram.getSessionMemory(sessionId);
   const transcript = formatEventsAsTranscript(session.events);
 
-  // 2. Call OpenAI for structured extraction
-  const response = await openai.chat.completions.create({
-    model: options.modelName ?? "gpt-4o-mini",
-    response_format: { type: "json_object" },
-    messages: [
-      { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
-      { role: "user", content: transcript },
-    ],
+  // 2. Call LLM with structured output (works with any LangChain provider)
+  const extractionSchema = z.object({
+    facts: z.array(
+      z.object({
+        text: z.string(),
+        topics: z.array(z.string()),
+      }),
+    ),
   });
 
-  // 3. Parse into memory records
-  const facts = JSON.parse(response.choices[0].message.content).facts;
+  const structuredLlm = llm.withStructuredOutput(extractionSchema);
+  const result = await structuredLlm.invoke([
+    { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
+    { role: "user", content: transcript },
+  ]);
 
-  // 4. Store in LTM
-  const records = facts.map(f => ({
+  // 3. Store in LTM
+  const records = result.facts.map((f) => ({
     text: f.text,
     topics: f.topics ?? options.topics,
     sessionId,
@@ -749,9 +767,9 @@ const extractMemories = async (sessionId, options): Promise<ExtractionResult> =>
 };
 ```
 
-**Backend integration**: `appendWorkingMemoryHandler` calls `ram.extractMemories(sessionId, ...)` when `isLastChunk === true`.
+**Phase C usage**: `appendWorkingMemoryHandler` calls `ram.extractMemories(sessionId, ...)` when `isLastChunk === true`.
 
-**Test**: Play transcript to last chunk → verify LTM records appear with extracted facts.
+**Unit test**: Create a session with events → call `extractMemories` → verify LTM records appear with extracted facts and topics.
 
 ---
 
@@ -785,7 +803,8 @@ const buildMemoryPrompt = async (request): Promise<MemoryPromptResult> => {
   // 2. Search long-term memory
   let longTermContext = "";
   if (request.longTermSearch) {
-    const filter = request.longTermSearch === true ? {} : request.longTermSearch;
+    const filter =
+      request.longTermSearch === true ? {} : request.longTermSearch;
     const results = await ram.searchLongTermMemory({
       text: request.query,
       filter,
@@ -795,8 +814,10 @@ const buildMemoryPrompt = async (request): Promise<MemoryPromptResult> => {
   }
 
   // 3. Compose system prompt
-  const systemContent = MEMORY_PROMPT_TEMPLATE
-    .replace("{{conversation}}", conversationContext)
+  const systemContent = MEMORY_PROMPT_TEMPLATE.replace(
+    "{{conversation}}",
+    conversationContext,
+  )
     .replace("{{longTermMemory}}", longTermContext)
     .replace("{{query}}", request.query);
 
@@ -804,9 +825,9 @@ const buildMemoryPrompt = async (request): Promise<MemoryPromptResult> => {
 };
 ```
 
-**Backend integration**: Chatbot's `getMemoryContext` tool calls `ram.buildMemoryPrompt(...)`.
+**Phase C usage**: Chatbot's `getMemoryContext` tool calls `ram.buildMemoryPrompt(...)`.
 
-**Test**: With session + LTM populated, call `buildMemoryPrompt` → verify system message contains both conversation and LTM facts.
+**Unit test**: Populate session + LTM → call `buildMemoryPrompt` → verify system message contains both conversation context and LTM facts.
 
 ---
 
@@ -815,6 +836,7 @@ const buildMemoryPrompt = async (request): Promise<MemoryPromptResult> => {
 **Goal**: Compute summaries from LTM grouped by session/user/topic.
 
 **Methods**:
+
 - `ram.createSummaryView(definition)` -- store view definition
 - `ram.listSummaryViews()` -- list stored definitions
 - `ram.getSummaryView(viewId)` -- get one definition
@@ -823,6 +845,7 @@ const buildMemoryPrompt = async (request): Promise<MemoryPromptResult> => {
 - `ram.listSummaryPartitions(viewId)` -- get cached summaries
 
 **Implementation** (`packages/cau-ram/src/custom/compute-summary.ts`):
+
 - View definitions stored in Redis as JSON (`summary-view:{viewId}`)
 - On `computeSummary`: search LTM → group by view fields → OpenAI summarize → cache in Redis
 - Partition results cached in Redis (`summary-partition:{viewId}:{groupKey}`)
@@ -830,7 +853,7 @@ const buildMemoryPrompt = async (request): Promise<MemoryPromptResult> => {
 
 **Note**: This feature requires `cau-redis` (Redis access) as a peer dependency.
 
-**Test**: Create view → populate LTM → compute summary → verify summary text is coherent.
+**Unit test**: Create view → populate LTM → compute summary → verify summary text is coherent and cached.
 
 ---
 
@@ -857,7 +880,7 @@ const forgetMemories = async (policy, filters?): Promise<ForgetResult> => {
   let searchFilter: MemoryFilter = { ...filters };
 
   if (policy.age) {
-    const cutoff = Date.now() - (policy.age.days * 24 * 60 * 60 * 1000);
+    const cutoff = Date.now() - policy.age.days * 24 * 60 * 60 * 1000;
     searchFilter.createdBefore = cutoff;
   }
 
@@ -872,37 +895,138 @@ const forgetMemories = async (policy, filters?): Promise<ForgetResult> => {
   }
 
   if (toDelete.length > 0) {
-    await ram.deleteLongTermMemories(toDelete.map(m => m.id));
+    await ram.deleteLongTermMemories(toDelete.map((m) => m.id));
   }
 
   return { deleted: toDelete.length, scanned: all.memories.length };
 };
 ```
 
-**Test**: Create old memories → call forget with age policy → verify deleted.
+**Unit test**: Create old memories → call `forgetMemories` with age policy → verify deleted. Test budget policy keeps N most recent.
 
 ---
 
-### B5. Backend Integration (Custom Logic)
+### B5. Unit Tests (Custom Logic)
 
-After Phase B implementations are done, update the handler code that uses these features:
+**Goal**: Comprehensive tests for all custom intelligence features against real cloud + LLM.
 
-- `working-memory.handlers.ts`: On `isLastChunk`, call `ram.extractMemories(...)` instead of relying on `longTermMemoryStrategy`
+**Test file**: `packages/cau-ram/src/custom/__tests__/extract-memories.test.ts`
+
+```typescript
+describe("extractMemories", () => {
+  it("should extract facts from session transcript into LTM");
+  it("should tag extracted memories with topics");
+  it("should handle empty session gracefully");
+});
+```
+
+**Test file**: `packages/cau-ram/src/custom/__tests__/build-memory-prompt.test.ts`
+
+```typescript
+describe("buildMemoryPrompt", () => {
+  it("should include session context in prompt");
+  it("should include relevant LTM in prompt");
+  it("should work with session-only (no LTM search)");
+  it("should work with LTM-only (no session)");
+});
+```
+
+**Test file**: `packages/cau-ram/src/custom/__tests__/forget-memories.test.ts`
+
+```typescript
+describe("forgetMemories", () => {
+  it("should delete memories older than age policy");
+  it("should keep N most recent with budget policy");
+  it("should report deleted + scanned counts");
+});
+```
+
+**Test file**: `packages/cau-ram/src/custom/__tests__/compute-summary.test.ts`
+
+```typescript
+describe("summaryViews", () => {
+  it("should create and retrieve view definition");
+  it("should compute summary from LTM records");
+  it("should cache computed summary");
+});
+```
+
+**Test config**: Tests use real env vars (`RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`, `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`). Each test cleans up created data.
+
+**Acceptance**: All custom logic tests pass. Package is fully production-ready. Ready for demo integration.
+
+---
+
+## PHASE C: Backend Integration
+
+**Prerequisite**: Phase A + B complete. `cau-ram` package is fully implemented and tested.
+
+**Goal**: Wire `cau-ram` into the demo backend. This is the ONLY phase that changes demo code.
+
+---
+
+### C1. Backend Dependency Swap
+
+1. **`backend/package.json`**: Add `cau-ram` as workspace dep, remove `cau-redis-agent-memory`
+2. **`backend/src/config.ts`**: Add `RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`, `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`; remove `AGENT_MEMORY_*`
+3. **`backend/src/index.ts`**: Initialize:
+   ```typescript
+   import { RedisAgentMemory } from "cau-ram";
+   RedisAgentMemory.create({
+     endpoint: ENV.RAM_ENDPOINT,
+     apiKey: ENV.RAM_API_KEY,
+     storeId: ENV.RAM_STORE_ID,
+     llm: {
+       provider: ENV.LLM_PROVIDER,
+       model: ENV.LLM_MODEL,
+       apiKey: ENV.LLM_API_KEY,
+     },
+   });
+   await RedisAgentMemory.getInstance().health();
+   ```
+
+---
+
+### C2. Handler Rewrites
+
+Method names change to match cloud (see Migration Reference table below):
+
+- `working-memory.handlers.ts` → uses `addSessionEvent`, `getSessionMemory`, `deleteSessionMemory`, `listSessions`
+- `long-term-memory.handlers.ts` → uses `searchLongTermMemory`, `searchAllLongTermMemory`
+- `lifecycle.handlers.ts` → uses `deleteLongTermMemories`, `deleteSessionMemory`, `forgetMemories`
+- `summary-views.handlers.ts` → uses `createSummaryView`, `computeSummary`, `listSummaryPartitions`
+
+---
+
+### C3. Chatbot Integration
+
 - `chatbot-agent/tools.ts`: `getMemoryContext` tool calls `ram.buildMemoryPrompt(...)`
-- `summary-views.handlers.ts`: All handlers call `ram.createSummaryView(...)`, `ram.computeSummary(...)`, etc.
-- `lifecycle.handlers.ts`: Reset calls `ram.forgetMemories(...)` or direct `deleteLongTermMemories`
+- `chatbot-agent/graph.ts`: Import from `cau-ram`
+- On `isLastChunk`, call `ram.extractMemories(...)` instead of relying on `longTermMemoryStrategy`
 
 ---
 
-### B6. Full End-to-End Verification
+### C4. Cleanup and Deployment
 
-After all Phase B is complete, verify the full demo flow:
+- Remove `agent-memory` service from `docker-compose.yml`
+- Remove all AMS-related env vars
+- Update `.env.example` with cloud vars
+- Remove `ams-partition-cleanup.ts` usage
+- Simpler stack: Node app + Redis (for copilot stores)
+
+---
+
+### C5. Full End-to-End Verification
+
+Verify the full demo flow:
+
 - Transcript playback → session events → extraction → LTM populated
 - Memory explorer shows extracted LTM records
 - Chatbot uses `buildMemoryPrompt` and answers with memory context
 - Summary views compute and display
 - Lifecycle reset clears sessions + LTM
 - No OSS AMS dependency anywhere
+- Update README with cloud setup instructions
 
 ---
 
@@ -910,45 +1034,45 @@ After all Phase B is complete, verify the full demo flow:
 
 Old calls (OSS, `cau-redis-agent-memory`) → New calls (`cau-ram`):
 
-| Old | New |
-|---|---|
-| `import { AgentMemory } from "cau-redis-agent-memory"` | `import { RedisAgentMemory } from "cau-ram"` |
-| `AgentMemory.getInstance()` | `RedisAgentMemory.getInstance()` |
-| `.getOrCreateWorkingMemory(sessionId, opts)` | `.getSessionMemory(sessionId)` (returns null if not exists) |
-| `.getWorkingMemory(sessionId, opts)` | `.getSessionMemory(sessionId)` |
-| `.putWorkingMemory(sessionId, payload, opts)` | `.addSessionEvent(eventInput)` (one per new message) |
-| `.deleteWorkingMemory(sessionId, opts)` | `.deleteSessionMemory(sessionId)` |
-| `.listSessions(opts)` | `.listSessions(opts)` |
-| `.createLongTermMemories(records, opts)` | `.createLongTermMemories(records)` |
-| `.searchLongTermMemory(opts)` | `.searchLongTermMemory(opts)` |
-| `.searchAllLongTermMemories(opts)` | `.searchAllLongTermMemory(opts)` |
-| `.getLongTermMemory(id)` | `.getLongTermMemory(id)` |
-| `.editLongTermMemory(id, updates)` | `.updateLongTermMemory(id, updates)` |
-| `.deleteLongTermMemories(ids)` | `.deleteLongTermMemories(ids)` |
-| `.memoryPrompt(request)` | `.buildMemoryPrompt(request)` |
-| `.forgetLongTermMemories(policy, opts)` | `.forgetMemories(policy, filters)` |
-| `.createSummaryView(...)` | `.createSummaryView(...)` |
-| `.listSummaryViews()` | `.listSummaryViews()` |
-| `.runSummaryViewPartition(...)` | `.computeSummary(...)` |
-| `.listSummaryViewPartitions(...)` | `.listSummaryPartitions(...)` |
+| Old                                                    | New                                                         |
+| ------------------------------------------------------ | ----------------------------------------------------------- |
+| `import { AgentMemory } from "cau-redis-agent-memory"` | `import { RedisAgentMemory } from "cau-ram"`                |
+| `AgentMemory.getInstance()`                            | `RedisAgentMemory.getInstance()`                            |
+| `.getOrCreateWorkingMemory(sessionId, opts)`           | `.getSessionMemory(sessionId)` (returns null if not exists) |
+| `.getWorkingMemory(sessionId, opts)`                   | `.getSessionMemory(sessionId)`                              |
+| `.putWorkingMemory(sessionId, payload, opts)`          | `.addSessionEvent(eventInput)` (one per new message)        |
+| `.deleteWorkingMemory(sessionId, opts)`                | `.deleteSessionMemory(sessionId)`                           |
+| `.listSessions(opts)`                                  | `.listSessions(opts)`                                       |
+| `.createLongTermMemories(records, opts)`               | `.createLongTermMemories(records)`                          |
+| `.searchLongTermMemory(opts)`                          | `.searchLongTermMemory(opts)`                               |
+| `.searchAllLongTermMemories(opts)`                     | `.searchAllLongTermMemory(opts)`                            |
+| `.getLongTermMemory(id)`                               | `.getLongTermMemory(id)`                                    |
+| `.editLongTermMemory(id, updates)`                     | `.updateLongTermMemory(id, updates)`                        |
+| `.deleteLongTermMemories(ids)`                         | `.deleteLongTermMemories(ids)`                              |
+| `.memoryPrompt(request)`                               | `.buildMemoryPrompt(request)`                               |
+| `.forgetLongTermMemories(policy, opts)`                | `.forgetMemories(policy, filters)`                          |
+| `.createSummaryView(...)`                              | `.createSummaryView(...)`                                   |
+| `.listSummaryViews()`                                  | `.listSummaryViews()`                                       |
+| `.runSummaryViewPartition(...)`                        | `.computeSummary(...)`                                      |
+| `.listSummaryViewPartitions(...)`                      | `.listSummaryPartitions(...)`                               |
 
 ---
 
 ## File Change Summary
 
-| Area | Files Affected | Change Type |
-|---|---|---|
-| `packages/cau-ram/` (NEW) | ~15-20 files | **New package** |
-| `packages/cau-redis-agent-memory/` | **None** -- left untouched | No change |
-| `backend/package.json` | Replace dep with `cau-ram` | Dependency swap |
-| `backend/src/config.ts` | Replace `AGENT_MEMORY_*` vars with `RAM_*` | Rewrite config |
-| `backend/src/index.ts` | `RedisAgentMemory.create(...)` | Rewrite init |
-| `backend/src/handlers/*.ts` | Import from `cau-ram`, use new method names | Rewrite |
-| `backend/src/chatbot-agent/tools.ts` | Import from `cau-ram`, use new method names | Rewrite |
-| `backend/src/chatbot-agent/graph.ts` | Import from `cau-ram` | Rewrite |
-| `backend/src/services/ams-partition-cleanup.ts` | Remove | Deletion |
-| `.env` / `.env.example` | Replace AMS vars with cloud vars | Rewrite |
-| `docker-compose.yml` | Remove `agent-memory` service | Simplification |
+| Phase | Area                                            | Files Affected                              | Change Type     |
+| ----- | ----------------------------------------------- | ------------------------------------------- | --------------- |
+| A+B   | `packages/cau-ram/` (NEW)                       | ~20-25 files (ops, custom, tests, config)   | **New package** |
+| --    | `packages/cau-redis-agent-memory/`              | **None** -- left untouched                  | No change       |
+| C     | `backend/package.json`                          | Replace dep with `cau-ram`                  | Dependency swap |
+| C     | `backend/src/config.ts`                         | Replace `AGENT_MEMORY_*` vars with `RAM_*`  | Rewrite config  |
+| C     | `backend/src/index.ts`                          | `RedisAgentMemory.create(...)`              | Rewrite init    |
+| C     | `backend/src/handlers/*.ts`                     | Import from `cau-ram`, use new method names | Rewrite         |
+| C     | `backend/src/chatbot-agent/tools.ts`            | Import from `cau-ram`, use new method names | Rewrite         |
+| C     | `backend/src/chatbot-agent/graph.ts`            | Import from `cau-ram`                       | Rewrite         |
+| C     | `backend/src/services/ams-partition-cleanup.ts` | Remove                                      | Deletion        |
+| C     | `.env` / `.env.example`                         | Replace AMS vars with cloud vars            | Rewrite         |
+| C     | `docker-compose.yml`                            | Remove `agent-memory` service               | Simplification  |
 
 ---
 
@@ -972,29 +1096,31 @@ Old calls (OSS, `cau-redis-agent-memory`) → New calls (`cau-ram`):
 
 ## Migration Checklist
 
-### Phase A: Cloud SDK Integration
+### Phase A: Core Package (Cloud SDK Wraps)
 
 - [ ] A1: Scaffold `packages/cau-ram/` (package.json, tsconfig, index.ts, config, singleton)
 - [ ] A1: `ram.health()` works against real cloud endpoint
 - [ ] A2: `addSessionEvent` / `getSessionMemory` / `deleteSessionMemory` / `listSessions`
-- [ ] A2: Test session CRUD against real cloud
 - [ ] A3: `createLongTermMemories` / `searchLongTermMemory` / `searchAllLongTermMemory`
 - [ ] A3: `getLongTermMemory` / `updateLongTermMemory` / `deleteLongTermMemories`
-- [ ] A3: Test LTM CRUD + search against real cloud
-- [ ] A4: Backend handlers rewritten to use `cau-ram`
-- [ ] A4: Chatbot tools rewritten to use `cau-ram`
-- [ ] A4: App starts and basic session/LTM flow works end-to-end
-- [ ] A5: Docker cleaned up, `.env` updated
+- [ ] A4: All session memory unit tests pass against real cloud
+- [ ] A4: All long-term memory unit tests pass against real cloud
 
-### Phase B: Custom Logic
+### Phase B: Custom Logic (Intelligence Layer)
 
-- [ ] B1: `extractMemories` -- extraction prompt + OpenAI + bulkCreate
-- [ ] B1: Test extraction produces meaningful LTM records
-- [ ] B2: `buildMemoryPrompt` -- session + LTM search + template
-- [ ] B2: Test chatbot gets context-aware responses
+- [ ] B1: `extractMemories` -- LLM extraction + structured output + bulkCreate
+- [ ] B2: `buildMemoryPrompt` -- session + LTM search + template composition
 - [ ] B3: Summary views -- create/list/compute/cache in Redis
-- [ ] B3: Test summary computation produces coherent text
 - [ ] B4: `forgetMemories` -- search + bulk delete by policy
-- [ ] B5: All handlers using custom logic methods
-- [ ] B6: Full demo end-to-end verification
-- [ ] B6: Update README with cloud setup instructions
+- [ ] B5: All custom logic unit tests pass (extraction, prompt, forget, summary)
+
+### Phase C: Backend Integration
+
+- [ ] C1: Backend dependency swap (`cau-ram` replaces `cau-redis-agent-memory`)
+- [ ] C1: Config rewritten (RAM_* + LLM_* vars)
+- [ ] C1: `RedisAgentMemory.create(...)` + health check on startup
+- [ ] C2: All handlers rewritten to use `cau-ram` method names
+- [ ] C3: Chatbot tools use `buildMemoryPrompt` + `extractMemories`
+- [ ] C4: Docker cleaned, `.env.example` updated, `ams-partition-cleanup` removed
+- [ ] C5: Full demo end-to-end verification
+- [ ] C5: README updated with cloud setup instructions

@@ -155,3 +155,5 @@ temp/
 tests/
 
 **/*.mov
+
+**/agent-memory-ts-sdk
