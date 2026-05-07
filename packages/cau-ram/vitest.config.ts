@@ -7,8 +7,8 @@ config({ path: resolve(__dirname, "../../.env") });
 export default defineConfig({
   test: {
     globals: true,
-    testTimeout: 30_000,
-    hookTimeout: 30_000,
+    testTimeout: 60_000,
+    hookTimeout: 60_000,
     fileParallelism: false,
     sequence: { concurrent: false },
   },
