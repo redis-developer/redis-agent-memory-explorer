@@ -1,9 +1,16 @@
-import type { SessionEventInput, SessionEvent, SessionMemory, SessionListOptions, SessionListResult } from "../types";
+import type {
+  SessionEventInput,
+  SessionEvent,
+  SessionMemory,
+  SessionListOptions,
+  SessionListResult,
+} from "../types";
 
 import { AgentMemory } from "@redis-ai/agent-memory";
 
 import { DEFAULT_LIST_LIMIT, DEFAULT_LIST_OFFSET } from "../constants";
 
+//#region  map functions
 const mapContentToSdkFormat = (content: string): Array<{ text: string }> => {
   return [{ text: content }];
 };
@@ -31,7 +38,9 @@ const mapSdkEventToSessionEvent = (sdkEvent: {
     metadata: sdkEvent.metadata as Record<string, unknown> | undefined,
   };
 };
+//#endregion
 
+//#region event operations
 const addSessionEvent = async (
   client: AgentMemory,
   input: SessionEventInput,
@@ -47,37 +56,6 @@ const addSessionEvent = async (
   });
 
   return mapSdkEventToSessionEvent(response.event);
-};
-
-const getSessionMemory = async (
-  client: AgentMemory,
-  sessionId: string,
-): Promise<SessionMemory | null> => {
-  let result: SessionMemory | null = null;
-
-  try {
-    const response = await client.getSessionMemory(sessionId);
-
-    result = {
-      sessionId: response.sessionId,
-      ownerId: response.ownerId,
-      events: response.events.map(mapSdkEventToSessionEvent),
-    };
-  } catch (error: any) {
-    const isNotFound = error?.statusCode === 404 || error?.message?.includes("not found");
-    if (!isNotFound) {
-      throw error;
-    }
-  }
-
-  return result;
-};
-
-const deleteSessionMemory = async (
-  client: AgentMemory,
-  sessionId: string,
-): Promise<void> => {
-  await client.deleteSessionMemory(sessionId);
 };
 
 const getSessionEvent = async (
@@ -98,6 +76,41 @@ const deleteSessionEvent = async (
   await client.deleteSessionEvent(sessionId, eventId);
 };
 
+//#endregion
+
+//#region session operations
+const getSessionMemory = async (
+  client: AgentMemory,
+  sessionId: string,
+): Promise<SessionMemory | null> => {
+  let result: SessionMemory | null = null;
+
+  try {
+    const response = await client.getSessionMemory(sessionId);
+
+    result = {
+      sessionId: response.sessionId,
+      ownerId: response.ownerId,
+      events: response.events.map(mapSdkEventToSessionEvent),
+    };
+  } catch (error: any) {
+    const isNotFound =
+      error?.statusCode === 404 || error?.message?.includes("not found");
+    if (!isNotFound) {
+      throw error;
+    }
+  }
+
+  return result;
+};
+
+const deleteSessionMemory = async (
+  client: AgentMemory,
+  sessionId: string,
+): Promise<void> => {
+  await client.deleteSessionMemory(sessionId);
+};
+
 const listSessions = async (
   client: AgentMemory,
   options?: SessionListOptions,
@@ -113,4 +126,13 @@ const listSessions = async (
   };
 };
 
-export { addSessionEvent, getSessionMemory, getSessionEvent, deleteSessionEvent, deleteSessionMemory, listSessions };
+//#endregion
+
+export {
+  addSessionEvent,
+  getSessionEvent,
+  deleteSessionEvent,
+  getSessionMemory,
+  deleteSessionMemory,
+  listSessions,
+};
