@@ -36,7 +36,7 @@ import {
   updateLongTermMemory as updateLongTermMemoryOp,
   deleteLongTermMemories as deleteLongTermMemoriesOp,
 } from "./operations/long-term-memory";
-import { buildMemoryPrompt as buildMemoryPromptOp } from "./operations/build-memory-prompt";
+import { buildMemoryPrompt as buildMemoryPromptOp } from "./operations/memory-prompt";
 
 let instance: RedisAgentMemory | null = null;
 

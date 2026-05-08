@@ -6,7 +6,7 @@ import type {
   MemorySearchOptions,
   MemoryRecord,
   LlmConfig,
-} from "../types";
+} from "../../types";
 
 import { AgentMemory } from "@redis-ai/agent-memory";
 
@@ -14,15 +14,15 @@ import {
   FORMATTING_OVERHEAD_TOKENS,
   DEFAULT_LTM_PROMPT_LIMIT,
   PER_MESSAGE_TOKEN_OVERHEAD,
-} from "../constants";
-import { getSessionMemory } from "./session-memory";
-import { searchLongTermMemory } from "./long-term-memory";
+} from "../../constants";
+import { getSessionMemory } from "../session-memory";
+import { searchLongTermMemory } from "../long-term-memory";
 import {
   countTokens,
   countMessagesTokens,
-} from "../helpers/token-counter.util";
-import { getEffectiveTokenLimit } from "../helpers/model-limits.util";
-import { summarizeMessages } from "../helpers/summarize-messages.util";
+} from "./token-counter.util";
+import { getEffectiveTokenLimit } from "./model-limits.util";
+import { summarizeMessages } from "./summarize-messages.util";
 
 const buildLtmSearchOptions = (
   options: BuildMemoryPromptOptions,

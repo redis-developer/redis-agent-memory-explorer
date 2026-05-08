@@ -2,7 +2,7 @@ import type { TiktokenModel } from "js-tiktoken";
 
 import { encodingForModel, getEncoding } from "js-tiktoken";
 
-import { PER_MESSAGE_TOKEN_OVERHEAD } from "../constants";
+import { PER_MESSAGE_TOKEN_OVERHEAD } from "../../constants";
 
 const CHARS_PER_TOKEN_ESTIMATE = 4;
 

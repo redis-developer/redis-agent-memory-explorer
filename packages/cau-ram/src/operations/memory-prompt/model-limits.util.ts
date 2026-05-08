@@ -1,4 +1,4 @@
-import { MODEL_CONTEXT_WINDOWS, DEFAULT_CONTEXT_WINDOW } from "../constants";
+import { MODEL_CONTEXT_WINDOWS, DEFAULT_CONTEXT_WINDOW } from "../../constants";
 
 const getModelContextWindow = (modelName?: string): number => {
   const normalized = modelName?.toLowerCase().trim() ?? "";

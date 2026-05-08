@@ -6,13 +6,13 @@ import type {
   MemoryUpdateInput,
   BulkCreateResult,
   BulkDeleteResult,
-} from "../types";
+} from "../../types";
 
 import { randomUUID } from "node:crypto";
 import { AgentMemory } from "@redis-ai/agent-memory";
 
-import { DEFAULT_LTM_SEARCH_LIMIT } from "../constants";
-import { buildLongTermMemoryFilter, mapFilterOp } from "../helpers/build-filters.util";
+import { DEFAULT_LTM_SEARCH_LIMIT } from "../../constants";
+import { buildLongTermMemoryFilter, mapFilterOp } from "./build-filters.util";
 
 const mapSdkRecordToMemoryRecord = (sdkRecord: {
   id: string;

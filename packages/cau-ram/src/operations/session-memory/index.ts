@@ -4,11 +4,11 @@ import type {
   SessionMemory,
   SessionListOptions,
   SessionListResult,
-} from "../types";
+} from "../../types";
 
 import { AgentMemory } from "@redis-ai/agent-memory";
 
-import { DEFAULT_LIST_LIMIT, DEFAULT_LIST_OFFSET } from "../constants";
+import { DEFAULT_LIST_LIMIT, DEFAULT_LIST_OFFSET } from "../../constants";
 
 //#region  map functions
 const mapContentToSdkFormat = (content: string): Array<{ text: string }> => {

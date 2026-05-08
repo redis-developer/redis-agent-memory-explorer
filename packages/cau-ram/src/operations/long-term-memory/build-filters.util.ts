@@ -1,8 +1,7 @@
-import type { MemoryFilter } from "../types";
+import type { MemoryFilter } from "../../types";
 
-import { FilterOp } from "../constants";
+import { FilterOp } from "../../constants";
 
-// Locally defined to match cloud SDK's expected shapes (avoids subpath import issues)
 type TagFilter = {
   eq?: string;
   ne?: string;
