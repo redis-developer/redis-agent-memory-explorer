@@ -1142,10 +1142,10 @@ Old calls (OSS, `cau-redis-agent-memory`) → New calls (`cau-ram`):
 ### Phase B: Custom Logic (Intelligence Layer)
 
 - ~~B1: `extractMemories` -- LLM extraction + structured output + bulkCreate~~ **NOT NEEDED** -- cloud handles extraction automatically (with dedup + contradiction resolution, ~5-7 min delay)
-- [ ] B2: `buildMemoryPrompt` -- session + LTM search + template composition
-- [ ] B3: Summary views -- create/list/compute/cache in Redis
-- [ ] B4: `forgetMemories` -- search + bulk delete by policy
-- [ ] B5: All custom logic unit tests pass (prompt, forget, summary)
+- [x] B2: `buildMemoryPrompt` -- session + LTM search + token budgeting + LLM summarization (8 tests pass)
+- ~~B3: Summary views -- create/list/compute/cache in Redis~~ **NOT NEEDED** -- will hide feature in UI; modern LLM context windows are large enough for demo
+- [x] B4: `forgetMemories` -- search + bulk delete by policy
+- [x] B5: All custom logic unit tests pass (prompt, forget)
 
 ### Phase C: Backend Integration
 

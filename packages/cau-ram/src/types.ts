@@ -147,6 +147,34 @@ type RedisAgentMemoryConfig = {
   llm?: LlmConfig;
 };
 
+// ── Forget ──
+
+type ForgetSessionOptions = {
+  sessionId: string;
+};
+
+type ForgetLtmOptions = {
+  ownerId?: string;
+  namespace?: string;
+  topics?: string[];
+  sessionId?: string;
+  text?: string;
+  similarityThreshold?: number;
+};
+
+type ForgetOptions = {
+  includeSession: boolean;
+  includeLtm: boolean;
+  session?: ForgetSessionOptions;
+  ltm?: ForgetLtmOptions;
+};
+
+type ForgetResult = {
+  deletedSessionIds: string[];
+  deletedLtmIds: string[];
+  totalDeleted: number;
+};
+
 // ── Health ──
 
 type HealthResult = {
@@ -170,6 +198,10 @@ export type {
   SimpleMessage,
   BuildMemoryPromptOptions,
   MemoryPromptResult,
+  ForgetSessionOptions,
+  ForgetLtmOptions,
+  ForgetOptions,
+  ForgetResult,
   RamConfig,
   LlmConfig,
   RedisAgentMemoryConfig,
