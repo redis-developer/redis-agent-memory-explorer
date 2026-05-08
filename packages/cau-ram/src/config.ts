@@ -23,16 +23,15 @@ const loadRamConfig = (): RamConfig => {
 };
 
 const loadLlmConfig = (): LlmConfig | undefined => {
-  const provider = process.env.LLM_PROVIDER;
-  const model = process.env.LLM_MODEL;
-  const apiKey = process.env.LLM_API_KEY;
+  const model = process.env.SUMMARY_MODEL;
+  const apiKey = process.env.OPENAI_API_KEY;
 
-  const hasAll = provider && model && apiKey;
+  const hasAll = model && apiKey;
   if (!hasAll) {
     return undefined;
   }
 
-  return { provider, model, apiKey };
+  return { model, apiKey };
 };
 
 const loadConfig = (): RedisAgentMemoryConfig => {

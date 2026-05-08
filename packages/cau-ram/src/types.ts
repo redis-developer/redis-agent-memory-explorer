@@ -104,6 +104,31 @@ type BulkDeleteResult = {
   errors?: Array<{ id: string; message: string }>;
 };
 
+// ── Memory Prompt ──
+
+type SimpleMessage = { role: string; content: string };
+
+type BuildMemoryPromptOptions = {
+  query: string;
+  sessionId?: string;
+  ownerId?: string;
+  namespace?: string;
+  modelName?: string;
+  contextWindowMax?: number;
+  longTermSearch?: MemorySearchOptions | boolean;
+};
+
+type MemoryPromptResult = {
+  context: string;
+  sessionSummary?: string;
+  recentSessionEvents: SimpleMessage[];
+  longTermMemories: Array<{ id: string; text: string; memoryType?: string; topics?: string[] }>;
+  tokenUsage: {
+    budget: number;
+    used: number;
+  };
+};
+
 // ── Config ──
 
 type RamConfig = {
@@ -113,7 +138,6 @@ type RamConfig = {
 };
 
 type LlmConfig = {
-  provider: string;
   model: string;
   apiKey: string;
 };
@@ -143,6 +167,9 @@ export type {
   MemoryUpdateInput,
   BulkCreateResult,
   BulkDeleteResult,
+  SimpleMessage,
+  BuildMemoryPromptOptions,
+  MemoryPromptResult,
   RamConfig,
   LlmConfig,
   RedisAgentMemoryConfig,

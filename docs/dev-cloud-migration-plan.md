@@ -492,10 +492,8 @@ RAM_ENDPOINT=https://gcp-us-east4.memory.redis.io
 RAM_API_KEY=mem1_...
 RAM_STORE_ID=<store-id>
 
-# ── LLM for custom logic (extraction, memoryPrompt, summaries) ──
-LLM_PROVIDER=openai              # "openai" | "anthropic" | "google" | "azure"
-LLM_MODEL=gpt-4o-mini           # model name for the provider
-LLM_API_KEY=sk-...               # API key for the provider (can reuse OPENAI_API_KEY)
+# ── LLM for summarization (uses OPENAI_API_KEY defined above) ──
+SUMMARY_MODEL=gpt-4o-mini       # OpenAI model used for session summarization
 
 # ── Redis (for app's copilot stores, topic stores, chunk stores) ──
 REDIS_URL=redis://default:...@geese-crown-supersteady-16768.db.redis.io:18074
@@ -556,7 +554,7 @@ This ensures the package is fully developed and tested in isolation before touch
 - `vitest.config.ts`
 - `src/index.ts` -- public exports
 - `src/redis-agent-memory.ts` -- singleton class with stubs
-- `src/config.ts` -- ENV: `RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`, `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`
+- `src/config.ts` -- ENV: `RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`, `OPENAI_API_KEY`, `SUMMARY_MODEL`
 - `src/types.ts` -- fresh types (cloud-native naming)
 - `src/constants.ts` -- `MessageRole`, `MemoryType` enums
 - `src/helpers/llm.util.ts` -- creates LangChain ChatModel from config
@@ -987,7 +985,7 @@ describe("summaryViews", () => {
 });
 ```
 
-**Test config**: Tests use real env vars (`RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`, `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`). Each test cleans up created data.
+**Test config**: Tests use real env vars (`RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`, `OPENAI_API_KEY`, `SUMMARY_MODEL`). Each test cleans up created data.
 
 **Acceptance**: All custom logic tests pass. Package is fully production-ready. Ready for demo integration.
 
@@ -1004,7 +1002,7 @@ describe("summaryViews", () => {
 ### C1. Backend Dependency Swap
 
 1. **`backend/package.json`**: Add `cau-ram` as workspace dep, remove `cau-redis-agent-memory`
-2. **`backend/src/config.ts`**: Add `RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`, `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`; remove `AGENT_MEMORY_*`
+2. **`backend/src/config.ts`**: Add `RAM_ENDPOINT`, `RAM_API_KEY`, `RAM_STORE_ID`, `OPENAI_API_KEY`, `SUMMARY_MODEL`; remove `AGENT_MEMORY_*`
 3. **`backend/src/index.ts`**: Initialize:
    ```typescript
    import { RedisAgentMemory } from "cau-ram";
@@ -1013,9 +1011,8 @@ describe("summaryViews", () => {
      apiKey: ENV.RAM_API_KEY,
      storeId: ENV.RAM_STORE_ID,
      llm: {
-       provider: ENV.LLM_PROVIDER,
-       model: ENV.LLM_MODEL,
-       apiKey: ENV.LLM_API_KEY,
+       model: ENV.SUMMARY_MODEL,
+       apiKey: ENV.OPENAI_API_KEY,
      },
    });
    await RedisAgentMemory.getInstance().health();
@@ -1160,3 +1157,114 @@ Old calls (OSS, `cau-redis-agent-memory`) → New calls (`cau-ram`):
 - [ ] C4: Docker cleaned, `.env.example` updated, `ams-partition-cleanup` removed
 - [ ] C5: Full demo end-to-end verification
 - [ ] C5: README updated with cloud setup instructions
+
+---
+
+## Architecture: `buildMemoryPrompt` (Phase B2)
+
+### What it solves
+
+The OSS Agent Memory Server had a `/v1/memory/prompt` endpoint that combined session history + long-term memories into an LLM-ready message list. The cloud RAM product has no equivalent — it only stores and retrieves data. `buildMemoryPrompt` replicates this intelligence locally in the `cau-ram` package.
+
+### High-level flow
+
+```mermaid
+flowchart TD
+    Caller["Chatbot / Suggestion Agent"] -->|"buildMemoryPrompt(options)"| BMP["buildMemoryPrompt"]
+    BMP --> Parallel["Parallel fetch"]
+    Parallel --> FetchSession["getSessionMemory(sessionId)"]
+    Parallel --> SearchLTM["searchLongTermMemory(query, filters)"]
+    FetchSession --> TokenBudget["Token budget engine"]
+    SearchLTM --> TokenBudget
+    TokenBudget --> Decision{Session over budget?}
+    Decision -->|No| Assemble["Assemble context"]
+    Decision -->|Yes| Summarize["Summarize old messages (LLM call)"]
+    Summarize --> Assemble
+    Assemble --> Result["MemoryPromptResult"]
+    Result --> Caller
+```
+
+### Input
+
+```typescript
+buildMemoryPrompt({
+  query: "What did we discuss about the roadmap?",
+  sessionId: "session-abc",
+  ownerId: "user-123",
+  namespace: "work",
+  modelName: "gpt-4o",
+  contextWindowMax: 128000,
+  longTermSearch: true,  // or MemorySearchOptions for custom filters
+})
+```
+
+- `query` — the user's current question (used for LTM semantic search + included in output)
+- `sessionId` — which session's messages to include
+- `ownerId` — scopes LTM search to this user's memories
+- `namespace` — scopes LTM search to a logical group (e.g., "work", "personal")
+- `modelName` / `contextWindowMax` — determines token budget
+- `longTermSearch` — `true` (auto-search with ownerId/namespace filters), custom `MemorySearchOptions`, or `false` (skip LTM)
+
+### Output
+
+```typescript
+{
+  context: string;          // full assembled text, ready to inject as system message
+  sessionSummary?: string;  // LLM-generated summary (if compression was needed)
+  recentSessionEvents: [...];  // session events that fit within budget
+  longTermMemories: [...];  // LTM search results (never trimmed)
+  tokenUsage: { budget: 128000, used: 45000 }
+}
+```
+
+The `context` field is structured:
+
+```
+[Session Summary]
+The user previously discussed TypeScript preferences, Redis demos, and a roadmap meeting...
+
+[Recent Conversation]
+user: What features should we showcase?
+assistant: Session memory, LTM extraction, and semantic search.
+
+[Relevant Memories]
+- Prasan's favorite programming language is Python [episodic]
+- Prasan works at Redis as a developer advocate [episodic]
+- Prasan enjoys hiking on weekends [semantic, topics: hobbies, outdoor]
+
+[Current Query]
+What did we discuss about the roadmap?
+```
+
+### Token budget strategy
+
+LTM results and query are **never trimmed** (caller controls LTM count via `limit`). Only session data is compressed:
+
+1. Count tokens: query + LTM (fixed cost)
+2. Remaining budget = `contextWindowMax` - fixed cost
+3. If session fits → use all messages
+4. If session exceeds → summarize oldest messages via LLM, keep recent
+5. If still over → drop more recent messages until fits
+
+```mermaid
+flowchart LR
+    Budget["Total Token Budget"] --> LTM_Block["LTM Results (fixed, never trimmed)"]
+    Budget --> Query_Block["Query (fixed)"]
+    Budget --> Session_Block["Session (compressible)"]
+    Session_Block --> Summary["Old msgs → LLM summary"]
+    Session_Block --> Recent["Recent msgs kept as-is"]
+```
+
+### Dependencies
+
+- `js-tiktoken` — accurate token counting (cl100k_base encoding)
+- `@langchain/core` + `@langchain/openai` — LLM calls for summarization
+- LLM config from `RedisAgentMemoryConfig.llm` (provider, model, apiKey)
+
+### How it's consumed in the demo
+
+**Chatbot agent** (`tools.ts`): The `getMemoryContext` tool calls `buildMemoryPrompt` and returns `result.context` as tool output for the ReAct loop.
+
+**Suggestion agent** (`generate-suggestion.ts`): Injects `result.context` as a system message before generating suggestions.
+
+Both use cases get a single, token-safe string that fits within the model's context window.

@@ -12,6 +12,8 @@ import type {
   MemoryUpdateInput,
   BulkCreateResult,
   BulkDeleteResult,
+  BuildMemoryPromptOptions,
+  MemoryPromptResult,
   HealthResult,
 } from "./types";
 
@@ -34,6 +36,7 @@ import {
   updateLongTermMemory as updateLongTermMemoryOp,
   deleteLongTermMemories as deleteLongTermMemoriesOp,
 } from "./operations/long-term-memory";
+import { buildMemoryPrompt as buildMemoryPromptOp } from "./operations/build-memory-prompt";
 
 let instance: RedisAgentMemory | null = null;
 
@@ -134,6 +137,12 @@ class RedisAgentMemory {
 
   deleteLongTermMemories = async (memoryIds: string[]): Promise<BulkDeleteResult> => {
     return deleteLongTermMemoriesOp(this.client, memoryIds);
+  };
+
+  // ── Memory Prompt ──
+
+  buildMemoryPrompt = async (options: BuildMemoryPromptOptions): Promise<MemoryPromptResult> => {
+    return buildMemoryPromptOp(this.client, this.config.llm, options);
   };
 }
 

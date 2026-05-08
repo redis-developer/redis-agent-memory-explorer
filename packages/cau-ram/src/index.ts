@@ -18,6 +18,8 @@ export type {
   MemoryUpdateInput,
   BulkCreateResult,
   BulkDeleteResult,
+  BuildMemoryPromptOptions,
+  MemoryPromptResult,
   RamConfig,
   LlmConfig,
   RedisAgentMemoryConfig,

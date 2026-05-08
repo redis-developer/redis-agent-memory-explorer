@@ -11,7 +11,7 @@ import type {
 import { randomUUID } from "node:crypto";
 import { AgentMemory } from "@redis-ai/agent-memory";
 
-import { DEFAULT_SEARCH_LIMIT } from "../constants";
+import { DEFAULT_LTM_SEARCH_LIMIT } from "../constants";
 import { buildLongTermMemoryFilter, mapFilterOp } from "../helpers/build-filters.util";
 
 const mapSdkRecordToMemoryRecord = (sdkRecord: {
@@ -78,7 +78,7 @@ const searchLongTermMemory = async (
     text: options?.text,
     filter: cloudFilter,
     filterOp,
-    limit: options?.limit ?? DEFAULT_SEARCH_LIMIT,
+    limit: options?.limit ?? DEFAULT_LTM_SEARCH_LIMIT,
     pageToken: options?.pageToken,
     similarityThreshold: options?.similarityThreshold,
   });
