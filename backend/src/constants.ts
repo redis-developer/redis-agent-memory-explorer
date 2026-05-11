@@ -8,7 +8,7 @@ const LOGGER_CONTEXT = "MeetingMemory";
 const SESSION_ID_PREFIX = "playback";
 
 const DEFAULT_PORT = 3001;
-const DEFAULT_AGENT_MEMORY_BASE_URL = "http://localhost:8000";
+const DEFAULT_SUMMARY_MODEL = "gpt-4o-mini";
 const DEFAULT_DATA_DIR = "../../data";
 const DEFAULT_ACTIVE_DATASET = "wealth-advisor";
 const DEFAULT_MODEL_NAME = "gpt-4o-mini";
@@ -22,8 +22,6 @@ const DEFAULT_SEARCH_LIMIT = 100;
 const DEFAULT_SEARCH_OFFSET = 0;
 const SESSION_SEARCH_LIMIT = 100;
 const SEARCH_ALL_LIMIT = 100;
-const FORGET_LIMIT = 1000;
-
 const SUPPORTED_GROUP_BY_FIELDS = ["user_id", "session_id", "namespace"];
 
 const AGENT_SEARCH_DEFAULT_LIMIT = 50;
@@ -51,18 +49,6 @@ const DEFAULT_RATE_LIMIT_MAX = 8000;
 
 const DEFAULT_REDIS_URL = "redis://localhost:6379";
 
-// Workaround: https://github.com/redis/agent-memory-server/issues/229
-// AMS deleteSummaryView leaves orphaned partition keys in Redis.
-// Remove this constant + cleanup logic once the upstream fix lands.
-const AMS_PARTITION_KEY_PREFIX = "summary_view";
-const AMS_PARTITION_KEY_SEPARATOR = ":";
-const AMS_PARTITION_SUMMARY_SEGMENT = "summary";
-const AMS_PARTITION_SCAN_BATCH = 100;
-
-const ROLE_TO_MEMORY_ROLE: Record<string, string> = {
-  client: "user",
-  rm: "assistant",
-};
 
 const DEFAULT_STATIC_DIR = "../public";
 
@@ -94,7 +80,7 @@ export {
   LOGGER_CONTEXT,
   SESSION_ID_PREFIX,
   DEFAULT_PORT,
-  DEFAULT_AGENT_MEMORY_BASE_URL,
+  DEFAULT_SUMMARY_MODEL,
   DEFAULT_DATA_DIR,
   DEFAULT_ACTIVE_DATASET,
   DEFAULT_MODEL_NAME,
@@ -106,7 +92,6 @@ export {
   DEFAULT_SEARCH_OFFSET,
   SESSION_SEARCH_LIMIT,
   SEARCH_ALL_LIMIT,
-  FORGET_LIMIT,
   SUPPORTED_GROUP_BY_FIELDS,
   AGENT_SEARCH_DEFAULT_LIMIT,
   AGENT_SESSION_LIST_DEFAULT_LIMIT,
@@ -126,16 +111,11 @@ export {
   DEFAULT_RATE_LIMIT_MAX,
   REDIS_JSON_ROOT_PATH,
   DEFAULT_REDIS_URL,
-  AMS_PARTITION_KEY_PREFIX,
-  AMS_PARTITION_KEY_SEPARATOR,
-  AMS_PARTITION_SUMMARY_SEGMENT,
-  AMS_PARTITION_SCAN_BATCH,
   DEFAULT_STATIC_DIR,
   DEFAULT_LOG_DIR,
   DEFAULT_LOG_FILE,
   DEFAULT_LOG_MAX_FILES,
   DEFAULT_ERROR_LOG_FILE,
-  ROLE_TO_MEMORY_ROLE,
   DetectedTopicStatus,
   DetectedTopicSource,
 };

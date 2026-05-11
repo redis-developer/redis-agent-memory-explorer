@@ -1149,12 +1149,14 @@ Old calls (OSS, `cau-redis-agent-memory`) → New calls (`cau-ram`):
 
 ### Phase C: Backend Integration
 
-- [ ] C1: Backend dependency swap (`cau-ram` replaces `cau-redis-agent-memory`)
-- [ ] C1: Config rewritten (RAM_* + LLM_* vars)
-- [ ] C1: `RedisAgentMemory.create(...)` + health check on startup
-- [ ] C2: All handlers rewritten to use `cau-ram` method names
-- [ ] C3: Chatbot tools use `buildMemoryPrompt`
-- [ ] C4: Docker cleaned, `.env.example` updated, `ams-partition-cleanup` removed
+- [x] C1: Backend dependency swap (`cau-ram` replaces `cau-redis-agent-memory`)
+- [x] C1: Config rewritten (RAM_* + SUMMARY_MODEL vars)
+- [x] C1: `RedisAgentMemory.create(...)` + health check on startup
+- [x] C2: All handlers rewritten to use `cau-ram` method names
+- [x] C2: Summary views handlers/routes removed, forgetLifecycleHandler removed
+- [x] C3: Chatbot tools use `buildMemoryPrompt` (5 tools, no summary tools)
+- [x] C3: Suggestion agent uses `buildMemoryPrompt`
+- [x] C4: `ams-partition-cleanup` deleted, `.env` updated
 - [ ] C5: Full demo end-to-end verification
 - [ ] C5: README updated with cloud setup instructions
 

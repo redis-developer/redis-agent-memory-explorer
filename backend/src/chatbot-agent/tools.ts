@@ -1,13 +1,12 @@
 import type { StructuredToolInterface } from "@langchain/core/tools";
-import type { MemoryPromptRequest } from "cau-redis-agent-memory";
+import type { MemoryFilter } from "cau-ram";
 
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
-import { AgentMemory, MemoryType } from "cau-redis-agent-memory";
+import { RedisAgentMemory, MemoryType } from "cau-ram";
 import { Logger } from "cau-logger";
 
 import { getAppState } from "../app-state";
-import { ENV } from "../config";
 import {
   AGENT_SEARCH_DEFAULT_LIMIT,
   AGENT_SESSION_LIST_DEFAULT_LIMIT,
@@ -31,50 +30,36 @@ const searchMemoriesTool = new DynamicStructuredTool({
       .optional()
       .describe("Filter by memory type"),
     topics: z.array(z.string()).optional().describe("Filter by topic tags"),
-    entities: z
-      .array(z.string())
-      .optional()
-      .describe("Filter by entity names"),
     limit: z
       .number()
       .optional()
       .default(AGENT_SEARCH_DEFAULT_LIMIT)
       .describe("Max results to return"),
   }),
-  func: async ({ query, memoryType, topics, entities, limit }) => {
+  func: async ({ query, memoryType, topics, limit }) => {
     const logger = getLogger();
-    const { namespace, userId } = getAppState();
+    const { userId } = getAppState();
     const startMs = Date.now();
 
-    logger.info("Tool: searchMemories invoked", { query, memoryType, topics, entities, limit });
+    logger.info("Tool: searchMemories invoked", { query, memoryType, topics, limit });
 
-    let memoryTypeFilter: { eq: string } | undefined;
+    const filter: MemoryFilter = {
+      ownerId: userId,
+    };
     if (memoryType) {
-      memoryTypeFilter = { eq: memoryType };
+      filter.memoryType = memoryType;
     }
-
-    let topicsFilter: { any: string[] } | undefined;
     if (topics) {
-      topicsFilter = { any: topics };
+      filter.topics = topics;
     }
 
-    let entitiesFilter: { any: string[] } | undefined;
-    if (entities) {
-      entitiesFilter = { any: entities };
-    }
-
-    const agentMemoryInst = AgentMemory.getInstance();
-    const result = await agentMemoryInst.searchLongTermMemory({
+    const result = await RedisAgentMemory.getInstance().searchLongTermMemory({
       text: query,
-      namespace: { eq: namespace },
-      userId: { eq: userId },
-      memoryType: memoryTypeFilter,
-      topics: topicsFilter,
-      entities: entitiesFilter,
+      filter,
       limit: limit ?? AGENT_SEARCH_DEFAULT_LIMIT,
     });
 
-    logger.info("Tool: searchMemories completed", { total: result.total, latencyMs: Date.now() - startMs });
+    logger.info("Tool: searchMemories completed", { count: result.memories.length, latencyMs: Date.now() - startMs });
 
     return JSON.stringify(result);
   },
@@ -93,20 +78,21 @@ const searchMemoriesBySessionTool = new DynamicStructuredTool({
   }),
   func: async ({ sessionId, query }) => {
     const logger = getLogger();
-    const { namespace } = getAppState();
     const startMs = Date.now();
 
     logger.info("Tool: searchMemoriesBySession invoked", { sessionId, query });
 
-    const agentMemoryInst = AgentMemory.getInstance();
-    const result = await agentMemoryInst.searchLongTermMemory({
+    const filter: MemoryFilter = {
+      sessionId,
+    };
+
+    const result = await RedisAgentMemory.getInstance().searchLongTermMemory({
       text: query ?? "",
-      sessionId: { eq: sessionId },
-      namespace: { eq: namespace },
+      filter,
       limit: AGENT_SESSION_MEMORIES_LIMIT,
     });
 
-    logger.info("Tool: searchMemoriesBySession completed", { sessionId, total: result.total, latencyMs: Date.now() - startMs });
+    logger.info("Tool: searchMemoriesBySession completed", { sessionId, count: result.memories.length, latencyMs: Date.now() - startMs });
 
     return JSON.stringify(result);
   },
@@ -115,13 +101,13 @@ const searchMemoriesBySessionTool = new DynamicStructuredTool({
 const getMemoryContextTool = new DynamicStructuredTool({
   name: "getMemoryContext",
   description:
-    "Get a fully hydrated memory context for a query. Combines working memory (live session) with long-term memory search. Use this as the primary tool for answering questions when a session is active.",
+    "Get a fully hydrated memory context for a query. Combines session memory with long-term memory search. Use this as the primary tool for answering questions when a session is active.",
   schema: z.object({
     query: z.string().describe("The user's question"),
     sessionId: z
       .string()
       .optional()
-      .describe("Active session ID for working memory context"),
+      .describe("Active session ID for session memory context"),
     includeAllLongTermMemories: z
       .boolean()
       .optional()
@@ -130,31 +116,24 @@ const getMemoryContextTool = new DynamicStructuredTool({
   }),
   func: async ({ query, sessionId, includeAllLongTermMemories }) => {
     const logger = getLogger();
-    const { namespace, userId } = getAppState();
+    const { userId } = getAppState();
     const startMs = Date.now();
 
     logger.info("Tool: getMemoryContext invoked", { query, sessionId, includeAllLongTermMemories });
 
-    const request: MemoryPromptRequest = { query };
+    const ram = RedisAgentMemory.getInstance();
 
-    if (sessionId) {
-      request.session = {
-        sessionId,
-        userId,
-        modelName: ENV.MODEL_NAME,
-        contextWindowMax: ENV.CONTEXT_WINDOW_MAX,
-      };
-    }
-
+    let longTermSearch: boolean | undefined;
     if (includeAllLongTermMemories) {
-      request.longTermSearch = {
-        namespace: { eq: namespace },
-        userId: { eq: userId },
-      };
+      longTermSearch = true;
     }
 
-    const agentMemoryInst = AgentMemory.getInstance();
-    const result = await agentMemoryInst.memoryPrompt(request);
+    const result = await ram.buildMemoryPrompt({
+      query,
+      sessionId,
+      ownerId: userId,
+      longTermSearch,
+    });
 
     logger.info("Tool: getMemoryContext completed", { latencyMs: Date.now() - startMs });
 
@@ -165,7 +144,7 @@ const getMemoryContextTool = new DynamicStructuredTool({
 const listSessionsTool = new DynamicStructuredTool({
   name: "listSessions",
   description:
-    "List all working memory sessions for the current user. Each session corresponds to a meeting transcript that was played back. Returns session IDs that can be used with other tools.",
+    "List all session memory sessions for the current user. Each session corresponds to a meeting transcript that was played back. Returns session IDs that can be used with other tools.",
   schema: z.object({
     limit: z
       .number()
@@ -174,11 +153,8 @@ const listSessionsTool = new DynamicStructuredTool({
       .describe("Max sessions to return"),
   }),
   func: async ({ limit }) => {
-    const { namespace, userId } = getAppState();
-    const agentMemoryInst = AgentMemory.getInstance();
-    const result = await agentMemoryInst.listSessions({
-      namespace,
-      userId,
+    const ram = RedisAgentMemory.getInstance();
+    const result = await ram.listSessions({
       limit: limit ?? AGENT_SESSION_LIST_DEFAULT_LIMIT,
     });
 
@@ -186,128 +162,25 @@ const listSessionsTool = new DynamicStructuredTool({
   },
 });
 
-const getComputedSummariesTool = new DynamicStructuredTool({
-  name: "getComputedSummaries",
+const getSessionStateTool = new DynamicStructuredTool({
+  name: "getSessionState",
   description:
-    "Get AI-generated summary narratives that have already been computed from summary views. Returns the actual generated text. Use listSummaryViews first to discover available views, then call this with a specific viewName to fetch the computed summaries.",
-  schema: z.object({
-    viewName: z
-      .string()
-      .optional()
-      .describe(
-        "Name of the summary view (e.g., 'Client Memory Summary', 'Session Recap'). If not provided, returns computed summaries from all views.",
-      ),
-  }),
-  func: async ({ viewName }) => {
-    const { namespace, userId } = getAppState();
-    const agentMemoryInst = AgentMemory.getInstance();
-    const allViews = await agentMemoryInst.listSummaryViews();
-    const ownViews = allViews.filter(
-      (v) => v.filters?.namespace === namespace,
-    );
-
-    let targetViews = ownViews;
-    if (viewName) {
-      targetViews = ownViews.filter((v) => v.name === viewName);
-    }
-
-    const summaries = [];
-    for (const view of targetViews) {
-      const partitions = await agentMemoryInst.listSummaryViewPartitions(
-        view.id,
-      );
-      summaries.push({ viewName: view.name, viewId: view.id, partitions });
-    }
-
-    return JSON.stringify(summaries);
-  },
-});
-
-const getWorkingMemoryStateTool = new DynamicStructuredTool({
-  name: "getWorkingMemoryState",
-  description:
-    "Get the current working memory state for a session, including message count, token usage, and auto-generated context summary. Use when the user asks about what happened in a specific session or about context window state.",
+    "Get the current session memory state, including events (messages). Use when the user asks about what happened in a specific session.",
   schema: z.object({
     sessionId: z.string().describe("The session ID"),
   }),
   func: async ({ sessionId }) => {
-    const { namespace, userId } = getAppState();
-    const agentMemoryInst = AgentMemory.getInstance();
-    const result = await agentMemoryInst.getWorkingMemory(sessionId, {
-      namespace,
-      userId,
-    });
+    const ram = RedisAgentMemory.getInstance();
+    const result = await ram.getSessionMemory(sessionId);
 
     let output: Record<string, unknown> = {
-      error: `No working memory found for session: ${sessionId}`,
+      error: `No session memory found for session: ${sessionId}`,
     };
     if (result) {
       output = {
         sessionId: result.sessionId,
-        messageCount: result.messages.length,
-        tokens: result.tokens,
-        context: result.context,
-        contextPercentageTotalUsed: result.contextPercentageTotalUsed,
-        memoriesAttached: result.memories.length,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt,
-      };
-    }
-
-    return JSON.stringify(output);
-  },
-});
-
-const listSummaryViewsTool = new DynamicStructuredTool({
-  name: "listSummaryViews",
-  description:
-    "List all available summary view definitions. Each view is a recipe for how to summarize long-term memories (e.g., grouped by user, by session, by topic). Use this to discover what views exist before fetching computed summaries with getComputedSummaries, or before getting a single view's full definition with getSummaryView.",
-  schema: z.object({}),
-  func: async () => {
-    const { namespace } = getAppState();
-    const agentMemoryInst = AgentMemory.getInstance();
-    const allViews = await agentMemoryInst.listSummaryViews();
-    const views = allViews.filter((v) => v.filters?.namespace === namespace);
-
-    const mapped = views.map((v) => ({
-      viewId: v.id,
-      name: v.name,
-      source: v.source,
-      groupBy: v.groupBy,
-      timeWindowDays: v.timeWindowDays,
-      continuous: v.continuous,
-      prompt: v.prompt,
-    }));
-
-    return JSON.stringify({ views: mapped, total: mapped.length });
-  },
-});
-
-const getSummaryViewTool = new DynamicStructuredTool({
-  name: "getSummaryView",
-  description:
-    "Get a single summary view definition by ID. Returns the full configuration: name, source, groupBy fields, filters, timeWindowDays, continuous flag, prompt template, and model. Use this after listSummaryViews to inspect a specific view's settings, or when the user asks how a particular summary is configured.",
-  schema: z.object({
-    viewId: z.string().describe("The summary view ID"),
-  }),
-  func: async ({ viewId }) => {
-    const agentMemoryInst = AgentMemory.getInstance();
-    const view = await agentMemoryInst.getSummaryView(viewId);
-
-    let output: Record<string, unknown> = {
-      error: `No summary view found with ID: ${viewId}`,
-    };
-    if (view) {
-      output = {
-        viewId: view.id,
-        name: view.name,
-        source: view.source,
-        groupBy: view.groupBy,
-        filters: view.filters,
-        timeWindowDays: view.timeWindowDays,
-        continuous: view.continuous,
-        prompt: view.prompt,
-        modelName: view.modelName,
+        ownerId: result.ownerId,
+        eventCount: result.events.length,
       };
     }
 
@@ -321,10 +194,7 @@ const createMemoryTools = (): StructuredToolInterface[] => {
     searchMemoriesBySessionTool,
     getMemoryContextTool,
     listSessionsTool,
-    getComputedSummariesTool,
-    getWorkingMemoryStateTool,
-    listSummaryViewsTool,
-    getSummaryViewTool,
+    getSessionStateTool,
   ];
 };
 

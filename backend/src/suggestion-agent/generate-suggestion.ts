@@ -10,7 +10,7 @@ import type {
 
 import { ChatOpenAI } from "@langchain/openai";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
-import { AgentMemory } from "cau-redis-agent-memory";
+import { RedisAgentMemory } from "cau-ram";
 import { Logger } from "cau-logger";
 
 import { SUGGESTION_CHUNK_WINDOW, DetectedTopicStatus } from "../constants";
@@ -81,7 +81,7 @@ const fetchMemoryContext = async (
   sessionId: string,
   recentChunks: TranscriptChunk[],
 ): Promise<string> => {
-  const { namespace, userId } = getAppState();
+  const { userId } = getAppState();
   const logger = getLogger();
 
   const queryStartMs = Date.now();
@@ -94,20 +94,13 @@ const fetchMemoryContext = async (
   });
 
   const contextStartMs = Date.now();
-  const memoryContext = await AgentMemory.getInstance().memoryPrompt({
+  const memoryContext = await RedisAgentMemory.getInstance().buildMemoryPrompt({
     query: extractedQuery,
-    session: {
-      sessionId,
-      userId,
-      modelName: ENV.MODEL_NAME,
-      contextWindowMax: ENV.CONTEXT_WINDOW_MAX,
-    },
-    longTermSearch: {
-      namespace: { eq: namespace },
-      userId: { eq: userId },
-    },
+    sessionId,
+    ownerId: userId,
+    longTermSearch: true,
   });
-  logger.info("Memory context hydrated via memoryPrompt", {
+  logger.info("Memory context hydrated via buildMemoryPrompt", {
     sessionId,
     latencyMs: Date.now() - contextStartMs,
   });

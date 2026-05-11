@@ -6,6 +6,8 @@ import { useState } from "react";
 import Chip from "@mui/material/Chip";
 
 import { MemoryTypeBadge } from "@/components/core";
+import type { MemoryType } from "@/constants/app.constants";
+
 import {
   MAX_MEMORY_TEXT_LENGTH,
   MEMORY_TYPE,
@@ -20,7 +22,7 @@ type MemoryCardProps = {
 
 const dedupe = (items: string[]): string[] => [...new Set(items)];
 
-const MEMORY_TYPE_ICON: Partial<Record<MemoryRecordData["memoryType"], string>> = {
+const MEMORY_TYPE_ICON: Partial<Record<MemoryType, string>> = {
   [MEMORY_TYPE.SEMANTIC]: "/icons/icon-semantic-routing-64-white.svg",
   [MEMORY_TYPE.EPISODIC]: "/icons/icon-access-to-memory-64-white.svg",
 };
@@ -32,13 +34,14 @@ const MemoryCard = ({ memory }: MemoryCardProps) => {
   const createdAt = new Date(memory.createdAt);
   const createdDatePart = createdAt.toLocaleDateString();
   const createdTimePart = createdAt.toLocaleTimeString();
-  const uniqueTopics = dedupe(memory.topics);
-  const uniqueEntities = dedupe(memory.entities);
-  const iconSrc = MEMORY_TYPE_ICON[memory.memoryType];
-  const isMessage = memory.memoryType === MEMORY_TYPE.MESSAGE;
+  const uniqueTopics = dedupe(memory.topics ?? []);
+  const uniqueEntities = dedupe(memory.entities ?? []);
+  const memoryType = memory.memoryType ?? MEMORY_TYPE.MESSAGE;
+  const iconSrc = MEMORY_TYPE_ICON[memoryType];
+  const isMessage = memoryType === MEMORY_TYPE.MESSAGE;
 
   return (
-    <div className={`memory-card memory-card--${memory.memoryType}`}>
+    <div className={`memory-card memory-card--${memoryType}`}>
       <div className="memory-card__header">
         <div className="memory-card__title-group">
           {iconSrc && (
@@ -50,10 +53,10 @@ const MemoryCard = ({ memory }: MemoryCardProps) => {
             />
           )}
           {isMessage ? (
-            <MemoryTypeBadge memoryType={memory.memoryType} />
+            <MemoryTypeBadge memoryType={memoryType} />
           ) : (
             <h3 className="memory-card__title">
-              {MEMORY_TYPE_LABEL[memory.memoryType]}
+              {MEMORY_TYPE_LABEL[memoryType]}
             </h3>
           )}
         </div>

@@ -19,19 +19,7 @@ import {
   searchLongTermMemoryHandler,
   searchLongTermMemoryBySessionHandler,
 } from "./handlers/long-term-memory.handlers";
-import {
-  createSummaryViewHandler,
-  listSummaryViewsHandler,
-  getSummaryViewHandler,
-  computeSummaryHandler,
-  getComputedSummariesHandler,
-  deleteSummaryViewHandler,
-  getTaskHandler,
-} from "./handlers/summary-views.handlers";
-import {
-  resetLifecycleHandler,
-  forgetLifecycleHandler,
-} from "./handlers/lifecycle.handlers";
+import { resetLifecycleHandler } from "./handlers/lifecycle.handlers";
 import {
   generateSuggestionHandler,
   listSuggestionsHandler,
@@ -46,7 +34,7 @@ const routes: RouteDefinition[] = [
   { path: "/listTranscripts", handler: listTranscriptsHandler },
   { path: "/getTranscript", handler: getTranscriptHandler },
 
-  // Working Memory
+  // Working Memory (Session Memory)
   { path: "/createWorkingMemory", handler: createWorkingMemoryHandler },
   { path: "/appendWorkingMemory", handler: appendWorkingMemoryHandler },
   { path: "/getWorkingMemory", handler: getWorkingMemoryHandler },
@@ -63,22 +51,12 @@ const routes: RouteDefinition[] = [
     handler: searchLongTermMemoryBySessionHandler,
   },
 
-  // Summary Views
-  { path: "/createSummaryView", handler: createSummaryViewHandler },
-  { path: "/listSummaryViews", handler: listSummaryViewsHandler },
-  { path: "/getSummaryView", handler: getSummaryViewHandler },
-  { path: "/computeSummary", handler: computeSummaryHandler },
-  { path: "/getComputedSummaries", handler: getComputedSummariesHandler },
-  { path: "/deleteSummaryView", handler: deleteSummaryViewHandler },
-  { path: "/getTask", handler: getTaskHandler },
-
   // Suggestions
   { path: "/generateSuggestion", handler: generateSuggestionHandler },
   { path: "/listSuggestions", handler: listSuggestionsHandler },
 
   // Lifecycle
   { path: "/resetLifecycle", handler: resetLifecycleHandler },
-  { path: "/forgetLifecycle", handler: forgetLifecycleHandler },
 ];
 
 export { routes };

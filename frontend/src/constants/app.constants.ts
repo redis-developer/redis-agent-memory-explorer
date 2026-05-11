@@ -35,7 +35,6 @@ const DEMO_TAB = {
   AI_COPILOT: "ai-copilot",
   WORKING_MEMORY: "working-memory",
   LONG_TERM_MEMORY: "long-term-memory",
-  SUMMARY_VIEWS: "summary-views",
   REDIS_METRICS: "redis-metrics",
 } as const;
 
@@ -50,12 +49,6 @@ const PLAYBACK_STATUS = {
 
 const TRANSCRIPT_ROLE = {
   RM: "rm",
-} as const;
-
-const SUMMARY_GROUP_BY_KEY = {
-  USER_ID: "user_id",
-  SESSION_ID: "session_id",
-  NAMESPACE: "namespace",
 } as const;
 
 const CONTEXT_THRESHOLD = {
@@ -132,7 +125,6 @@ export {
   DEMO_TAB,
   PLAYBACK_STATUS,
   TRANSCRIPT_ROLE,
-  SUMMARY_GROUP_BY_KEY,
   LT_SCOPE,
   SEARCH_ALL_LIMIT,
   CONTEXT_THRESHOLD,

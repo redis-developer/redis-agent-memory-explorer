@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 
 import {
   DEFAULT_PORT,
-  DEFAULT_AGENT_MEMORY_BASE_URL,
+  DEFAULT_SUMMARY_MODEL,
   DEFAULT_DATA_DIR,
   DEFAULT_ACTIVE_DATASET,
   DEFAULT_MODEL_NAME,
@@ -26,8 +26,10 @@ const parseAllowedOrigins = (raw: string | undefined): string[] => {
 
 const ENV = {
   PORT: Number(process.env.MEETING_MEMORY_PORT) || DEFAULT_PORT,
-  AGENT_MEMORY_BASE_URL:
-    process.env.AGENT_MEMORY_BASE_URL ?? DEFAULT_AGENT_MEMORY_BASE_URL,
+  RAM_ENDPOINT: process.env.RAM_ENDPOINT ?? "",
+  RAM_API_KEY: process.env.RAM_API_KEY ?? "",
+  RAM_STORE_ID: process.env.RAM_STORE_ID ?? "",
+  SUMMARY_MODEL: process.env.SUMMARY_MODEL ?? DEFAULT_SUMMARY_MODEL,
   DATA_DIR: resolve(
     __dirname,
     process.env.MEETING_MEMORY_DATA_DIR ?? DEFAULT_DATA_DIR,

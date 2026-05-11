@@ -1,84 +1,50 @@
 import type { MemoryType } from "@/constants/app.constants";
 
-type WorkingMemoryMessage = {
+type SessionEvent = {
+  eventId: string;
+  sessionId: string;
+  actorId: string;
   role: string;
   content: string;
-  id?: string;
-  createdAt?: string;
+  createdAt: number;
+  metadata?: Record<string, unknown>;
 };
 
-type WorkingMemoryData = {
+type SessionMemoryData = {
   sessionId: string;
-  userId: string;
-  namespace: string;
-  messages: WorkingMemoryMessage[];
-  tokens: number;
-  context: string | null;
-  data: unknown;
-  contextPercentageTotalUsed: number | null;
-  contextPercentageUntilSummarization: number | null;
-  memories: string[];
-  createdAt: string;
-  updatedAt: string;
-  lastAccessed: string;
-  ttlSeconds: number | null;
+  ownerId: string;
+  events: SessionEvent[];
 };
 
 type MemoryRecordData = {
   id: string;
   text: string;
-  memoryType: MemoryType;
-  userId: string;
-  sessionId: string;
-  namespace: string;
-  topics: string[];
-  entities: string[];
-  eventDate: string | null;
-  createdAt: string;
-  updatedAt: string;
-  lastAccessed: string;
-  persistedAt: string | null;
-  pinned: boolean;
-  accessCount: number;
-  memoryHash: string;
-  dist: number;
-};
-
-type SummaryViewData = {
-  viewId: string;
-  name: string;
-  source: string;
-  groupBy: string[];
-};
-
-type ComputedSummaryData = {
-  group: Record<string, string>;
-  summary: string;
-  memoryCount: number;
-  computedAt: string;
+  memoryType?: MemoryType;
+  sessionId?: string;
+  ownerId?: string;
+  namespace?: string;
+  topics?: string[];
+  entities?: string[];
+  eventDate?: string;
+  createdAt: number;
+  updatedAt: number;
 };
 
 type AppendResult = {
-  messageCount: number;
-  tokens: number;
-  context: string | null;
-  contextPercentageTotalUsed: number;
-  contextPercentageUntilSummarization: number;
+  eventId: string;
   latencyMs: number;
 };
 
 type CreateSessionResponse = {
   sessionId: string;
   created: boolean;
-  memory: WorkingMemoryData;
+  memory: { events: SessionEvent[] };
 };
 
 export type {
-  WorkingMemoryMessage,
-  WorkingMemoryData,
+  SessionEvent,
+  SessionMemoryData,
   MemoryRecordData,
-  SummaryViewData,
-  ComputedSummaryData,
   AppendResult,
   CreateSessionResponse,
 };

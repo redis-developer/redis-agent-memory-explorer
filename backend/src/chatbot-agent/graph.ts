@@ -11,7 +11,7 @@ import {
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { SystemMessage } from "@langchain/core/messages";
-import { AgentMemory } from "cau-redis-agent-memory";
+import { RedisAgentMemory } from "cau-ram";
 
 import { Logger } from "cau-logger";
 import { join } from "node:path";
@@ -63,12 +63,18 @@ const ensureInitialized = (datasetConfig: DatasetConfig): void => {
   //since langgraph server runs in a separate process, we need to ensure that the AgentMemory is initialized
 
   try {
-    AgentMemory.getInstance();
+    RedisAgentMemory.getInstance();
   } catch {
-    AgentMemory.create({
-      baseUrl: ENV.AGENT_MEMORY_BASE_URL,
-      defaultNamespace: datasetConfig.namespace,
-      defaultModelName: ENV.MODEL_NAME,
+    RedisAgentMemory.create({
+      ram: {
+        endpoint: ENV.RAM_ENDPOINT,
+        apiKey: ENV.RAM_API_KEY,
+        storeId: ENV.RAM_STORE_ID,
+      },
+      llm: {
+        model: ENV.SUMMARY_MODEL,
+        apiKey: ENV.OPENAI_API_KEY,
+      },
     });
     setAppState({
       datasetConfig,
@@ -76,7 +82,7 @@ const ensureInitialized = (datasetConfig: DatasetConfig): void => {
       userId: datasetConfig.userId,
     });
     const logger = getLogger();
-    logger.info("AgentMemory initialized in LangGraph process", {
+    logger.info("RedisAgentMemory initialized in LangGraph process", {
       namespace: datasetConfig.namespace,
       userId: datasetConfig.userId,
     });
@@ -98,6 +104,7 @@ const buildReadableMessages = (
   copilotkit: CopilotKitState,
 ): SystemMessage[] => {
   const readables = copilotkit?.context ?? [];
+
   return readables.map(
     (r) => new SystemMessage(`${r.description}: ${r.value}`),
   );
@@ -124,17 +131,20 @@ const invokeReactNode = async (
     totalMessages: messagesWithSystemPrompt.length,
   });
 
+  const inputCount = messagesWithSystemPrompt.length;
   const startMs = Date.now();
   const result = await reactAgent.invoke({
     messages: messagesWithSystemPrompt,
   });
 
+  const newMessages = result.messages.slice(inputCount);
+
   logger.info("ReAct agent completed", {
-    responseMessageCount: result.messages.length,
+    responseMessageCount: newMessages.length,
     latencyMs: Date.now() - startMs,
   });
 
-  return { messages: result.messages };
+  return { messages: newMessages };
 };
 
 const createCompiledGraph = () => {

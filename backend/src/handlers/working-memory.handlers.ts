@@ -8,13 +8,12 @@ import type {
   DetectedTopic,
 } from "../types";
 
-import { AgentMemory, ExtractionStrategy } from "cau-redis-agent-memory";
+import { RedisAgentMemory, MessageRole } from "cau-ram";
 
 import {
   SESSION_ID_PREFIX,
   DEFAULT_LIST_LIMIT,
   DEFAULT_LIST_OFFSET,
-  ROLE_TO_MEMORY_ROLE,
   DetectedTopicStatus,
   DetectedTopicSource,
 } from "../constants";
@@ -28,16 +27,18 @@ const buildSessionId = (transcriptId: string): string => {
   return `${SESSION_ID_PREFIX}-${transcriptId}-${Date.now()}`;
 };
 
-const formatChunkAsMessage = (chunk: AppendWorkingMemoryInput["chunk"]): {
-  role: string;
-  content: string;
-} => {
-  const memoryRole = ROLE_TO_MEMORY_ROLE[chunk.role] ?? "user";
+const MEMORY_ROLE_TO_MESSAGE_ROLE: Record<string, string> = {
+  user: MessageRole.USER,
+  assistant: MessageRole.ASSISTANT,
+};
 
-  return {
-    role: memoryRole,
-    content: `[${chunk.timestamp}] ${chunk.speaker}: ${chunk.text}`,
-  };
+const resolveMessageRole = (
+  chunk: AppendWorkingMemoryInput["chunk"],
+): string => {
+  const { datasetConfig } = getAppState();
+  const memoryRole = datasetConfig?.roleMapping?.[chunk.role] ?? "user";
+
+  return MEMORY_ROLE_TO_MESSAGE_ROLE[memoryRole] ?? MessageRole.USER;
 };
 
 const seedTopicsFromTranscript = async (
@@ -62,7 +63,6 @@ const seedTopicsFromTranscript = async (
 
 const createWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
   const { transcriptId } = input as CreateWorkingMemoryInput;
-  const { namespace, userId } = getAppState();
 
   const sessionId = buildSessionId(transcriptId);
 
@@ -71,94 +71,68 @@ const createWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
     transcriptId,
   });
 
-  const { created, memory } =
-    await AgentMemory.getInstance().getOrCreateWorkingMemory(sessionId, {
-      userId,
-      namespace,
-    });
-
   await seedTopicsFromTranscript(sessionId, transcriptId);
   await TranscriptChunkStore.initialize(sessionId);
-  logger.info("Pre-seeded detected topics and initialized chunk store", { sessionId });
+  logger.info("Pre-seeded detected topics and initialized chunk store", {
+    sessionId,
+  });
 
-  return { sessionId, created, memory };
+  return { sessionId, created: true, memory: { events: [] } };
 };
 
 const appendWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
   const { sessionId, chunk, isLastChunk } = input as AppendWorkingMemoryInput;
-  const { namespace, userId } = getAppState();
+  const { userId } = getAppState();
   const startMs = Date.now();
 
-  const existing = await AgentMemory.getInstance().getWorkingMemory(
+  const role = resolveMessageRole(chunk);
+  const content = `[${chunk.timestamp}] ${chunk.speaker}: ${chunk.text}`;
+
+  const event = await RedisAgentMemory.getInstance().addSessionEvent({
     sessionId,
-    { userId, namespace },
-  );
-
-  const currentMessages = existing?.messages ?? [];
-  const newMessage = formatChunkAsMessage(chunk);
-  const allMessages = [...currentMessages, newMessage];
-
-  const payload: Parameters<typeof AgentMemory.prototype.putWorkingMemory>[1] =
-    {
-      messages: allMessages,
-      context: existing?.context ?? undefined,
-      userId,
-      namespace,
-    };
-
-  const shouldTriggerExtraction = isLastChunk;
-  if (shouldTriggerExtraction) {
-    payload.longTermMemoryStrategy = {
-      strategy: ExtractionStrategy.DISCRETE,
-    };
-    logger.info("Last chunk -- triggering long-term memory extraction", {
-      sessionId,
-    });
-  }
-
-  const result = await AgentMemory.getInstance().putWorkingMemory(
-    sessionId,
-    payload,
-    { namespace, modelName: ENV.MODEL_NAME, contextWindowMax: ENV.CONTEXT_WINDOW_MAX },
-  );
+    actorId: userId,
+    role: role as any,
+    content,
+  });
 
   await TranscriptChunkStore.append(sessionId, chunk);
 
   const latencyMs = Date.now() - startMs;
 
-  logger.info("Appended to working memory", {
+  logger.info("Appended session event", {
     sessionId,
-    messageCount: result.messages.length,
-    tokens: result.tokens,
+    eventId: event.eventId,
     isLastChunk,
     latencyMs,
   });
 
   return {
-    messageCount: result.messages.length,
-    tokens: result.tokens,
-    context: result.context,
-    contextPercentageTotalUsed: result.contextPercentageTotalUsed,
-    contextPercentageUntilSummarization:
-      result.contextPercentageUntilSummarization,
+    eventId: event.eventId,
     latencyMs,
   };
 };
 
+/**
+ createWorkingMemoryHandler generates the session ID and seeds local stores
+ (topics, chunks) but does NOT call addSessionEvent on cloud RAM. The cloud
+ only learns about a session after the first addSessionEvent during playback.
+ If the user loads a created session before any messages are played,
+ getSessionMemory returns null. Return an empty session in that case instead
+ of throwing, since the session ID is legitimate. 
+*/
 const getWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
   const { sessionId } = input as GetWorkingMemoryInput;
-  const { namespace, userId } = getAppState();
 
-  logger.info("Getting working memory", { sessionId });
+  logger.info("Getting session memory", { sessionId });
 
-  const result = await AgentMemory.getInstance().getWorkingMemory(sessionId, {
-    userId,
-    namespace,
-  });
+  const result =
+    await RedisAgentMemory.getInstance().getSessionMemory(sessionId);
 
-  const isNotFound = result === null;
-  if (isNotFound) {
-    throw new Error(`Working memory session not found: ${sessionId}`);
+  if (!result) {
+    logger.info("Session memory not found, returning empty session", {
+      sessionId,
+    });
+    return { sessionId, ownerId: "", events: [] };
   }
 
   return result;
@@ -166,16 +140,12 @@ const getWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
 
 const deleteWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
   const { sessionId } = input as DeleteWorkingMemoryInput;
-  const { namespace, userId } = getAppState();
 
-  logger.info("Deleting working memory", { sessionId });
+  logger.info("Deleting session memory", { sessionId });
 
-  const result = await AgentMemory.getInstance().deleteWorkingMemory(
-    sessionId,
-    { namespace, userId },
-  );
+  await RedisAgentMemory.getInstance().deleteSessionMemory(sessionId);
 
-  return result;
+  return { deleted: true, sessionId };
 };
 
 const listWorkingMemorySessionsHandler: RouteHandler = async (
@@ -183,16 +153,13 @@ const listWorkingMemorySessionsHandler: RouteHandler = async (
   { logger },
 ) => {
   const { limit, offset } = (input as ListWorkingMemorySessionsInput) ?? {};
-  const { namespace, userId } = getAppState();
 
-  const result = await AgentMemory.getInstance().listSessions({
-    namespace,
-    userId,
+  const result = await RedisAgentMemory.getInstance().listSessions({
     limit: limit ?? DEFAULT_LIST_LIMIT,
     offset: offset ?? DEFAULT_LIST_OFFSET,
   });
 
-  logger.info("Listing working memory sessions", {
+  logger.info("Listing sessions", {
     count: result.sessions.length,
     total: result.total,
   });

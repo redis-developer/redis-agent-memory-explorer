@@ -1,7 +1,5 @@
-import type {
-  MemoryType,
-  SummaryViewSource,
-} from "cau-redis-agent-memory";
+import type { MemoryType } from "cau-ram";
+
 import type { DetectedTopicStatus, DetectedTopicSource } from "./constants";
 
 // --- Dataset Config (matches dataset.config.json schema) ---
@@ -35,6 +33,7 @@ type DatasetConfig = {
     accentColor: string;
   };
   roles: Record<string, RoleConfig>;
+  roleMapping: Record<string, "user" | "assistant">;
   participants: Record<string, ParticipantConfig>;
   memoryLabels: {
     workingMemory: {
@@ -48,11 +47,6 @@ type DatasetConfig = {
       semantic: MemoryTypeLabel;
       episodic: MemoryTypeLabel;
       message: MemoryTypeLabel;
-    };
-    summaryViews: {
-      title: string;
-      description: string;
-      views: SummaryViewConfigEntry[];
     };
     metrics: {
       title: string;
@@ -78,16 +72,6 @@ type DatasetConfig = {
     intervalMs: number;
     speeds: Array<{ label: string; intervalMs: number }>;
   };
-};
-
-type SummaryViewConfigEntry = {
-  name: string;
-  source: SummaryViewSource;
-  groupBy: string[];
-  filters?: Record<string, unknown>;
-  timeWindowDays?: number;
-  continuous?: boolean;
-  prompt?: string;
 };
 
 type DatasetSummary = {
@@ -165,7 +149,6 @@ type SearchLongTermMemoryInput = {
   text?: string;
   memoryType?: MemoryType;
   topics?: string[];
-  entities?: string[];
   limit?: number;
   offset?: number;
 };
@@ -174,42 +157,6 @@ type SearchLongTermMemoryBySessionInput = {
   sessionId: string;
 };
 
-type CreateSummaryViewInput = {
-  name?: string;
-  source: SummaryViewSource;
-  groupBy?: string[];
-  timeWindowDays?: number;
-};
-
-type GetSummaryViewInput = {
-  viewId: string;
-};
-
-type ComputeSummaryInput = {
-  viewId: string;
-  group: Record<string, string>;
-};
-
-type GetComputedSummariesInput = {
-  viewId: string;
-};
-
-type DeleteSummaryViewInput = {
-  viewId: string;
-};
-
-type GetTaskInput = {
-  taskId: string;
-};
-
-type ForgetLifecycleInput = {
-  policy: {
-    maxAgeDays?: number;
-    maxInactiveDays?: number;
-    budget?: number;
-  };
-  dryRun?: boolean;
-};
 
 // --- Suggestions ---
 
@@ -311,7 +258,6 @@ export type {
   RoleConfig,
   ParticipantConfig,
   MemoryTypeLabel,
-  SummaryViewConfigEntry,
   DatasetConfig,
   DatasetSummary,
   SuggestionTypeConfig,
@@ -338,12 +284,5 @@ export type {
   ListWorkingMemorySessionsInput,
   SearchLongTermMemoryInput,
   SearchLongTermMemoryBySessionInput,
-  CreateSummaryViewInput,
-  GetSummaryViewInput,
-  ComputeSummaryInput,
-  GetComputedSummariesInput,
-  DeleteSummaryViewInput,
-  GetTaskInput,
-  ForgetLifecycleInput,
   AppState,
 };

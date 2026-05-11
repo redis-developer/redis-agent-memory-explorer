@@ -1,6 +1,6 @@
 "use client";
 
-import type { WorkingMemoryData } from "@/types/memory.types";
+import type { SessionMemoryData } from "@/types/memory.types";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 
@@ -11,7 +11,7 @@ import {
 } from "@/constants/app.constants";
 
 type UseWorkingMemoryResult = {
-  data: WorkingMemoryData | null;
+  data: SessionMemoryData | null;
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
@@ -34,7 +34,7 @@ const useWorkingMemory = (
   enabled: boolean,
   isPlaybackComplete: boolean,
 ): UseWorkingMemoryResult => {
-  const [data, setData] = useState<WorkingMemoryData | null>(null);
+  const [data, setData] = useState<SessionMemoryData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -71,8 +71,12 @@ const useWorkingMemory = (
         setError(null);
       })
       .catch((err: Error) => {
-        setError(err.message);
         setIsLoading(false);
+        const isNotFound = err.message.includes("not found");
+        if (isNotFound && !hasFetchedOnceRef.current) {
+          return;
+        }
+        setError(err.message);
       });
   }, [sessionId]);
 

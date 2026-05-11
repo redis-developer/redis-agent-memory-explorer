@@ -1,10 +1,11 @@
 import type { RouteHandler } from "cau-api-server";
+import type { MemoryFilter } from "cau-ram";
 import type {
   SearchLongTermMemoryInput,
   SearchLongTermMemoryBySessionInput,
 } from "../types";
 
-import { AgentMemory } from "cau-redis-agent-memory";
+import { RedisAgentMemory } from "cau-ram";
 
 import { getAppState } from "../app-state";
 
@@ -16,29 +17,38 @@ const searchLongTermMemoryHandler: RouteHandler = async (
     text,
     memoryType,
     topics,
-    entities,
   } = (input as SearchLongTermMemoryInput) ?? {};
-  const { namespace, userId } = getAppState();
+  const { userId } = getAppState();
 
-  logger.info("Searching long-term memory", { text, memoryType, topics, entities });
+  logger.info("Searching long-term memory", { text, memoryType, topics });
+
+  const filter: MemoryFilter = {
+    ownerId: userId,
+  };
+  if (memoryType) {
+    filter.memoryType = memoryType;
+  }
+  if (topics) {
+    filter.topics = topics;
+  }
+
+  const hasText = !!text;
+  const searchText = hasText ? text : "*";
 
   const startMs = Date.now();
-  const result = await AgentMemory.getInstance().searchAllLongTermMemories({
-    text: text ?? "",
-    userId: { eq: userId },
-    namespace: { eq: namespace },
-    memoryType: memoryType ? { eq: memoryType } : undefined,
-    topics: topics ? { any: topics } : undefined,
-    entities: entities ? { any: entities } : undefined,
+  const result = await RedisAgentMemory.getInstance().searchAllLongTermMemory({
+    text: searchText,
+    filter,
   });
 
+  const total = result.memories.length;
+
   logger.info("Long-term memory search complete", {
-    total: result.total,
-    returned: result.memories.length,
+    returned: total,
     latencyMs: Date.now() - startMs,
   });
 
-  return result;
+  return { memories: result.memories, total };
 };
 
 const searchLongTermMemoryBySessionHandler: RouteHandler = async (
@@ -46,23 +56,26 @@ const searchLongTermMemoryBySessionHandler: RouteHandler = async (
   { logger },
 ) => {
   const { sessionId } = input as SearchLongTermMemoryBySessionInput;
-  const { namespace } = getAppState();
+
+  const filter: MemoryFilter = {
+    sessionId,
+  };
 
   const startMs = Date.now();
-  const result = await AgentMemory.getInstance().searchAllLongTermMemories({
+  const result = await RedisAgentMemory.getInstance().searchAllLongTermMemory({
     text: "",
-    sessionId: { eq: sessionId },
-    namespace: { eq: namespace },
+    filter,
   });
+
+  const total = result.memories.length;
 
   logger.info("Searched long-term memory by session", {
     sessionId,
-    total: result.total,
-    returned: result.memories.length,
+    returned: total,
     latencyMs: Date.now() - startMs,
   });
 
-  return result;
+  return { memories: result.memories, total };
 };
 
 export {

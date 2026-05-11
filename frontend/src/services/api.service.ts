@@ -5,18 +5,18 @@ import type {
   TranscriptChunk,
 } from "@/types/transcript.types";
 import type {
-  WorkingMemoryData,
+  SessionMemoryData,
   AppendResult,
   CreateSessionResponse,
-  SummaryViewData,
-  ComputedSummaryData,
 } from "@/types/memory.types";
 import type {
   ApiResponse,
+  DeleteWorkingMemoryResponse,
   HealthResponse,
   ListSessionsResponse,
   LtSearchResponse,
   ResetResult,
+  TaskResponse,
 } from "@/types/api.types";
 import type {
   GenerateSuggestionResponse,
@@ -36,11 +36,6 @@ const API_PATH = {
   LIST_WORKING_MEMORY_SESSIONS: "/api/listWorkingMemorySessions",
   SEARCH_LONG_TERM_MEMORY: "/api/searchLongTermMemory",
   SEARCH_LONG_TERM_MEMORY_BY_SESSION: "/api/searchLongTermMemoryBySession",
-  CREATE_SUMMARY_VIEW: "/api/createSummaryView",
-  LIST_SUMMARY_VIEWS: "/api/listSummaryViews",
-  COMPUTE_SUMMARY: "/api/computeSummary",
-  GET_COMPUTED_SUMMARIES: "/api/getComputedSummaries",
-  DELETE_SUMMARY_VIEW: "/api/deleteSummaryView",
   GET_TASK: "/api/getTask",
   GENERATE_SUGGESTION: "/api/generateSuggestion",
   LIST_SUGGESTIONS: "/api/listSuggestions",
@@ -80,7 +75,12 @@ const apiGet = async <T>(path: string): Promise<T> => {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return response.json();
+    const json: ApiResponse<T> = await response.json();
+    if (json.error) {
+      throw new Error(json.error);
+    }
+
+    return json.data as T;
   } catch (err) {
     emitApiError((err as Error).message);
     throw err;
@@ -114,12 +114,12 @@ const appendChunk = (
     isLastChunk,
   });
 
-const fetchWorkingMemory = (sessionId: string): Promise<WorkingMemoryData> =>
-  apiPost<WorkingMemoryData>(API_PATH.GET_WORKING_MEMORY, { sessionId });
+const fetchWorkingMemory = (sessionId: string): Promise<SessionMemoryData> =>
+  apiPost<SessionMemoryData>(API_PATH.GET_WORKING_MEMORY, { sessionId });
 
 // Not yet used -- available for manual session cleanup from the UI
-const deleteWorkingMemory = (sessionId: string): Promise<void> =>
-  apiPost<void>(API_PATH.DELETE_WORKING_MEMORY, { sessionId });
+const deleteWorkingMemory = (sessionId: string): Promise<DeleteWorkingMemoryResponse> =>
+  apiPost<DeleteWorkingMemoryResponse>(API_PATH.DELETE_WORKING_MEMORY, { sessionId });
 
 const listWorkingMemorySessions = (
   limit?: number,
@@ -134,9 +134,6 @@ const searchLongTermMemory = (params: {
   text?: string;
   memoryType?: string;
   topics?: string[];
-  entities?: string[];
-  limit?: number;
-  offset?: number;
 }): Promise<LtSearchResponse> =>
   apiPost<LtSearchResponse>(API_PATH.SEARCH_LONG_TERM_MEMORY, params);
 
@@ -147,43 +144,11 @@ const searchLongTermMemoryBySession = (
     sessionId,
   });
 
-const createSummaryView = (input: {
-  name?: string;
-  source: string;
-  groupBy?: string[];
-  timeWindowDays?: number;
-}): Promise<SummaryViewData> =>
-  apiPost<SummaryViewData>(API_PATH.CREATE_SUMMARY_VIEW, input);
-
-const listSummaryViews = (): Promise<{ views: SummaryViewData[] }> =>
-  apiPost<{ views: SummaryViewData[] }>(API_PATH.LIST_SUMMARY_VIEWS);
-
-const computeSummary = (
-  viewId: string,
-  group: Record<string, string>,
-): Promise<ComputedSummaryData & { viewId: string }> =>
-  apiPost<ComputedSummaryData & { viewId: string }>(API_PATH.COMPUTE_SUMMARY, {
-    viewId,
-    group,
-  });
-
-const fetchComputedSummaries = (
-  viewId: string,
-): Promise<{ summaries: ComputedSummaryData[] }> =>
-  apiPost<{ summaries: ComputedSummaryData[] }>(
-    API_PATH.GET_COMPUTED_SUMMARIES,
-    { viewId },
-  );
-
-// Not yet used -- wired in use-summary-views.ts but reserved for a future per-view delete button
-const deleteSummaryView = (viewId: string): Promise<void> =>
-  apiPost<void>(API_PATH.DELETE_SUMMARY_VIEW, { viewId });
-
-// Not yet used -- reserved for polling async task status (e.g. long-term memory extraction, summary recomputes)
+// Not yet used -- reserved for polling async task status
 const fetchTask = (
   taskId: string,
-): Promise<{ id: string; status: string; result: unknown }> =>
-  apiPost<{ id: string; status: string; result: unknown }>(API_PATH.GET_TASK, {
+): Promise<TaskResponse> =>
+  apiPost<TaskResponse>(API_PATH.GET_TASK, {
     taskId,
   });
 
@@ -218,11 +183,6 @@ export {
   listWorkingMemorySessions,
   searchLongTermMemory,
   searchLongTermMemoryBySession,
-  createSummaryView,
-  listSummaryViews,
-  computeSummary,
-  fetchComputedSummaries,
-  deleteSummaryView,
   fetchTask,
   generateSuggestion,
   listSuggestions,

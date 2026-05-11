@@ -20,6 +20,10 @@
       "shortLabel": "Client"
     }
   },
+  "roleMapping": {
+    "rm": "assistant",
+    "client": "user"
+  },
   "participants": {
     "rm": {
       "name": "Sarah Chen",
@@ -53,27 +57,6 @@
         "label": "Conversation records",
         "description": "Stored conversation segments"
       }
-    },
-    "summaryViews": {
-      "title": "Summary views",
-      "description": "AI-generated narrative summaries condensed from extracted memories.",
-      "views": [
-        {
-          "name": "Client memory summary",
-          "source": "long_term",
-          "groupBy": [
-            "user_id"
-          ]
-        },
-        {
-          "name": "Session Recap",
-          "source": "long_term",
-          "groupBy": [
-            "session_id"
-          ],
-          "prompt": "Summarize the key discussion points, decisions made, and action items from this meeting session."
-        }
-      ]
     },
     "metrics": {
       "title": "Redis under the hood",

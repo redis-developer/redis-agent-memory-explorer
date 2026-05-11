@@ -5,13 +5,11 @@ type ApiResponse<T> = { data: T; error: null } | { data: null; error: string };
 type HealthResponse = {
   status: string;
   uptime: number;
-  timestamp: string;
 };
 
 type LtSearchResponse = {
   memories: MemoryRecordData[];
   total: number;
-  nextOffset: number | null;
 };
 
 type TaskResponse = {
@@ -25,15 +23,19 @@ type ListSessionsResponse = {
   total: number;
 };
 
+type DeleteWorkingMemoryResponse = {
+  deleted: boolean;
+  sessionId: string;
+};
+
 type ResetResult = {
   sessionsDeleted: number;
   memoriesDeleted: number;
-  viewsDeleted: number;
-  viewsCreated: number;
 };
 
 export type {
   ApiResponse,
+  DeleteWorkingMemoryResponse,
   HealthResponse,
   ListSessionsResponse,
   LtSearchResponse,

@@ -12,11 +12,9 @@ import { DEMO_TAB, DEFAULT_TRIGGER_EVERY_N_CHUNKS } from "@/constants/app.consta
 
 import { WorkingMemoryTab } from "./working-memory-tab.component";
 import { LongTermMemoryTab } from "./long-term-memory-tab.component";
-import { SummaryViewsTab } from "./summary-views-tab.component";
 import { RedisMetricsTab } from "./redis-metrics-tab.component";
 import { useWorkingMemory } from "./use-working-memory";
 import { useLongTermMemory } from "./use-long-term-memory";
-import { useSummaryViews } from "./use-summary-views";
 import { AiCopilotTab, SuggestionBanner, useSuggestions } from "./ai-copilot";
 
 import "./memory-explorer-panel.component.css";
@@ -51,7 +49,6 @@ const MemoryExplorerPanel = ({
 
   const workingMemory = useWorkingMemory(sessionId, hasSession, isPlaybackComplete);
   const longTermMemory = useLongTermMemory(sessionId, isPlaybackComplete);
-  const summaryViews = useSummaryViews();
 
   const triggerEveryN = suggestionsConfig?.triggerEveryNChunks ?? DEFAULT_TRIGGER_EVERY_N_CHUNKS;
 
@@ -66,8 +63,6 @@ const MemoryExplorerPanel = ({
     const sessionChanged = prevSessionIdRef.current !== sessionId;
     prevSessionIdRef.current = sessionId;
     if (sessionChanged) {
-      summaryViews.resetAndRefresh();
-
       const shouldAutoSwitch = hasSuggestions && sessionId !== null;
       if (shouldAutoSwitch) {
         setActiveTab(DEMO_TAB.AI_COPILOT);
@@ -89,10 +84,6 @@ const MemoryExplorerPanel = ({
     const isLtTab = newValue === DEMO_TAB.LONG_TERM_MEMORY;
     if (isLtTab) {
       longTermMemory.refetch();
-    }
-    const isSummaryTab = newValue === DEMO_TAB.SUMMARY_VIEWS;
-    if (isSummaryTab) {
-      summaryViews.refreshViews();
     }
   };
 
@@ -145,7 +136,6 @@ const MemoryExplorerPanel = ({
         )}
         <Tab label={tabLabels.workingMemory.title} value={DEMO_TAB.WORKING_MEMORY} />
         <Tab label={tabLabels.longTermMemory.title} value={DEMO_TAB.LONG_TERM_MEMORY} />
-        <Tab label={tabLabels.summaryViews.title} value={DEMO_TAB.SUMMARY_VIEWS} />
         <Tab label={tabLabels.metrics.title} value={DEMO_TAB.REDIS_METRICS} />
       </Tabs>
 
@@ -184,28 +174,11 @@ const MemoryExplorerPanel = ({
           />
         )}
 
-        {activeTab === DEMO_TAB.SUMMARY_VIEWS && (
-          <SummaryViewsTab
-            views={summaryViews.views}
-            summaries={summaryViews.summaries}
-            isLoading={summaryViews.isLoading}
-            computingTarget={summaryViews.computingTarget}
-            userId={userId}
-            sessionId={sessionId}
-            namespace={namespace}
-            config={datasetConfig}
-            onComputeSummary={summaryViews.computeSummaryForView}
-            error={summaryViews.error}
-          />
-        )}
-
         {activeTab === DEMO_TAB.REDIS_METRICS && (
           <RedisMetricsTab
             workingMemoryData={workingMemory.data}
             longTermMemorySessionCount={longTermMemory.sessionTotal}
             longTermMemoryAllCount={longTermMemory.allTotal}
-            summaryViewCount={summaryViews.summaryViewCount}
-            computedSummaryCount={summaryViews.computedSummaryCount}
             config={datasetConfig}
           />
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import type { WorkingMemoryData } from "@/types/memory.types";
+import type { SessionMemoryData } from "@/types/memory.types";
 import type { DatasetConfig } from "@/types/dataset-config.types";
 
 import { SectionCard } from "@/components/core";
@@ -8,11 +8,9 @@ import { SectionCard } from "@/components/core";
 import "./redis-metrics-tab.component.css";
 
 type RedisMetricsTabProps = {
-  workingMemoryData: WorkingMemoryData | null;
+  workingMemoryData: SessionMemoryData | null;
   longTermMemorySessionCount: number;
   longTermMemoryAllCount: number;
-  summaryViewCount: number;
-  computedSummaryCount: number;
   config: DatasetConfig;
 };
 
@@ -20,17 +18,14 @@ const RedisMetricsTab = ({
   workingMemoryData,
   longTermMemorySessionCount,
   longTermMemoryAllCount,
-  summaryViewCount,
-  computedSummaryCount,
   config,
 }: RedisMetricsTabProps) => {
-  const messageCount = workingMemoryData?.messages?.length ?? 0;
-  const tokens = workingMemoryData?.tokens ?? 0;
+  const eventCount = workingMemoryData?.events?.length ?? 0;
 
   const rows = [
     {
-      label: "Working memory",
-      value: `${messageCount} messages, ${tokens.toLocaleString()} tokens`,
+      label: "Session memory",
+      value: `${eventCount} events`,
     },
     {
       label: "Long-term memories (session)",
@@ -39,10 +34,6 @@ const RedisMetricsTab = ({
     {
       label: "Long-term memories (all)",
       value: `${longTermMemoryAllCount} total`,
-    },
-    {
-      label: "Summary views",
-      value: `${summaryViewCount} configured, ${computedSummaryCount} computed`,
     },
   ];
 

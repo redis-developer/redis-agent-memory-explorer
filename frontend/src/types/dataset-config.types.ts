@@ -16,16 +16,6 @@ type MemoryTypeLabel = {
   description: string;
 };
 
-type SummaryViewConfigEntry = {
-  name: string;
-  source: string;
-  groupBy: string[];
-  filters?: Record<string, unknown>;
-  timeWindowDays?: number;
-  continuous?: boolean;
-  prompt?: string;
-};
-
 type ChatbotConfig = {
   title: string;
   initialMessage: string;
@@ -59,11 +49,6 @@ type DatasetConfig = {
       semantic: MemoryTypeLabel;
       episodic: MemoryTypeLabel;
       message: MemoryTypeLabel;
-    };
-    summaryViews: {
-      title: string;
-      description: string;
-      views: SummaryViewConfigEntry[];
     };
     metrics: {
       title: string;
@@ -104,7 +89,6 @@ export type {
   RoleConfig,
   ParticipantConfig,
   MemoryTypeLabel,
-  SummaryViewConfigEntry,
   ChatbotConfig,
   DatasetConfig,
   UseDatasetConfigResult,
