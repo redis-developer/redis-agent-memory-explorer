@@ -5,7 +5,8 @@ COPY package.json package-lock.json ./
 COPY packages/cau-logger/package.json packages/cau-logger/
 COPY packages/cau-redis/package.json packages/cau-redis/
 COPY packages/cau-api-server/package.json packages/cau-api-server/
-COPY packages/cau-redis-agent-memory/package.json packages/cau-redis-agent-memory/
+COPY packages/agent-memory-ts-sdk/package.json packages/agent-memory-ts-sdk/
+COPY packages/cau-ram/package.json packages/cau-ram/
 COPY backend/package.json backend/
 COPY frontend/package.json frontend/
 RUN npm ci
@@ -32,7 +33,8 @@ COPY package.json package-lock.json ./
 COPY packages/cau-logger/package.json packages/cau-logger/
 COPY packages/cau-redis/package.json packages/cau-redis/
 COPY packages/cau-api-server/package.json packages/cau-api-server/
-COPY packages/cau-redis-agent-memory/package.json packages/cau-redis-agent-memory/
+COPY packages/agent-memory-ts-sdk/package.json packages/agent-memory-ts-sdk/
+COPY packages/cau-ram/package.json packages/cau-ram/
 COPY backend/package.json backend/
 
 RUN npm ci --omit=dev

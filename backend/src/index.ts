@@ -56,7 +56,7 @@ const initializeApp = async (): Promise<void> => {
       storeId: ENV.RAM_STORE_ID,
     },
     llm: {
-      model: ENV.SUMMARY_MODEL,
+      model: ENV.LLM_MODEL,
       apiKey: ENV.OPENAI_API_KEY,
     },
   });
@@ -83,7 +83,7 @@ const initializeApp = async (): Promise<void> => {
     dataset: ENV.ACTIVE_DATASET,
     namespace,
     userId,
-    modelName: ENV.MODEL_NAME,
+    llmModel: ENV.LLM_MODEL,
     contextWindowMax: ENV.CONTEXT_WINDOW_MAX,
   });
 };

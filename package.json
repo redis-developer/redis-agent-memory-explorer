@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "setup": "npm install && npm run build:packages",
-    "build:packages": "npm run build -w packages/cau-logger -w packages/cau-redis -w packages/cau-api-server -w packages/cau-redis-agent-memory",
+    "build:packages": "npm run build -w packages/cau-logger -w packages/cau-redis -w packages/cau-api-server -w packages/agent-memory-ts-sdk -w packages/cau-ram",
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "clean": "npm run clean --workspaces",

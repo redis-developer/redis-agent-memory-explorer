@@ -123,13 +123,13 @@ const invokeSuggestionLlm = async (
   );
 
   const llm = new ChatOpenAI({
-    model: ENV.CHATBOT_MODEL,
+    model: ENV.LLM_MODEL,
     temperature: 0,
     apiKey: ENV.OPENAI_API_KEY,
   });
 
   logger.info("Invoking suggestion LLM", {
-    model: ENV.CHATBOT_MODEL,
+    model: ENV.LLM_MODEL,
     topicCount: detectedTopics.length,
     previousSuggestionCount: previousSuggestions.length,
     chunkCount: recentChunks.length,

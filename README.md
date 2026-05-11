@@ -1,6 +1,6 @@
 # Redis agent memory explorer
 
-A meeting-memory app that demonstrates [Redis Agent Memory](https://github.com/redis/agent-memory-server) capabilities—working memory, long-term memory, summary views, suggestions, and a conversational chatbot.
+A meeting-memory app that demonstrates [Redis Agent Memory](https://redis.io/products/agent-memory/) capabilities -- working memory, long-term memory, suggestions, and a conversational chatbot -- powered by the Redis Agent Memory (RAM) cloud service.
 
 ## Architecture
 
@@ -11,16 +11,28 @@ redis-agent-memory-explorer/
 ├── data/            Sample transcript datasets (e.g. wealth-advisor)
 ├── docs/            Design and planning documents
 └── packages/        Reusable utility libraries
-    ├── cau-api-server          Zero-boilerplate Express server
-    ├── cau-logger              Pino-based structured logger
-    ├── cau-mongodb             Typed MongoDB CRUD with Zod
-    ├── cau-redis               Typed Redis client wrapper
-    └── cau-redis-agent-memory  Redis Agent Memory client
+    ├── agent-memory-ts-sdk  Redis Agent Memory cloud SDK
+    ├── cau-api-server       Zero-boilerplate Express server
+    ├── cau-logger           Pino-based structured logger
+    ├── cau-ram              Cloud RAM wrapper (session + LTM + intelligence)
+    └── cau-redis            Typed Redis client wrapper
 ```
+
+Everything runs against a single cloud Redis instance -- the Agent Memory REST API (`RAM_ENDPOINT`) handles session and long-term memory, while the same database (`REDIS_URL`) stores auxiliary data (topic tracking, transcript chunks, CopilotKit state) under separate key prefixes.
+
+## Prerequisites
+
+- **Node.js** >= 18
+- **OpenAI API key** for the chatbot, suggestion agents, and memory summarization
+- **Redis Agent Memory cloud credentials**:
+  - `RAM_ENDPOINT` -- REST API endpoint
+  - `RAM_API_KEY` -- API key
+  - `RAM_STORE_ID` -- store identifier
+  - `REDIS_URL` -- Redis protocol URL for the same cloud instance
 
 ## Quick start (Docker)
 
-The fastest way to get everything running—Redis, Agent Memory Server, backend + frontend, and LangGraph—in a single command.
+The fastest way to get the backend + frontend and LangGraph running in a single command.
 
 ### 1. Configure environment
 
@@ -28,10 +40,15 @@ The fastest way to get everything running—Redis, Agent Memory Server, backend 
 cp .env.example .env
 ```
 
-Edit `.env` and set your `OPENAI_API_KEY`:
+Edit `.env` and fill in the required values:
 
 ```env
 OPENAI_API_KEY=sk-your-actual-key-here
+
+RAM_ENDPOINT=https://your-ram-endpoint.redis.io
+RAM_API_KEY=your-ram-api-key
+RAM_STORE_ID=your-store-id
+REDIS_URL=redis://your-cloud-redis-url:6379
 ```
 
 ### 2. Start all services
@@ -40,22 +57,19 @@ OPENAI_API_KEY=sk-your-actual-key-here
 docker compose up --build
 ```
 
-This spins up four containers:
+This spins up two containers:
 
-| Service           | Description                              | Port   |
-| ----------------- | ---------------------------------------- | ------ |
-| `redis`           | Redis 8.x (vector search + JSON)         | `6379` |
-| `agent-memory`    | Redis Agent Memory Server                | `8000` |
-| `demo-app`        | Backend API + frontend (static build)    | `3001` |
-| `demo-langgraph`  | LangGraph chatbot agent dev server       | `2024` |
+| Service          | Description                           | Port   |
+| ---------------- | ------------------------------------- | ------ |
+| `demo-app`       | Backend API + frontend (static build) | `3001` |
+| `demo-langgraph` | LangGraph chatbot agent dev server    | `2024` |
 
 Open [http://localhost:3001](http://localhost:3001) once all services are healthy.
 
 ### Stop and clean up
 
 ```bash
-docker compose down            # stop containers
-docker compose down -v         # stop + remove Redis data volume
+docker compose down
 ```
 
 ---
@@ -63,13 +77,6 @@ docker compose down -v         # stop + remove Redis data volume
 ## Local development
 
 If you prefer running services directly on your machine (e.g. for hot-reload).
-
-### Prerequisites
-
-- **Node.js** >= 18
-- **Redis** running locally (default `redis://localhost:6379`)
-- **Redis Agent Memory Server** running locally (default `http://localhost:8000`)
-- **OpenAI API key** for the chatbot and suggestion agents
 
 ### 1. Install dependencies and build packages
 
@@ -85,17 +92,21 @@ This runs `npm install` (resolves all workspaces) and then builds the shared `pa
 cp backend/.env.example backend/.env
 ```
 
-Edit `backend/.env` and fill in your API keys:
+Edit `backend/.env` and fill in your credentials:
 
-| Variable                        | Description                    | Default                 |
-| ------------------------------- | ------------------------------ | ----------------------- |
-| `MEETING_MEMORY_PORT`           | Backend API port               | `3001`                  |
-| `AGENT_MEMORY_BASE_URL`         | Redis Agent Memory Server URL  | `http://localhost:8000` |
-| `MEETING_MEMORY_DATA_DIR`       | Path to transcript data (relative to `backend/src/`) | `../../data`    |
-| `MEETING_MEMORY_ACTIVE_DATASET` | Active dataset folder name     | `wealth-advisor`        |
-| `OPENAI_API_KEY`                | OpenAI API key                 | —                       |
-| `LANGGRAPH_DEPLOYMENT_URL`      | LangGraph local dev server URL | `http://localhost:2024` |
-| `LANGSMITH_API_KEY`             | LangSmith API key (optional)   | —                       |
+| Variable                        | Description                                          | Default                 |
+| ------------------------------- | ---------------------------------------------------- | ----------------------- |
+| `RAM_ENDPOINT`                  | Redis Agent Memory cloud REST endpoint               | --                      |
+| `RAM_API_KEY`                   | Redis Agent Memory cloud API key                     | --                      |
+| `RAM_STORE_ID`                  | Redis Agent Memory cloud store ID                    | --                      |
+| `REDIS_URL`                     | Redis protocol URL (same cloud instance)             | --                      |
+| `OPENAI_API_KEY`                | OpenAI API key                                       | --                      |
+| `LLM_MODEL`                     | OpenAI model for all LLM tasks (chatbot, suggestions, summarization) | `gpt-4o-mini` |
+| `MEETING_MEMORY_PORT`           | Backend API port                                     | `3001`                  |
+| `MEETING_MEMORY_DATA_DIR`       | Path to transcript data (relative to `backend/src/`) | `../../data`            |
+| `MEETING_MEMORY_ACTIVE_DATASET` | Active dataset folder name                           | `wealth-advisor`        |
+| `LANGGRAPH_DEPLOYMENT_URL`      | LangGraph local dev server URL                       | `http://localhost:2024` |
+| `LANGSMITH_API_KEY`             | LangSmith API key (optional)                         | --                      |
 
 ### 3. Start everything
 
@@ -105,11 +116,11 @@ npm run dev
 
 This single command builds the shared packages, then starts all three services concurrently with color-coded, labeled output:
 
-| Label        | Service                  | Port   |
-| ------------ | ------------------------ | ------ |
-| `langgraph`  | LangGraph CLI dev server | `2024` |
-| `api`        | Express backend (hot-reload) | `3001` |
-| `frontend`   | Next.js dev server       | `3000` |
+| Label       | Service                      | Port   |
+| ----------- | ---------------------------- | ------ |
+| `langgraph` | LangGraph CLI dev server     | `2024` |
+| `api`       | Express backend (hot-reload) | `3001` |
+| `frontend`  | Next.js dev server           | `3000` |
 
 Open [http://localhost:3000](http://localhost:3000) once all services are up.
 
@@ -132,11 +143,11 @@ All scripts are run from the repo root.
 
 ### Individual services
 
-| Script                   | Description                                       |
-| ------------------------ | ------------------------------------------------- |
-| `npm run dev:frontend`   | Start Next.js dev server (port 3000)              |
-| `npm run dev:api`        | Start Express backend with hot-reload (port 3001) |
-| `npm run dev:langgraph`  | Start LangGraph CLI dev server (port 2024)        |
+| Script                  | Description                                       |
+| ----------------------- | ------------------------------------------------- |
+| `npm run dev:frontend`  | Start Next.js dev server (port 3000)              |
+| `npm run dev:api`       | Start Express backend with hot-reload (port 3001) |
+| `npm run dev:langgraph` | Start LangGraph CLI dev server (port 2024)        |
 
 ### Build and maintenance
 

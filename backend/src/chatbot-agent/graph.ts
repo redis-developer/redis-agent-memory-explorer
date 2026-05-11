@@ -72,7 +72,7 @@ const ensureInitialized = (datasetConfig: DatasetConfig): void => {
         storeId: ENV.RAM_STORE_ID,
       },
       llm: {
-        model: ENV.SUMMARY_MODEL,
+        model: ENV.LLM_MODEL,
         apiKey: ENV.OPENAI_API_KEY,
       },
     });
@@ -157,7 +157,7 @@ const createCompiledGraph = () => {
   ensureInitialized(datasetConfig);
 
   const llm = new ChatOpenAI({
-    model: ENV.CHATBOT_MODEL,
+    model: ENV.LLM_MODEL,
     temperature: 0,
     apiKey: ENV.OPENAI_API_KEY,
   });
