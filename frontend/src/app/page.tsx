@@ -41,11 +41,6 @@ const DemoPage = () => {
     value: config?.userId ?? "",
   });
 
-  useCopilotReadable({
-    description: "Namespace for memory scoping",
-    value: config?.namespace ?? "",
-  });
-
   const handleSessionCreated = useCallback((id: string) => {
     setSessionId(id);
   }, []);
@@ -129,7 +124,6 @@ const DemoPage = () => {
           <div className="demo-page__panel demo-page__panel--explorer">
             <MemoryExplorerPanel
               userId={config.userId}
-              namespace={config.namespace}
               sessionId={sessionId}
               datasetConfig={config}
               lastAppendResult={lastAppendResult}

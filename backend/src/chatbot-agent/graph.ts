@@ -78,12 +78,10 @@ const ensureInitialized = (datasetConfig: DatasetConfig): void => {
     });
     setAppState({
       datasetConfig,
-      namespace: datasetConfig.namespace,
       userId: datasetConfig.userId,
     });
     const logger = getLogger();
     logger.info("RedisAgentMemory initialized in LangGraph process", {
-      namespace: datasetConfig.namespace,
       userId: datasetConfig.userId,
     });
   }

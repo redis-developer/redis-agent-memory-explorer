@@ -47,7 +47,7 @@ const initializeApp = async (): Promise<void> => {
   const datasetConfig = DatasetLoaderService.loadDatasetConfig(
     ENV.ACTIVE_DATASET,
   );
-  const { namespace, userId } = datasetConfig;
+  const { userId } = datasetConfig;
 
   RedisAgentMemory.create({
     ram: {
@@ -71,7 +71,6 @@ const initializeApp = async (): Promise<void> => {
 
   setAppState({
     datasetConfig,
-    namespace,
     userId,
   });
 
@@ -81,7 +80,6 @@ const initializeApp = async (): Promise<void> => {
 
   logger.info("Backend ready", {
     dataset: ENV.ACTIVE_DATASET,
-    namespace,
     userId,
     llmModel: ENV.LLM_MODEL,
     contextWindowMax: ENV.CONTEXT_WINDOW_MAX,

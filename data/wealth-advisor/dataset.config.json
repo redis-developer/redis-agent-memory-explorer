@@ -2,7 +2,6 @@
   "id": "wealth-advisor",
   "name": "Intelligent Wealth Advisor",
   "description": "AI-powered meeting memory for bank relationship managers and high-net-worth clients.",
-  "namespace": "wealth-advisor",
   "userId": "sarah-chen",
   "branding": {
     "title": "Wealth advisor agent",

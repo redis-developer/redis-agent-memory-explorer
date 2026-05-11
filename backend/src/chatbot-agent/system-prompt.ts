@@ -19,14 +19,12 @@ const buildSystemPrompt = (config: DatasetConfig): string => {
 ## Context
 - Dataset: ${config.name} (${config.description})
 - User: ${config.userId} (${userName})
-- Namespace: ${config.namespace}
 - Participants: ${participants}
 
 ## Active Session Context (from Frontend)
 The frontend passes context into your conversation via CopilotKit readables. These appear as system messages in your conversation BEFORE the user's question:
 - "Active session ID for the current meeting playback: <sessionId or 'none'>"
 - "User ID for memory scoping: <userId>"
-- "Namespace for memory scoping: <namespace>"
 
 Read the active session ID from these messages. If the value is "none", there is no active session.
 

@@ -29,7 +29,6 @@ const loadDatasetConfig = (datasetId: string): DatasetConfig => {
 
   logger.info("Dataset config loaded", {
     datasetId,
-    namespace: parsed.namespace,
   });
 
   return parsed;

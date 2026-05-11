@@ -21,7 +21,6 @@ import "./memory-explorer-panel.component.css";
 
 type MemoryExplorerPanelProps = {
   userId: string;
-  namespace: string;
   sessionId: string | null;
   datasetConfig: DatasetConfig;
   lastAppendResult?: AppendResult | null;
@@ -31,7 +30,6 @@ type MemoryExplorerPanelProps = {
 
 const MemoryExplorerPanel = ({
   userId,
-  namespace,
   sessionId,
   datasetConfig,
   lastAppendResult,

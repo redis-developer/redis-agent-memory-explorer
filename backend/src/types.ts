@@ -24,7 +24,6 @@ type DatasetConfig = {
   id: string;
   name: string;
   description: string;
-  namespace: string;
   userId: string;
   branding: {
     title: string;
@@ -250,7 +249,6 @@ type CopilotKitState = {
 
 type AppState = {
   datasetConfig: DatasetConfig | null;
-  namespace: string;
   userId: string;
 };
 

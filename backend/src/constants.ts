@@ -21,7 +21,7 @@ const DEFAULT_SEARCH_LIMIT = 100;
 const DEFAULT_SEARCH_OFFSET = 0;
 const SESSION_SEARCH_LIMIT = 100;
 const SEARCH_ALL_LIMIT = 100;
-const SUPPORTED_GROUP_BY_FIELDS = ["user_id", "session_id", "namespace"];
+const SUPPORTED_GROUP_BY_FIELDS = ["user_id", "session_id"];
 
 const AGENT_SEARCH_DEFAULT_LIMIT = 50;
 const AGENT_SESSION_LIST_DEFAULT_LIMIT = 100;

@@ -18,12 +18,11 @@ const getLogger = () => {
 const SCAN_BATCH_SIZE = 100;
 
 const buildStoreKey = (entityPrefix: string, sessionId?: string): string => {
-  const { namespace, userId } = getAppState();
+  const { userId } = getAppState();
 
   const parts = [
     COPILOT_KEY_PREFIX,
     entityPrefix,
-    namespace,
     userId,
     sessionId, //optional ,say not passed during clearAll
   ].filter(Boolean) as string[];

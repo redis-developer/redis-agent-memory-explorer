@@ -27,7 +27,6 @@ type DatasetConfig = {
   id: string;
   name: string;
   description: string;
-  namespace: string;
   userId: string;
   branding: {
     title: string;
