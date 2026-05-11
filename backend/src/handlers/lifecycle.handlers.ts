@@ -9,11 +9,11 @@ import { TopicStore } from "../services/topic-store";
 import { TranscriptChunkStore } from "../services/transcript-chunk-store";
 
 const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
-  const { namespace } = getAppState();
+  const { userId } = getAppState();
   const ram = RedisAgentMemory.getInstance();
   const resetStartMs = Date.now();
 
-  logger.info("Resetting lifecycle -- clearing all memories", { namespace });
+  logger.info("Resetting lifecycle -- clearing all memories", { userId });
 
   const sessionsStartMs = Date.now();
   let sessionsDeleted = 0;
@@ -35,8 +35,7 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   let ltBatch;
   do {
     ltBatch = await ram.searchLongTermMemory({
-      text: "",
-      filter: { namespace },
+      filter: { ownerId: userId },
     });
     if (ltBatch.memories.length > 0) {
       const batchIds = ltBatch.memories.map((m) => m.id);
