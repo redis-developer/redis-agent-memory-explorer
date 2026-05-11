@@ -37,7 +37,7 @@
   },
   "memoryLabels": {
     "workingMemory": {
-      "title": "Working memory",
+      "title": "Session memory",
       "description": "Live session state—transcript messages, token count, and auto-generated context summary.",
       "contextSummaryLabel": "Conversation summary (auto-generated)"
     },
