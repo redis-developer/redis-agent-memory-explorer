@@ -152,25 +152,21 @@ const LongTermMemoryTab = ({
       </div>
 
       <div className="long-term-memory-tab__sections">
-        {sections.map((section) => (
-          <SectionCard
-            key={section.key}
-            title={`${section.label} (${section.items.length})`}
-            description={section.description}
-          >
-            {section.items.length === 0 ? (
-              <p className="long-term-memory-tab__empty-section">
-                No {section.key} memories extracted.
-              </p>
-            ) : (
+        {sections
+          .filter((section) => section.items.length > 0)
+          .map((section) => (
+            <SectionCard
+              key={section.key}
+              title={`${section.label} (${section.items.length})`}
+              description={section.description}
+            >
               <div className="long-term-memory-tab__cards">
                 {section.items.map((memory) => (
                   <MemoryCard key={memory.id} memory={memory} />
                 ))}
               </div>
-            )}
-          </SectionCard>
-        ))}
+            </SectionCard>
+          ))}
       </div>
     </div>
   );
