@@ -1,6 +1,6 @@
 "use client";
 
-import type { SessionMemoryData, AppendResult } from "@/types/memory.types";
+import type { SessionMemoryData } from "@/types/memory.types";
 import type { DatasetConfig } from "@/types/dataset-config.types";
 
 import LinearProgress from "@mui/material/LinearProgress";
@@ -18,7 +18,6 @@ type WorkingMemoryTabProps = {
   isLoading: boolean;
   config: DatasetConfig;
   onRefresh: () => void;
-  lastAppendResult: AppendResult | null;
 };
 
 const WorkingMemoryTab = ({
@@ -26,7 +25,6 @@ const WorkingMemoryTab = ({
   isLoading,
   config,
   onRefresh,
-  lastAppendResult,
 }: WorkingMemoryTabProps) => {
   if (!data) {
     return (
@@ -40,10 +38,6 @@ const WorkingMemoryTab = ({
   const events = data.events ?? [];
   const eventCount = events.length;
   const lastEvents = events.slice(-LAST_MESSAGES_COUNT);
-  const latencyLabel =
-    lastAppendResult?.latencyMs !== undefined
-      ? `${lastAppendResult.latencyMs}ms`
-      : "--";
 
   return (
     <div className="working-memory-tab">
@@ -67,10 +61,6 @@ const WorkingMemoryTab = ({
           <div className="working-memory-tab__info-row">
             <span className="working-memory-tab__info-label">Events</span>
             <span className="working-memory-tab__info-value">{eventCount}</span>
-          </div>
-          <div className="working-memory-tab__info-row">
-            <span className="working-memory-tab__info-label">Last append</span>
-            <span className="working-memory-tab__info-value mono">{latencyLabel}</span>
           </div>
         </div>
       </SectionCard>

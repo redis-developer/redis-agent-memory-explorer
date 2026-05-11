@@ -2,7 +2,6 @@
 
 import type { DatasetConfig } from "@/types/dataset-config.types";
 import type { TranscriptData, TranscriptSummary } from "@/types/transcript.types";
-import type { AppendResult } from "@/types/memory.types";
 
 import { useState, useCallback, useEffect, useMemo, useRef, type MutableRefObject } from "react";
 
@@ -60,7 +59,6 @@ type TranscriptPanelProps = {
   datasetConfig: DatasetConfig;
   onSessionCreated: (sessionId: string) => void;
   onReset: () => void;
-  onAppendResult?: (result: AppendResult) => void;
   onPlaybackStateChange?: (chunkIndex: number, isPlaying: boolean, isComplete: boolean) => void;
 };
 
@@ -68,7 +66,6 @@ const TranscriptPanel = ({
   datasetConfig,
   onSessionCreated,
   onReset,
-  onAppendResult,
   onPlaybackStateChange,
 }: TranscriptPanelProps) => {
   const [transcripts, setTranscripts] = useState<TranscriptSummary[]>([]);
@@ -132,12 +129,6 @@ const TranscriptPanel = ({
       playback.loadAll();
     }
   }, [transcriptData, playback]);
-
-  useEffect(() => {
-    if (playback.lastAppendResult && onAppendResult) {
-      onAppendResult(playback.lastAppendResult);
-    }
-  }, [playback.lastAppendResult, onAppendResult]);
 
   useEffect(() => {
     if (onPlaybackStateChange) {

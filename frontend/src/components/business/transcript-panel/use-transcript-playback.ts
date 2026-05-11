@@ -1,7 +1,6 @@
 "use client";
 
 import type { TranscriptChunk } from "@/types/transcript.types";
-import type { AppendResult } from "@/types/memory.types";
 
 import { useState, useRef, useCallback } from "react";
 
@@ -19,7 +18,6 @@ type UseTranscriptPlaybackResult = {
   isPaused: boolean;
   isComplete: boolean;
   status: PlaybackStatusValue;
-  lastAppendResult: AppendResult | null;
   start: () => void;
   pause: () => void;
   next: () => void;
@@ -37,10 +35,6 @@ const useTranscriptPlayback = (
   const [status, setStatus] = useState<PlaybackStatusValue>(
     PLAYBACK_STATUS.IDLE,
   );
-  const [lastAppendResult, setLastAppendResult] = useState<AppendResult | null>(
-    null,
-  );
-
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const indexRef = useRef(0);
 
@@ -67,9 +61,7 @@ const useTranscriptPlayback = (
     setCurrentIndex(idx + 1);
     indexRef.current = idx + 1;
 
-    appendChunk(sessionId!, chunk, isLastChunk).then((result) => {
-      setLastAppendResult(result);
-    });
+    appendChunk(sessionId!, chunk, isLastChunk);
 
     if (isLastChunk) {
       clearTimer();
@@ -110,7 +102,6 @@ const useTranscriptPlayback = (
     setCurrentIndex(0);
     indexRef.current = 0;
     setStatus(PLAYBACK_STATUS.IDLE);
-    setLastAppendResult(null);
   }, [clearTimer]);
 
   const loadAll = useCallback(() => {
@@ -133,7 +124,6 @@ const useTranscriptPlayback = (
     isPaused: status === PLAYBACK_STATUS.PAUSED,
     isComplete: status === PLAYBACK_STATUS.COMPLETED,
     status,
-    lastAppendResult,
     start,
     pause,
     next,

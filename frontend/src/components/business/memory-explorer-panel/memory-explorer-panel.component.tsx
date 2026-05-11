@@ -1,7 +1,6 @@
 "use client";
 
 import type { DatasetConfig } from "@/types/dataset-config.types";
-import type { AppendResult } from "@/types/memory.types";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
@@ -23,7 +22,6 @@ type MemoryExplorerPanelProps = {
   userId: string;
   sessionId: string | null;
   datasetConfig: DatasetConfig;
-  lastAppendResult?: AppendResult | null;
   currentChunkIndex?: number;
   isPlaybackComplete?: boolean;
 };
@@ -32,7 +30,6 @@ const MemoryExplorerPanel = ({
   userId,
   sessionId,
   datasetConfig,
-  lastAppendResult,
   currentChunkIndex = 0,
   isPlaybackComplete = false,
 }: MemoryExplorerPanelProps) => {
@@ -156,7 +153,6 @@ const MemoryExplorerPanel = ({
             isLoading={workingMemory.isLoading}
             config={datasetConfig}
             onRefresh={workingMemory.refetch}
-            lastAppendResult={lastAppendResult ?? null}
           />
         )}
 

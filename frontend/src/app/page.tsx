@@ -1,6 +1,5 @@
 "use client";
 
-import type { AppendResult } from "@/types/memory.types";
 import type { ComponentProps } from "react";
 
 import { useState, useCallback } from "react";
@@ -26,7 +25,6 @@ import "@/styles/copilotkit-theme.css";
 const DemoPage = () => {
   const { config, isLoading, error, retry } = useDatasetConfig();
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [lastAppendResult, setLastAppendResult] = useState<AppendResult | null>(null);
   const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPlaybackComplete, setIsPlaybackComplete] = useState(false);
@@ -47,14 +45,9 @@ const DemoPage = () => {
 
   const handleReset = useCallback(() => {
     setSessionId(null);
-    setLastAppendResult(null);
     setCurrentChunkIndex(0);
     setIsPlaying(false);
     setIsPlaybackComplete(false);
-  }, []);
-
-  const handleAppendResult = useCallback((result: AppendResult) => {
-    setLastAppendResult(result);
   }, []);
 
   const handlePlaybackStateChange = useCallback(
@@ -117,7 +110,6 @@ const DemoPage = () => {
               datasetConfig={config}
               onSessionCreated={handleSessionCreated}
               onReset={handleReset}
-              onAppendResult={handleAppendResult}
               onPlaybackStateChange={handlePlaybackStateChange}
             />
           </div>
@@ -126,7 +118,6 @@ const DemoPage = () => {
               userId={config.userId}
               sessionId={sessionId}
               datasetConfig={config}
-              lastAppendResult={lastAppendResult}
               currentChunkIndex={currentChunkIndex}
               isPlaybackComplete={isPlaybackComplete}
             />
