@@ -125,17 +125,24 @@ const getWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {
 
   logger.info("Getting session memory", { sessionId });
 
-  const result =
+  const cloudResult =
     await RedisAgentMemory.getInstance().getSessionMemory(sessionId);
 
-  if (!result) {
+  if (!cloudResult) {
     logger.info("Session memory not found, returning empty session", {
       sessionId,
     });
-    return { sessionId, ownerId: "", events: [] };
   }
 
-  return result;
+  //TODO: summary is not yet implemented in cloud RAM
+  const memory = cloudResult ?? {
+    sessionId,
+    ownerId: "",
+    events: [],
+    summary: undefined,
+  };
+
+  return memory;
 };
 
 const deleteWorkingMemoryHandler: RouteHandler = async (input, { logger }) => {

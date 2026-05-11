@@ -14,6 +14,7 @@ type SessionMemoryData = {
   sessionId: string;
   ownerId: string;
   events: SessionEvent[];
+  summary?: string;
 };
 
 type MemoryRecordData = {

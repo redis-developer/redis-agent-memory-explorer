@@ -9,6 +9,7 @@ import { RefreshCw } from "lucide-react";
 
 import { EmptyState, SectionCard } from "@/components/core";
 import { LAST_MESSAGES_COUNT } from "@/constants/app.constants";
+import { WorkingMemorySummary } from "./working-memory-summary.component";
 
 import "./working-memory-tab.component.css";
 
@@ -73,6 +74,13 @@ const WorkingMemoryTab = ({
           </div>
         </div>
       </SectionCard>
+
+      {data.summary && (
+        <WorkingMemorySummary
+          context={data.summary}
+          label={config.memoryLabels.workingMemory.contextSummaryLabel}
+        />
+      )}
 
       <SectionCard
         title={`Session events (${eventCount})`}
