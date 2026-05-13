@@ -2,23 +2,18 @@
 
 A meeting-memory app that demonstrates [Redis Agent Memory](https://redis.io/products/agent-memory/) capabilities -- working memory, long-term memory, suggestions, and a conversational chatbot -- powered by the Redis Agent Memory (RAM) cloud service.
 
-## Architecture
+## Documentation
 
-```
-redis-agent-memory-explorer/
-├── backend/         Express API server + LangGraph chatbot agent
-├── frontend/        Next.js + MUI + CopilotKit UI
-├── data/            Sample transcript datasets (e.g. wealth-advisor)
-├── docs/            Design and planning documents
-└── packages/        Reusable utility libraries
-    ├── agent-memory-ts-sdk  Redis Agent Memory cloud SDK
-    ├── cau-api-server       Zero-boilerplate Express server
-    ├── cau-logger           Pino-based structured logger
-    ├── cau-ram              Cloud RAM wrapper (session + LTM + intelligence)
-    └── cau-redis            Typed Redis client wrapper
-```
+Detailed developer documentation lives in [`docs/dev-plans/`](docs/dev-plans/):
 
-Everything runs against a single cloud Redis instance -- the Agent Memory REST API (`RAM_ENDPOINT`) handles session and long-term memory, while the same database (`REDIS_URL`) stores auxiliary data (topic tracking, transcript chunks, CopilotKit state) under separate key prefixes.
+| Document                                          | Covers                                                              |
+| ------------------------------------------------- | ------------------------------------------------------------------- |
+| [architecture.md](docs/dev-plans/architecture.md) | Monorepo layout, data flows, packages, env vars, cloud RAM behavior |
+| [backend.md](docs/dev-plans/backend.md)           | Routes, handlers, services, config, API contract                    |
+| [frontend.md](docs/dev-plans/frontend.md)         | Components, state management, hooks, styling, dataset-driven UI     |
+| [cau-ram.md](docs/dev-plans/cau-ram.md)           | Cloud RAM wrapper API, operations, types, token budgeting           |
+| [chatbot.md](docs/dev-plans/chatbot.md)           | LangGraph agent, tools, system prompt, CopilotKit integration       |
+| [suggestions.md](docs/dev-plans/suggestions.md)   | Real-time AI copilot pipeline, topic detection, stores              |
 
 ## Prerequisites
 
@@ -94,19 +89,19 @@ cp backend/.env.example backend/.env
 
 Edit `backend/.env` and fill in your credentials:
 
-| Variable                        | Description                                          | Default                 |
-| ------------------------------- | ---------------------------------------------------- | ----------------------- |
-| `RAM_ENDPOINT`                  | Redis Agent Memory cloud REST endpoint               | --                      |
-| `RAM_API_KEY`                   | Redis Agent Memory cloud API key                     | --                      |
-| `RAM_STORE_ID`                  | Redis Agent Memory cloud store ID                    | --                      |
-| `REDIS_URL`                     | Redis protocol URL (same cloud instance)             | --                      |
-| `OPENAI_API_KEY`                | OpenAI API key                                       | --                      |
-| `LLM_MODEL`                     | OpenAI model for all LLM tasks (chatbot, suggestions, summarization) | `gpt-4o-mini` |
-| `MEETING_MEMORY_PORT`           | Backend API port                                     | `3001`                  |
-| `MEETING_MEMORY_DATA_DIR`       | Path to transcript data (relative to `backend/src/`) | `../../data`            |
-| `MEETING_MEMORY_ACTIVE_DATASET` | Active dataset folder name                           | `wealth-advisor`        |
-| `LANGGRAPH_DEPLOYMENT_URL`      | LangGraph local dev server URL                       | `http://localhost:2024` |
-| `LANGSMITH_API_KEY`             | LangSmith API key (optional)                         | --                      |
+| Variable                        | Description                                                          | Default                 |
+| ------------------------------- | -------------------------------------------------------------------- | ----------------------- |
+| `RAM_ENDPOINT`                  | Redis Agent Memory cloud REST endpoint                               | --                      |
+| `RAM_API_KEY`                   | Redis Agent Memory cloud API key                                     | --                      |
+| `RAM_STORE_ID`                  | Redis Agent Memory cloud store ID                                    | --                      |
+| `REDIS_URL`                     | Redis protocol URL (same cloud instance)                             | --                      |
+| `OPENAI_API_KEY`                | OpenAI API key                                                       | --                      |
+| `LLM_MODEL`                     | OpenAI model for all LLM tasks (chatbot, suggestions, summarization) | `gpt-4o-mini`           |
+| `MEETING_MEMORY_PORT`           | Backend API port                                                     | `3001`                  |
+| `MEETING_MEMORY_DATA_DIR`       | Path to transcript data (relative to `backend/src/`)                 | `../../data`            |
+| `MEETING_MEMORY_ACTIVE_DATASET` | Active dataset folder name                                           | `wealth-advisor`        |
+| `LANGGRAPH_DEPLOYMENT_URL`      | LangGraph local dev server URL                                       | `http://localhost:2024` |
+| `LANGSMITH_API_KEY`             | LangSmith API key (optional)                                         | --                      |
 
 ### 3. Start everything
 
