@@ -157,3 +157,4 @@ tests/
 **/*.mov
 
 **/agent-memory-ts-sdk
+**/context-surfaces-ts-sdk
