@@ -362,7 +362,7 @@ const run = async (): Promise<void> => {
     const holdingFilterTools = tools.filter((t) => t.name.includes("holding") && t.name.includes("asset_class"));
     const hasHoldingFilter = holdingFilterTools.length > 0;
     if (hasHoldingFilter) {
-      const result = await cs.callTool(holdingFilterTools[0].name, { asset_class: "equities" });
+      const result = await cs.callTool(holdingFilterTools[0].name, { value: "equities" });
       logDetail(`Result: ${JSON.stringify(result).slice(0, 200)}...`);
     } else {
       logDetail("No holding filter tool found -- skipping");
@@ -373,7 +373,7 @@ const run = async (): Promise<void> => {
     const getTools = tools.filter((t) => t.name.includes("get_") && t.name.includes("client"));
     const hasGetTool = getTools.length > 0;
     if (hasGetTool) {
-      const result = await cs.callTool(getTools[0].name, { client_id: "james-morrison" });
+      const result = await cs.callTool(getTools[0].name, { id: "james-morrison" });
       logDetail(`Result: ${JSON.stringify(result).slice(0, 200)}...`);
     } else {
       logDetail("No client get tool found -- skipping");
@@ -384,7 +384,7 @@ const run = async (): Promise<void> => {
     const meetingTools = tools.filter((t) => t.name.includes("meeting") && t.name.includes("sentiment"));
     const hasMeetingFilter = meetingTools.length > 0;
     if (hasMeetingFilter) {
-      const result = await cs.callTool(meetingTools[0].name, { sentiment: "anxious" });
+      const result = await cs.callTool(meetingTools[0].name, { value: "anxious" });
       logDetail(`Result: ${JSON.stringify(result).slice(0, 200)}...`);
     } else {
       logDetail("No meeting sentiment filter found -- skipping");
@@ -395,7 +395,7 @@ const run = async (): Promise<void> => {
     const actionTools = tools.filter((t) => t.name.includes("action") && t.name.includes("status"));
     const hasActionFilter = actionTools.length > 0;
     if (hasActionFilter) {
-      const result = await cs.callTool(actionTools[0].name, { status: "pending" });
+      const result = await cs.callTool(actionTools[0].name, { value: "pending" });
       logDetail(`Result: ${JSON.stringify(result).slice(0, 200)}...`);
     } else {
       logDetail("No action item status filter found -- skipping");
