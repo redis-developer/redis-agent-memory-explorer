@@ -98,3 +98,23 @@
 a.copilotKitMarkdownElement {
   color: var(--sky-blue) !important;
 }
+
+.copilotKitMessage.copilotKitAssistantMessage code.copilotKitMarkdownElement {
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.82em;
+  font-weight: 500;
+  background-color: var(--dusk-90);
+  color: var(--dusk-30);
+}
+
+.copilotKitMessage.copilotKitAssistantMessage pre {
+  position: relative;
+  border-radius: 6px;
+  background-color: var(--dusk-90) !important;
+  border: 1px solid var(--border);
+}
+
+.copilotKitMessage.copilotKitAssistantMessage pre > div:first-child {
+  display: none !important;
+}

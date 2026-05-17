@@ -123,11 +123,11 @@ const deleteWorkingMemory = (sessionId: string): Promise<DeleteWorkingMemoryResp
 
 const listWorkingMemorySessions = (
   limit?: number,
-  offset?: number,
+  pageToken?: string,
 ): Promise<ListSessionsResponse> =>
   apiPost<ListSessionsResponse>(API_PATH.LIST_WORKING_MEMORY_SESSIONS, {
     limit,
-    offset,
+    pageToken,
   });
 
 const searchLongTermMemory = (params: {

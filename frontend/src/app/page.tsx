@@ -11,6 +11,7 @@ import { useCopilotReadable } from "@copilotkit/react-core";
 import { useDatasetConfig } from "@/hooks/use-dataset-config";
 import { TranscriptPanel } from "@/components/business/transcript-panel";
 import { MemoryExplorerPanel } from "@/components/business/memory-explorer-panel";
+import { AssistantMessage } from "@/components/core/assistant-message.component";
 import {
   DEFAULT_CHATBOT_TITLE,
   DEFAULT_CHATBOT_INITIAL,
@@ -90,6 +91,7 @@ const DemoPage = () => {
   const sidebarProps: ComponentProps<typeof CopilotSidebar> = {
     defaultOpen: false,
     instructions: config.chatbot?.instructions ?? DEFAULT_CHATBOT_INSTRUCTIONS,
+    AssistantMessage,
     labels: {
       title: config.chatbot?.title ?? DEFAULT_CHATBOT_TITLE,
       initial: config.chatbot?.initialMessage ?? DEFAULT_CHATBOT_INITIAL,
