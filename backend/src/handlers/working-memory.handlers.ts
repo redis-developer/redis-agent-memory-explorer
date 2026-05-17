@@ -13,7 +13,6 @@ import { RedisAgentMemory, MessageRole } from "cau-ram";
 import {
   SESSION_ID_PREFIX,
   DEFAULT_LIST_LIMIT,
-  DEFAULT_LIST_OFFSET,
   DetectedTopicStatus,
   DetectedTopicSource,
 } from "../constants";
@@ -159,11 +158,11 @@ const listWorkingMemorySessionsHandler: RouteHandler = async (
   input,
   { logger },
 ) => {
-  const { limit, offset } = (input as ListWorkingMemorySessionsInput) ?? {};
+  const { limit, pageToken } = (input as ListWorkingMemorySessionsInput) ?? {};
 
   const result = await RedisAgentMemory.getInstance().listSessions({
     limit: limit ?? DEFAULT_LIST_LIMIT,
-    offset: offset ?? DEFAULT_LIST_OFFSET,
+    pageToken,
   });
 
   logger.info("Listing sessions", {

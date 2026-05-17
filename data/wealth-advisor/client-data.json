@@ -1,0 +1,438 @@
+{
+  "dataModel": {
+    "title": "Wealth Advisor Client Data",
+    "description": "Structured client profile, portfolio holdings, financial goals, and action items for the wealth-advisor demo",
+    "entities": [
+      {
+        "name": "Client",
+        "description": "Wealth management client profile",
+        "redisKeyTemplate": "wa_client:{client_id}",
+        "fields": [
+          {
+            "name": "client_id",
+            "type": "str",
+            "description": "Unique client identifier",
+            "isKeyComponent": true
+          },
+          {
+            "name": "name",
+            "type": "str",
+            "description": "Full name",
+            "redisIndices": [
+              {
+                "type": "text",
+                "weight": 2.0
+              }
+            ]
+          },
+          {
+            "name": "age",
+            "type": "int",
+            "description": "Age in years",
+            "redisIndices": [
+              {
+                "type": "numeric",
+                "sortable": true
+              }
+            ]
+          },
+          {
+            "name": "organization",
+            "type": "str",
+            "description": "Employer or company",
+            "redisIndices": [
+              {
+                "type": "tag"
+              }
+            ]
+          },
+          {
+            "name": "risk_profile",
+            "type": "str",
+            "description": "Investment risk tolerance level",
+            "redisIndices": [
+              {
+                "type": "tag"
+              }
+            ]
+          },
+          {
+            "name": "total_aum",
+            "type": "float",
+            "description": "Total assets under management in USD",
+            "redisIndices": [
+              {
+                "type": "numeric",
+                "sortable": true
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "name": "holdings",
+            "target": "Holding",
+            "description": "Portfolio holdings",
+            "sourceField": "client_id"
+          },
+          {
+            "name": "goals",
+            "target": "FinancialGoal",
+            "description": "Financial goals",
+            "sourceField": "client_id"
+          },
+          {
+            "name": "action_items",
+            "target": "ActionItem",
+            "description": "Action items",
+            "sourceField": "client_id"
+          }
+        ]
+      },
+      {
+        "name": "Holding",
+        "description": "Portfolio position in an asset class",
+        "redisKeyTemplate": "wa_holding:{holding_id}",
+        "fields": [
+          {
+            "name": "holding_id",
+            "type": "str",
+            "description": "Unique holding identifier",
+            "isKeyComponent": true
+          },
+          {
+            "name": "client_id",
+            "type": "str",
+            "description": "Owner client ID",
+            "redisIndices": [
+              {
+                "type": "tag"
+              }
+            ]
+          },
+          {
+            "name": "asset_class",
+            "type": "str",
+            "description": "Asset class category",
+            "redisIndices": [
+              {
+                "type": "tag"
+              }
+            ]
+          },
+          {
+            "name": "allocation_percent",
+            "type": "float",
+            "description": "Portfolio allocation percentage",
+            "redisIndices": [
+              {
+                "type": "numeric",
+                "sortable": true
+              }
+            ]
+          },
+          {
+            "name": "current_value",
+            "type": "float",
+            "description": "Current market value in USD",
+            "redisIndices": [
+              {
+                "type": "numeric",
+                "sortable": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "FinancialGoal",
+        "description": "Client financial planning goal",
+        "redisKeyTemplate": "wa_goal:{goal_id}",
+        "fields": [
+          {
+            "name": "goal_id",
+            "type": "str",
+            "description": "Unique goal identifier",
+            "isKeyComponent": true
+          },
+          {
+            "name": "client_id",
+            "type": "str",
+            "description": "Owner client ID",
+            "redisIndices": [
+              {
+                "type": "tag"
+              }
+            ]
+          },
+          {
+            "name": "type",
+            "type": "str",
+            "description": "Goal category",
+            "redisIndices": [
+              {
+                "type": "tag"
+              }
+            ]
+          },
+          {
+            "name": "target_amount",
+            "type": "float",
+            "description": "Target dollar amount",
+            "redisIndices": [
+              {
+                "type": "numeric",
+                "sortable": true
+              }
+            ]
+          },
+          {
+            "name": "target_year",
+            "type": "int",
+            "description": "Target completion year",
+            "redisIndices": [
+              {
+                "type": "numeric",
+                "sortable": true
+              }
+            ]
+          },
+          {
+            "name": "status",
+            "type": "str",
+            "description": "Current goal status",
+            "redisIndices": [
+              {
+                "type": "tag"
+              }
+            ]
+          },
+          {
+            "name": "description",
+            "type": "str",
+            "description": "Goal details and context",
+            "redisIndices": [
+              {
+                "type": "text"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "ActionItem",
+        "description": "Follow-up task from a meeting",
+        "redisKeyTemplate": "wa_action:{action_id}",
+        "fields": [
+          {
+            "name": "action_id",
+            "type": "str",
+            "description": "Unique action item identifier",
+            "isKeyComponent": true
+          },
+          {
+            "name": "meeting_id",
+            "type": "str",
+            "description": "Source meeting ID",
+            "redisIndices": [
+              {
+                "type": "tag"
+              }
+            ]
+          },
+          {
+            "name": "client_id",
+            "type": "str",
+            "description": "Related client ID",
+            "redisIndices": [
+              {
+                "type": "tag"
+              }
+            ]
+          },
+          {
+            "name": "assignee",
+            "type": "str",
+            "description": "Person responsible",
+            "redisIndices": [
+              {
+                "type": "tag"
+              }
+            ]
+          },
+          {
+            "name": "description",
+            "type": "str",
+            "description": "Action item details",
+            "redisIndices": [
+              {
+                "type": "text"
+              }
+            ]
+          },
+          {
+            "name": "status",
+            "type": "str",
+            "description": "Current status",
+            "redisIndices": [
+              {
+                "type": "tag"
+              }
+            ]
+          },
+          {
+            "name": "due_date",
+            "type": "str",
+            "description": "Due date (YYYY-MM-DD)",
+            "redisIndices": [
+              {
+                "type": "tag"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "records": {
+    "Client": [
+      {
+        "client_id": "jamesmorrison",
+        "name": "James Morrison",
+        "age": 52,
+        "organization": "Meridian Technologies",
+        "risk_profile": "moderate",
+        "total_aum": 2400000
+      }
+    ],
+    "Holding": [
+      {
+        "holding_id": "h001",
+        "client_id": "jamesmorrison",
+        "asset_class": "equities",
+        "allocation_percent": 45,
+        "current_value": 1080000
+      },
+      {
+        "holding_id": "h002",
+        "client_id": "jamesmorrison",
+        "asset_class": "fixed_income",
+        "allocation_percent": 30,
+        "current_value": 720000
+      },
+      {
+        "holding_id": "h003",
+        "client_id": "jamesmorrison",
+        "asset_class": "reits",
+        "allocation_percent": 9,
+        "current_value": 210000
+      },
+      {
+        "holding_id": "h004",
+        "client_id": "jamesmorrison",
+        "asset_class": "cash",
+        "allocation_percent": 10,
+        "current_value": 240000
+      },
+      {
+        "holding_id": "h005",
+        "client_id": "jamesmorrison",
+        "asset_class": "short_duration_bonds",
+        "allocation_percent": 4,
+        "current_value": 100000
+      },
+      {
+        "holding_id": "h006",
+        "client_id": "jamesmorrison",
+        "asset_class": "dividend_etf",
+        "allocation_percent": 2,
+        "current_value": 50000
+      }
+    ],
+    "FinancialGoal": [
+      {
+        "goal_id": "g001",
+        "client_id": "jamesmorrison",
+        "type": "retirement",
+        "target_amount": 3000000,
+        "target_year": 2031,
+        "status": "active",
+        "description": "Retire at 57 with $3M liquid, moderate risk tolerance, $50-75K annual contributions"
+      },
+      {
+        "goal_id": "g002",
+        "client_id": "jamesmorrison",
+        "type": "education",
+        "target_amount": 200000,
+        "target_year": 2029,
+        "status": "planning",
+        "description": "529 plan for daughter Emily, Northwestern, needs session with spouse Maya"
+      },
+      {
+        "goal_id": "g003",
+        "client_id": "jamesmorrison",
+        "type": "tax_optimization",
+        "target_amount": 40000,
+        "target_year": 2025,
+        "status": "completed",
+        "description": "Year-end tax loss harvesting from underperforming REIT and international positions"
+      },
+      {
+        "goal_id": "g004",
+        "client_id": "jamesmorrison",
+        "type": "retirement",
+        "target_amount": 0,
+        "target_year": 2027,
+        "status": "planning",
+        "description": "Model dual-retirement scenario -- spouse Maya considering early retirement in 2027"
+      }
+    ],
+    "ActionItem": [
+      {
+        "action_id": "a001",
+        "meeting_id": "meeting005",
+        "client_id": "jamesmorrison",
+        "assignee": "sarahchen",
+        "description": "Execute REIT to bond/ETF rebalance ($100K short-duration bonds, $50K dividend aristocrats ETF)",
+        "status": "completed",
+        "due_date": "2026_03_07"
+      },
+      {
+        "action_id": "a002",
+        "meeting_id": "meeting005",
+        "client_id": "jamesmorrison",
+        "assignee": "sarahchen",
+        "description": "Model dual-retirement income scenario with Maya retiring in 2027",
+        "status": "pending",
+        "due_date": "2026_03_15"
+      },
+      {
+        "action_id": "a003",
+        "meeting_id": "meeting005",
+        "client_id": "jamesmorrison",
+        "assignee": "sarahchen",
+        "description": "Schedule dedicated education fund session with Maya present",
+        "status": "pending",
+        "due_date": "2026_03_31"
+      },
+      {
+        "action_id": "a004",
+        "meeting_id": "meeting003",
+        "client_id": "jamesmorrison",
+        "assignee": "sarahchen",
+        "description": "Prepare 529 plan comparison report",
+        "status": "pending",
+        "due_date": "2026_02_01"
+      },
+      {
+        "action_id": "a005",
+        "meeting_id": "meeting001",
+        "client_id": "jamesmorrison",
+        "assignee": "sarahchen",
+        "description": "Prepare detailed asset allocation proposal",
+        "status": "completed",
+        "due_date": "2025_10_15"
+      }
+    ]
+  }
+}

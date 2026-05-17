@@ -1,5 +1,6 @@
 import type { BaseMessage } from "@langchain/core/messages";
 import type { CopilotKitState, DatasetConfig } from "../types";
+import type { McpToolDef } from "../types";
 
 import {
   MessagesAnnotation,
@@ -12,11 +13,12 @@ import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 import { SystemMessage } from "@langchain/core/messages";
 import { RedisAgentMemory } from "cau-ram";
+import { ContextSurfaces } from "cau-context-surfaces";
 
 import { Logger } from "cau-logger";
 import { join } from "node:path";
 
-import { createMemoryTools } from "./tools";
+import { createAllTools } from "./tools";
 import { buildSystemPrompt } from "./system-prompt";
 import { DatasetLoaderService } from "../services/dataset-loader.service";
 import { ENV } from "../config";
@@ -60,7 +62,9 @@ const StateAnnotation = Annotation.Root({
 });
 
 const ensureInitialized = (datasetConfig: DatasetConfig): void => {
-  //since langgraph server runs in a separate process, we need to ensure that the AgentMemory is initialized
+  //Since langgraph server runs in a separate process, we need to ensure that the AgentMemory is initialized
+
+  const logger = getLogger();
 
   try {
     RedisAgentMemory.getInstance();
@@ -76,15 +80,41 @@ const ensureInitialized = (datasetConfig: DatasetConfig): void => {
         apiKey: ENV.OPENAI_API_KEY,
       },
     });
-    setAppState({
-      datasetConfig,
-      userId: datasetConfig.userId,
-    });
-    const logger = getLogger();
     logger.info("RedisAgentMemory initialized in LangGraph process", {
       userId: datasetConfig.userId,
     });
   }
+
+  const hasCtxConfig =
+    ENV.CTX_ADMIN_KEY !== "" &&
+    ENV.CTX_SURFACE_ID !== "" &&
+    ENV.MCP_AGENT_KEY !== "";
+  let ctxSurfaceId = "";
+  let mcpAgentKey = "";
+  if (hasCtxConfig) {
+    try {
+      ContextSurfaces.getInstance();
+    } catch {
+      const cs = ContextSurfaces.create({
+        adminKey: ENV.CTX_ADMIN_KEY,
+        adminApiUrl: ENV.CTX_ADMIN_API_URL || undefined,
+        mcpUrl: ENV.CTX_MCP_URL || undefined,
+      });
+      cs.setAgentKey(ENV.MCP_AGENT_KEY);
+      ctxSurfaceId = ENV.CTX_SURFACE_ID;
+      mcpAgentKey = ENV.MCP_AGENT_KEY;
+      logger.info("ContextSurfaces initialized in LangGraph process", {
+        surfaceId: ctxSurfaceId,
+      });
+    }
+  }
+
+  setAppState({
+    datasetConfig,
+    userId: datasetConfig.userId,
+    ctxSurfaceId,
+    mcpAgentKey,
+  });
 };
 
 // CopilotKit passes useCopilotReadable values via state.copilotkit.context (NOT
@@ -112,9 +142,10 @@ const invokeReactNode = async (
   state: typeof StateAnnotation.State,
   reactAgent: ReturnType<typeof createReactAgent>,
   datasetConfig: DatasetConfig,
+  mcpToolDefs: McpToolDef[],
 ): Promise<{ messages: BaseMessage[] }> => {
   const logger = getLogger();
-  const systemPrompt = buildSystemPrompt(datasetConfig);
+  const systemPrompt = buildSystemPrompt(datasetConfig, mcpToolDefs);
   const readableMessages = buildReadableMessages(state.copilotkit);
 
   const messagesWithSystemPrompt = [
@@ -131,9 +162,10 @@ const invokeReactNode = async (
 
   const inputCount = messagesWithSystemPrompt.length;
   const startMs = Date.now();
-  const result = await reactAgent.invoke({
-    messages: messagesWithSystemPrompt,
-  });
+  const result = await reactAgent.invoke(
+    { messages: messagesWithSystemPrompt },
+    { recursionLimit: 50 },
+  );
 
   const newMessages = result.messages.slice(inputCount);
 
@@ -145,7 +177,7 @@ const invokeReactNode = async (
   return { messages: newMessages };
 };
 
-const createCompiledGraph = () => {
+const createCompiledGraph = async () => {
   ensureLoggerInitialized();
 
   const datasetConfig = DatasetLoaderService.loadDatasetConfig(
@@ -160,12 +192,12 @@ const createCompiledGraph = () => {
     apiKey: ENV.OPENAI_API_KEY,
   });
 
-  const tools = createMemoryTools();
+  const { tools, mcpToolDefs } = await createAllTools();
   const reactAgent = createReactAgent({ llm, tools });
 
   const graph = new StateGraph(StateAnnotation)
     .addNode("reactNode", (state) =>
-      invokeReactNode(state, reactAgent, datasetConfig),
+      invokeReactNode(state, reactAgent, datasetConfig, mcpToolDefs),
     )
     .addEdge(START, "reactNode")
     .addEdge("reactNode", END);

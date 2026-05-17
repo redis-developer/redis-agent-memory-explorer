@@ -1,6 +1,13 @@
+import type { StructuredToolInterface } from "@langchain/core/tools";
+import type { DataModel } from "cau-context-surfaces";
 import type { MemoryType } from "cau-ram";
 
 import type { DetectedTopicStatus, DetectedTopicSource } from "./constants";
+
+type McpToolDef = {
+  name: string;
+  description: string;
+};
 
 // --- Dataset Config (matches dataset.config.json schema) ---
 
@@ -53,6 +60,7 @@ type DatasetConfig = {
     };
   };
   suggestions?: SuggestionsConfig;
+  contextSurfaces?: ContextSurfacesDatasetConfig;
   transcriptPanel: {
     title: string;
     playingLabel: string;
@@ -141,7 +149,7 @@ type DeleteWorkingMemoryInput = {
 
 type ListWorkingMemorySessionsInput = {
   limit?: number;
-  offset?: number;
+  pageToken?: string;
 };
 
 type SearchLongTermMemoryInput = {
@@ -155,7 +163,6 @@ type SearchLongTermMemoryInput = {
 type SearchLongTermMemoryBySessionInput = {
   sessionId: string;
 };
-
 
 // --- Suggestions ---
 
@@ -245,17 +252,52 @@ type CopilotKitState = {
   actions?: unknown[];
 };
 
+// --- Context Surfaces (dataset config) ---
+
+type ContextSurfacesDatasetConfig = {
+  surfaceName: string;
+  clientDataFile: string;
+};
+
+// --- Context Surfaces setup ---
+
+type ClientDataFile = {
+  dataModel: DataModel;
+  records: Record<string, Record<string, unknown>[]>;
+};
+
+type ParsedRedisUrl = {
+  addr: string;
+  username: string;
+  password: string;
+  tls: boolean;
+  db: number;
+};
+
+type SetupResult = {
+  surfaceId: string;
+  agentKey: string;
+};
+
 // --- App state (set at startup, read by handlers) ---
 
 type AppState = {
   datasetConfig: DatasetConfig | null;
   userId: string;
+  ctxSurfaceId: string;
+  mcpAgentKey: string;
+};
+
+type ContextSurfacesResult = {
+  tools: StructuredToolInterface[];
+  mcpToolDefs: McpToolDef[];
 };
 
 export type {
   RoleConfig,
   ParticipantConfig,
   MemoryTypeLabel,
+  ContextSurfacesDatasetConfig,
   DatasetConfig,
   DatasetSummary,
   SuggestionTypeConfig,
@@ -282,5 +324,10 @@ export type {
   ListWorkingMemorySessionsInput,
   SearchLongTermMemoryInput,
   SearchLongTermMemoryBySessionInput,
+  ClientDataFile,
+  ParsedRedisUrl,
+  SetupResult,
   AppState,
+  ContextSurfacesResult,
+  McpToolDef,
 };

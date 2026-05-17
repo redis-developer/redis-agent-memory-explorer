@@ -1,9 +1,13 @@
 import type { StructuredToolInterface } from "@langchain/core/tools";
 import type { MemoryFilter } from "cau-ram";
+import type { McpTool } from "cau-context-surfaces";
+import type { McpToolDef } from "../types";
+import type { ContextSurfacesResult } from "../types";
 
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 import { RedisAgentMemory, MemoryType } from "cau-ram";
+import { ContextSurfaces } from "cau-context-surfaces";
 import { Logger } from "cau-logger";
 
 import { getAppState } from "../app-state";
@@ -15,7 +19,8 @@ import {
 
 let _logger: ReturnType<typeof Logger.getInstance> | null = null;
 const getLogger = () => {
-  if (!_logger) _logger = Logger.getInstance().child({ component: "ChatbotTools" });
+  if (!_logger)
+    _logger = Logger.getInstance().child({ component: "ChatbotTools" });
   return _logger;
 };
 
@@ -41,7 +46,12 @@ const searchMemoriesTool = new DynamicStructuredTool({
     const { userId } = getAppState();
     const startMs = Date.now();
 
-    logger.info("Tool: searchMemories invoked", { query, memoryType, topics, limit });
+    logger.info("Tool: searchMemories invoked", {
+      query,
+      memoryType,
+      topics,
+      limit,
+    });
 
     const filter: MemoryFilter = {
       ownerId: userId,
@@ -59,7 +69,10 @@ const searchMemoriesTool = new DynamicStructuredTool({
       limit: limit ?? AGENT_SEARCH_DEFAULT_LIMIT,
     });
 
-    logger.info("Tool: searchMemories completed", { count: result.memories.length, latencyMs: Date.now() - startMs });
+    logger.info("Tool: searchMemories completed", {
+      count: result.memories.length,
+      latencyMs: Date.now() - startMs,
+    });
 
     return JSON.stringify(result);
   },
@@ -92,7 +105,11 @@ const searchMemoriesBySessionTool = new DynamicStructuredTool({
       limit: AGENT_SESSION_MEMORIES_LIMIT,
     });
 
-    logger.info("Tool: searchMemoriesBySession completed", { sessionId, count: result.memories.length, latencyMs: Date.now() - startMs });
+    logger.info("Tool: searchMemoriesBySession completed", {
+      sessionId,
+      count: result.memories.length,
+      latencyMs: Date.now() - startMs,
+    });
 
     return JSON.stringify(result);
   },
@@ -119,7 +136,11 @@ const getMemoryContextTool = new DynamicStructuredTool({
     const { userId } = getAppState();
     const startMs = Date.now();
 
-    logger.info("Tool: getMemoryContext invoked", { query, sessionId, includeAllLongTermMemories });
+    logger.info("Tool: getMemoryContext invoked", {
+      query,
+      sessionId,
+      includeAllLongTermMemories,
+    });
 
     const ram = RedisAgentMemory.getInstance();
 
@@ -135,7 +156,9 @@ const getMemoryContextTool = new DynamicStructuredTool({
       longTermSearch,
     });
 
-    logger.info("Tool: getMemoryContext completed", { latencyMs: Date.now() - startMs });
+    logger.info("Tool: getMemoryContext completed", {
+      latencyMs: Date.now() - startMs,
+    });
 
     return JSON.stringify(result);
   },
@@ -188,6 +211,115 @@ const getSessionStateTool = new DynamicStructuredTool({
   },
 });
 
+const buildJsonSchemaToZod = (
+  inputSchema: Record<string, unknown>,
+): z.ZodType => {
+  const properties = (inputSchema.properties ?? {}) as Record<
+    string,
+    Record<string, unknown>
+  >;
+  const required = (inputSchema.required ?? []) as string[];
+
+  const shape: Record<string, z.ZodType> = {};
+  const entries = Object.entries(properties);
+
+  for (const [key, prop] of entries) {
+    const description = (prop.description as string) ?? key;
+    const propType = prop.type as string;
+
+    let field: z.ZodType;
+    if (propType === "number" || propType === "integer") {
+      field = z.number().describe(description);
+    } else {
+      field = z.string().describe(description);
+    }
+
+    const isOptional = !required.includes(key);
+    if (isOptional) {
+      field = field.optional();
+    }
+
+    shape[key] = field;
+  }
+
+  const hasNoProperties = entries.length === 0;
+  let result: z.ZodType = z.object(shape);
+  if (hasNoProperties) {
+    result = z.object({}).passthrough();
+  }
+
+  return result;
+};
+
+const extractMcpText = (result: {
+  content?: Array<{ type: string; text?: string }>;
+  isError?: boolean;
+}): string => {
+  const hasContent = result.content && result.content.length > 0;
+
+  let text = "No results found.";
+  if (hasContent) {
+    const textParts = result
+      .content!.filter((item) => item.type === "text" && item.text)
+      .map((item) => item.text!);
+
+    if (textParts.length > 0) {
+      text = textParts.join("\n");
+    }
+  }
+
+  return text;
+};
+
+const wrapMcpTool = (mcpTool: McpTool): DynamicStructuredTool => {
+  const schema = buildJsonSchemaToZod(mcpTool.inputSchema);
+
+  return new DynamicStructuredTool({
+    name: mcpTool.name,
+    description: `[Context Surfaces] ${mcpTool.description}`,
+    schema,
+    func: async (args: Record<string, unknown>) => {
+      const logger = getLogger();
+      const startMs = Date.now();
+
+      logger.info(`Tool: ${mcpTool.name} invoked (Context Surfaces)`, { args });
+
+      const cs = ContextSurfaces.getInstance();
+      const result = await cs.callTool(mcpTool.name, args);
+      const text = extractMcpText(result);
+
+      logger.info(`Tool: ${mcpTool.name} completed`, {
+        latencyMs: Date.now() - startMs,
+        resultLength: text.length,
+        isError: result.isError ?? false,
+        resultPreview: text.slice(0, 200),
+      });
+
+      return text;
+    },
+  });
+};
+
+const createContextSurfacesTools = async (): Promise<ContextSurfacesResult> => {
+  const logger = getLogger();
+
+  const cs = ContextSurfaces.getInstance();
+  const mcpTools = await cs.listTools();
+
+  const tools = mcpTools.map(wrapMcpTool);
+  const mcpToolDefs: McpToolDef[] = mcpTools.map((t) => ({
+    name: t.name,
+    description: t.description,
+  }));
+
+  logger.info("Context Surfaces tools registered", {
+    count: tools.length,
+    toolNames: tools.map((t) => t.name),
+  });
+
+  return { tools, mcpToolDefs };
+};
+
 const createMemoryTools = (): StructuredToolInterface[] => {
   return [
     searchMemoriesTool,
@@ -198,4 +330,31 @@ const createMemoryTools = (): StructuredToolInterface[] => {
   ];
 };
 
-export { createMemoryTools };
+const createAllTools = async (): Promise<ContextSurfacesResult> => {
+  const logger = getLogger();
+  const { ctxSurfaceId } = getAppState();
+
+  const ramTools = createMemoryTools();
+  const hasContextSurfaces = ctxSurfaceId !== "";
+
+  let tools: StructuredToolInterface[] = ramTools;
+  let mcpToolDefs: McpToolDef[] = [];
+
+  if (!hasContextSurfaces) {
+    logger.info("Chatbot tools: RAM only", { count: ramTools.length });
+  } else {
+    const csResult = await createContextSurfacesTools();
+    tools = [...ramTools, ...csResult.tools];
+    mcpToolDefs = csResult.mcpToolDefs;
+
+    logger.info("Chatbot tools: RAM + Context Surfaces", {
+      ramCount: ramTools.length,
+      csCount: csResult.tools.length,
+      totalCount: tools.length,
+    });
+  }
+
+  return { tools, mcpToolDefs };
+};
+
+export { createMemoryTools, createAllTools };

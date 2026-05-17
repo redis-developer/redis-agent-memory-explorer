@@ -18,6 +18,7 @@ import { routes } from "./routes";
 import { setAppState } from "./app-state";
 import { ENV } from "./config";
 import { DatasetLoaderService } from "./services/dataset-loader.service";
+import { initializeContextSurfaces } from "./services/context-surfaces-setup.service";
 import { handleCopilotKitLanggraph } from "./chatbot-agent";
 
 const logger = Logger.create({
@@ -69,20 +70,38 @@ const initializeApp = async (): Promise<void> => {
     status: healthResult.status,
   });
 
-  setAppState({
-    datasetConfig,
-    userId,
-  });
-
   const redis = RedisDb.create({ url: ENV.REDIS_URL, logger });
   await redis.connect();
   logger.info("Redis connected for copilot stores", { url: ENV.REDIS_URL });
+
+  let ctxSurfaceId = "";
+  let mcpAgentKey = "";
+
+  const hasCtxAdminKey = ENV.CTX_ADMIN_KEY !== "";
+  const hasContextSurfacesConfig = datasetConfig.contextSurfaces !== undefined;
+  if (hasCtxAdminKey && hasContextSurfacesConfig) {
+    const csResult = await initializeContextSurfaces(datasetConfig);
+    ctxSurfaceId = csResult.surfaceId;
+    mcpAgentKey = csResult.agentKey;
+  } else {
+    logger.info(
+      "Context Surfaces integration skipped (missing CTX_ADMIN_KEY or dataset contextSurfaces config)",
+    );
+  }
+
+  setAppState({
+    datasetConfig,
+    userId,
+    ctxSurfaceId,
+    mcpAgentKey,
+  });
 
   logger.info("Backend ready", {
     dataset: ENV.ACTIVE_DATASET,
     userId,
     llmModel: ENV.LLM_MODEL,
     contextWindowMax: ENV.CONTEXT_WINDOW_MAX,
+    ctxSurfaceId: ctxSurfaceId || "(not configured)",
   });
 };
 

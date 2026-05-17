@@ -159,8 +159,12 @@
   },
   "chatbot": {
     "title": "Memory assistant",
-    "initialMessage": "Ask me anything about the stored memories for this client. I can search across all meetings or focus on a specific session.",
-    "placeholder": "Ask about memories...",
-    "instructions": "You are a Memory Assistant that helps explore memories stored in Redis Agent Memory Server for this wealth advisor demo."
+    "initialMessage": "Ask me anything about the stored memories for this client. I can search across all meetings or focus on a specific session. I also have access to structured client data -- portfolio holdings, financial goals, and action items.",
+    "placeholder": "Ask about memories or client data...",
+    "instructions": "You are a Memory Assistant that helps explore memories stored in Redis Agent Memory and structured client data from Context Surfaces for this wealth advisor demo."
+  },
+  "contextSurfaces": {
+    "surfaceName": "wealth-advisor-demo",
+    "clientDataFile": "client-data.json"
   }
 }

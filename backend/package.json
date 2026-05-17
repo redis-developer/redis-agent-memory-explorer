@@ -13,6 +13,7 @@
     "cau-logger": "*",
     "cau-redis": "*",
     "cau-ram": "*",
+    "cau-context-surfaces": "*",
     "@copilotkit/runtime": "^1.54.0",
     "@langchain/langgraph": "^1.2.0",
     "@langchain/core": "^1.1.36",

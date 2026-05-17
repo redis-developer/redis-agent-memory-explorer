@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "setup": "npm install && npm run build:packages",
-    "build:packages": "npm run build -w packages/cau-logger -w packages/cau-redis -w packages/cau-api-server -w packages/agent-memory-ts-sdk -w packages/cau-ram -w packages/context-surfaces-ts-sdk -w packages/cau-context-surfaces",
+    "build:packages": "npm run build -w packages/cau-logger -w packages/cau-redis -w packages/cau-api-server -w packages/cau-ram -w packages/context-surfaces-ts-sdk -w packages/cau-context-surfaces",
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "clean": "npm run clean --workspaces",

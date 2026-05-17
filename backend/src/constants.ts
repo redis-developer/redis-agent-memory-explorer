@@ -1,4 +1,5 @@
 const CONFIG_FILENAME = "dataset.config.json";
+const CLIENT_DATA_FILENAME = "client-data.json";
 
 const TRANSCRIPTS_SUBDIR = "transcripts";
 const JSON_EXT = ".json";
@@ -64,8 +65,26 @@ const DetectedTopicSource = {
 type DetectedTopicSource =
   (typeof DetectedTopicSource)[keyof typeof DetectedTopicSource];
 
+const SURFACE_SETUP_POLL_INTERVAL_MS = 3000;
+const SURFACE_SETUP_POLL_TIMEOUT_MS = 90000;
+
+const DEFAULT_REDIS_PORT = "6379";
+const REDIS_TLS_PROTOCOL = "rediss:";
+const DEFAULT_REDIS_USERNAME = "default";
+
+const CTX_DATA_SOURCE_TYPE = "redis";
+const CTX_DATA_SOURCE_NAME = "demo-redis";
+
 export {
   CONFIG_FILENAME,
+  CLIENT_DATA_FILENAME,
+  SURFACE_SETUP_POLL_INTERVAL_MS,
+  SURFACE_SETUP_POLL_TIMEOUT_MS,
+  DEFAULT_REDIS_PORT,
+  REDIS_TLS_PROTOCOL,
+  DEFAULT_REDIS_USERNAME,
+  CTX_DATA_SOURCE_TYPE,
+  CTX_DATA_SOURCE_NAME,
   TRANSCRIPTS_SUBDIR,
   JSON_EXT,
   LOGGER_CONTEXT,

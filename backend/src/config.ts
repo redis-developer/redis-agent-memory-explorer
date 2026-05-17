@@ -43,6 +43,11 @@ const ENV = {
   LANGSMITH_API_KEY: process.env.LANGSMITH_API_KEY ?? "",
   OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "",
   REDIS_URL: process.env.REDIS_URL ?? DEFAULT_REDIS_URL,
+  CTX_ADMIN_KEY: process.env.CTX_ADMIN_KEY ?? "",
+  CTX_ADMIN_API_URL: process.env.CTX_ADMIN_API_URL ?? "",
+  CTX_MCP_URL: process.env.CTX_MCP_URL ?? "",
+  CTX_SURFACE_ID: process.env.CTX_SURFACE_ID ?? "",
+  MCP_AGENT_KEY: process.env.MCP_AGENT_KEY ?? "",
   LOG_DIR: resolve(
     __dirname,
     process.env.MEETING_MEMORY_LOG_DIR ?? DEFAULT_LOG_DIR,
