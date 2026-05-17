@@ -75,11 +75,12 @@ const AssistantMessage = (props: AssistantMessageProps) => {
   }
 
   const { source, tools, body } = parseMessage(content);
+  const displaySource = source?.replace(/Context Surfaces/g, "Context Retriever") ?? null;
 
   return (
     <div className="assistant-message">
-      {source && (
-        <div className="assistant-message__source">Source: {source}</div>
+      {displaySource && (
+        <div className="assistant-message__source">Source: {displaySource}</div>
       )}
       {tools.length > 0 && (
         <details className="assistant-message__tools">
