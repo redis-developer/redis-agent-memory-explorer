@@ -7,7 +7,7 @@ import { Markdown } from "@copilotkit/react-ui";
 import "./assistant-message.component.css";
 
 const SOURCE_PATTERN = /^\*\*Source:\s*(.+?)\*\*\s*$/;
-const TOOLS_PATTERN = /^<tools>(.+?)<\/tools>\s*$/;
+const TOOLS_PATTERN = /^<tools>(.*?)<\/tools>\s*$/;
 
 type ParsedMessage = {
   source: string | null;
@@ -46,7 +46,8 @@ const parseMessage = (text: string): ParsedMessage => {
     break;
   }
 
-  const body = lines.slice(bodyStartIdx).join("\n").trimStart();
+  const rawBody = lines.slice(bodyStartIdx).join("\n").trimStart();
+  const body = rawBody.replace(/<\/?tools>/g, "");
 
   return { source, tools, body };
 };

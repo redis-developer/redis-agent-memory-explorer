@@ -1,6 +1,6 @@
 # Redis agent memory explorer
 
-A meeting-memory app that demonstrates [Redis Agent Memory](https://redis.io/products/agent-memory/) capabilities -- working memory, long-term memory, suggestions, and a conversational chatbot -- powered by the Redis Agent Memory (RAM) cloud service.
+A meeting-memory app that demonstrates [Redis Agent Memory](https://redis.io/products/agent-memory/) capabilities -- working memory, long-term memory, suggestions, and a conversational chatbot -- powered by the Redis Agent Memory (RAM) cloud service and Redis Context Surfaces for structured data retrieval.
 
 ## Documentation
 
@@ -13,6 +13,7 @@ Detailed developer documentation lives in [`docs/dev-plans/`](docs/dev-plans/):
 | [frontend.md](docs/dev-plans/frontend.md)         | Components, state management, hooks, styling, dataset-driven UI     |
 | [cau-ram.md](docs/dev-plans/cau-ram.md)           | Cloud RAM wrapper API, operations, types, token budgeting           |
 | [chatbot.md](docs/dev-plans/chatbot.md)           | LangGraph agent, tools, system prompt, CopilotKit integration       |
+| [context-surfaces-integration.md](docs/dev-plans/context-surfaces-integration.md) | Context Surfaces setup, MCP tools, data flow, source attribution |
 | [suggestions.md](docs/dev-plans/suggestions.md)   | Real-time AI copilot pipeline, topic detection, stores              |
 
 ## Prerequisites
@@ -24,6 +25,10 @@ Detailed developer documentation lives in [`docs/dev-plans/`](docs/dev-plans/):
   - `RAM_API_KEY` -- API key
   - `RAM_STORE_ID` -- store identifier
   - `REDIS_URL` -- Redis protocol URL for the same cloud instance
+- **Context Surfaces credentials** (optional, enables structured data queries):
+  - `CTX_ADMIN_KEY` -- Admin API key from Redis Cloud
+  - `CTX_SURFACE_ID` -- Reuse an existing surface (auto-created on first run if blank)
+  - `MCP_AGENT_KEY` -- Reuse an existing agent key (auto-created on first run if blank)
 
 ## Quick start (Docker)
 
@@ -40,10 +45,14 @@ Edit `.env` and fill in the required values:
 ```env
 OPENAI_API_KEY=sk-your-actual-key-here
 
+REDIS_URL=redis://your-cloud-redis-url:6379
+
 RAM_ENDPOINT=https://your-ram-endpoint.redis.io
 RAM_API_KEY=your-ram-api-key
 RAM_STORE_ID=your-store-id
-REDIS_URL=redis://your-cloud-redis-url:6379
+
+# Context Surfaces (optional -- enables structured data queries in chatbot)
+CTX_ADMIN_KEY=ak_your-admin-key
 ```
 
 ### 2. Start all services
@@ -89,19 +98,24 @@ cp backend/.env.example backend/.env
 
 Edit `backend/.env` and fill in your credentials:
 
-| Variable                        | Description                                                          | Default                 |
-| ------------------------------- | -------------------------------------------------------------------- | ----------------------- |
-| `RAM_ENDPOINT`                  | Redis Agent Memory cloud REST endpoint                               | --                      |
-| `RAM_API_KEY`                   | Redis Agent Memory cloud API key                                     | --                      |
-| `RAM_STORE_ID`                  | Redis Agent Memory cloud store ID                                    | --                      |
-| `REDIS_URL`                     | Redis protocol URL (same cloud instance)                             | --                      |
-| `OPENAI_API_KEY`                | OpenAI API key                                                       | --                      |
-| `LLM_MODEL`                     | OpenAI model for all LLM tasks (chatbot, suggestions, summarization) | `gpt-4o-mini`           |
-| `MEETING_MEMORY_PORT`           | Backend API port                                                     | `3001`                  |
-| `MEETING_MEMORY_DATA_DIR`       | Path to transcript data (relative to `backend/src/`)                 | `../../data`            |
-| `MEETING_MEMORY_ACTIVE_DATASET` | Active dataset folder name                                           | `wealth-advisor`        |
-| `LANGGRAPH_DEPLOYMENT_URL`      | LangGraph local dev server URL                                       | `http://localhost:2024` |
-| `LANGSMITH_API_KEY`             | LangSmith API key (optional)                                         | --                      |
+| Variable                        | Description                                                          | Default                                            |
+| ------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------- |
+| `OPENAI_API_KEY`                | OpenAI API key                                                       | --                                                 |
+| `REDIS_URL`                     | Redis protocol URL (cloud instance)                                  | --                                                 |
+| `RAM_ENDPOINT`                  | Redis Agent Memory cloud REST endpoint                               | --                                                 |
+| `RAM_API_KEY`                   | Redis Agent Memory cloud API key                                     | --                                                 |
+| `RAM_STORE_ID`                  | Redis Agent Memory cloud store ID                                    | --                                                 |
+| `CTX_ADMIN_KEY`                 | Context Surfaces admin API key (optional)                            | --                                                 |
+| `CTX_ADMIN_API_URL`             | Context Surfaces admin REST endpoint                                 | `https://cloud.redis.io/context-surfaces`          |
+| `CTX_MCP_URL`                   | Context Surfaces MCP endpoint                                        | `https://gcp-us-east4.context-surfaces.redis.io/mcp` |
+| `CTX_SURFACE_ID`                | Reuse existing surface (auto-created if blank)                       | --                                                 |
+| `MCP_AGENT_KEY`                 | Reuse existing agent key (auto-created if blank)                     | --                                                 |
+| `MEETING_MEMORY_PORT`           | Backend API port                                                     | `3001`                                             |
+| `MEETING_MEMORY_ACTIVE_DATASET` | Active dataset folder name                                           | `wealth-advisor`                                   |
+| `MEETING_MEMORY_MODEL_NAME`     | OpenAI model for suggestions and summarization                       | `gpt-4o-mini`                                      |
+| `MEETING_MEMORY_CHATBOT_MODEL`  | OpenAI model for the chatbot agent                                   | `gpt-4o-mini`                                      |
+| `LANGGRAPH_DEPLOYMENT_URL`      | LangGraph local dev server URL                                       | `http://localhost:2024`                             |
+| `LANGSMITH_API_KEY`             | LangSmith API key (optional)                                         | --                                                 |
 
 ### 3. Start everything
 
