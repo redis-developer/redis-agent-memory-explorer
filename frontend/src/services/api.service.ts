@@ -118,8 +118,12 @@ const fetchWorkingMemory = (sessionId: string): Promise<SessionMemoryData> =>
   apiPost<SessionMemoryData>(API_PATH.GET_WORKING_MEMORY, { sessionId });
 
 // Not yet used -- available for manual session cleanup from the UI
-const deleteWorkingMemory = (sessionId: string): Promise<DeleteWorkingMemoryResponse> =>
-  apiPost<DeleteWorkingMemoryResponse>(API_PATH.DELETE_WORKING_MEMORY, { sessionId });
+const deleteWorkingMemory = (
+  sessionId: string,
+): Promise<DeleteWorkingMemoryResponse> =>
+  apiPost<DeleteWorkingMemoryResponse>(API_PATH.DELETE_WORKING_MEMORY, {
+    sessionId,
+  });
 
 const listWorkingMemorySessions = (
   limit?: number,
@@ -145,9 +149,7 @@ const searchLongTermMemoryBySession = (
   });
 
 // Not yet used -- reserved for polling async task status
-const fetchTask = (
-  taskId: string,
-): Promise<TaskResponse> =>
+const fetchTask = (taskId: string): Promise<TaskResponse> =>
   apiPost<TaskResponse>(API_PATH.GET_TASK, {
     taskId,
   });
@@ -161,9 +163,7 @@ const generateSuggestion = (
     chunkIndex,
   });
 
-const listSuggestions = (
-  sessionId: string,
-): Promise<ListSuggestionsResponse> =>
+const listSuggestions = (sessionId: string): Promise<ListSuggestionsResponse> =>
   apiPost<ListSuggestionsResponse>(API_PATH.LIST_SUGGESTIONS, { sessionId });
 
 const resetDemo = (): Promise<ResetResult> =>

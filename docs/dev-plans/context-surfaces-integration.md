@@ -1,351 +1,215 @@
-# Context Surfaces Integration Analysis
+# Context Surfaces Integration
 
-## The Central Question
+## Overview
 
-This demo has **call conversations** (free-text transcript chunks) as its primary data.
-Context Surfaces requires **structured data** (typed entities with indexed fields).
-Can we bridge that gap, and if so, where does Context Surfaces add value vs. the existing Cloud RAM approach?
+Context Surfaces provides a structured data layer alongside Cloud RAM. While RAM stores conversational memories (what was said in meetings, sentiments, extracted facts), Context Surfaces stores authoritative structured records (portfolio holdings, financial goals, client profiles, action items) as indexed entities queryable via auto-generated MCP tools.
 
----
+The chatbot agent has access to both data layers and routes questions to the appropriate source based on the query type.
 
-## What the Demo Has Today
-
-### Data Shape
-
-| Layer | Shape | Example |
-|---|---|---|
-| **Transcript chunks** | Free-text dialogue lines | `"[00:02:00] James Morrison: I'd like to retire at fifty-seven, target is three million liquid"` |
-| **Session events** | Semi-structured (text + role + timestamp + metadata) | `{ sessionId, actorId, role: "user", content: "...", createdAt }` |
-| **Long-term memories (LTMs)** | Semi-structured (text + metadata tags) | `{ text: "Client wants $3M liquid by 2031", memoryType: "episodic", topics: ["retirement"], ownerId: "sarah-chen", sessionId: "..." }` |
-| **Topics** | Lightweight tags | `{ name: "retirement planning", status: "discussed", source: "ai-detected" }` |
-| **Suggestions** | LLM-generated JSON | `{ type: "lifeEvent", title: "Retirement target mentioned", summary: "..." }` |
-
-### Access Patterns
-
-| Feature | How it queries data |
-|---|---|
-| **Session Memory tab** | `getSessionMemory(sessionId)` — full session event list |
-| **LTM tab** | `searchLongTermMemory({ text, filter: { ownerId, sessionId, memoryType } })` — vector + filter search |
-| **Suggestions** | `buildMemoryPrompt(query, sessionId)` — token-budgeted context from session + LTMs |
-| **Chatbot** | ReAct agent with 5 tools: `searchMemories`, `searchMemoriesBySession`, `getMemoryContext`, `listSessions`, `getSessionState` |
-
----
-
-## The Fundamental Mismatch
-
-Context Surfaces shines when you have **operational structured data** — customers, orders, products, shipments — where the relationships and attributes are well-defined and the agent needs to search/filter/join across them.
-
-Our demo's data is **conversational and semi-structured**. The raw transcripts are free-text. The extracted LTMs are closer to structured data, but they're still primarily text blobs with a handful of metadata tags. Here's the gap:
-
-| Context Surfaces Expects | What We Have |
-|---|---|
-| Entity with 5-20 typed, indexed fields | LTM with text + 4-5 optional metadata fields |
-| Relationships between entities (Customer → Orders) | Loose sessionId links between LTMs and sessions |
-| Pre-defined data model before data is loaded | Schema-less — LTMs are created dynamically by Cloud RAM |
-| Static or slowly-changing data | Continuously growing — new LTMs appear during playback |
-| Data loaded via import API | Data created by Cloud RAM's async extraction |
-
----
-
-## Three Possible Approaches
-
-### Approach A: Structure the Conversations (Transform to Fit)
-
-Transform conversation data into structured entities that Context Surfaces can index.
-
-#### Proposed Entity Model
+## Architecture
 
 ```
-Client
-├── client_id (TAG)
-├── name (TEXT)
-├── age (NUMERIC)
-├── role_title (TEXT)
-├── organization (TAG)
-├── risk_profile (TAG: conservative/moderate/aggressive)
-├── retirement_target_year (NUMERIC)
-├── retirement_target_amount (NUMERIC)
-├── total_aum (NUMERIC)
-└── relationships: meetings[], goals[], holdings[]
-
-Meeting
-├── meeting_id (TAG)
-├── date (TAG)
-├── type (TAG: phone/google-meet)
-├── duration_minutes (NUMERIC)
-├── sentiment (TAG)
-├── summary (TEXT)
-├── key_decisions (TEXT)
-├── follow_ups (TEXT)
-├── embedding (VECTOR)
-└── relationships: client, topics[], action_items[]
-
-FinancialGoal
-├── goal_id (TAG)
-├── client_id (TAG)
-├── type (TAG: retirement/education/estate/tax)
-├── target_amount (NUMERIC)
-├── target_date (TAG)
-├── status (TAG: active/achieved/revised)
-├── description (TEXT)
-└── relationships: client
-
-Holding
-├── holding_id (TAG)
-├── client_id (TAG)
-├── asset_class (TAG: equities/fixed-income/reits/cash/alternatives)
-├── allocation_percent (NUMERIC)
-├── current_value (NUMERIC)
-├── notes (TEXT)
-└── relationships: client
-
-ActionItem
-├── action_id (TAG)
-├── meeting_id (TAG)
-├── assignee (TAG)
-├── description (TEXT)
-├── status (TAG: pending/completed/cancelled)
-├── due_date (TAG)
-└── relationships: meeting
-
-Topic
-├── topic_id (TAG)
-├── name (TEXT)
-├── category (TAG: portfolio/retirement/tax/estate/insurance)
-├── first_mentioned_date (TAG)
-├── mention_count (NUMERIC)
-├── latest_context (TEXT)
-├── embedding (VECTOR)
-└── relationships: meetings[]
+Frontend (CopilotSidebar)
+  │
+  │ Custom AssistantMessage component
+  │ (parses source badge + tools disclosure)
+  ▼
+Backend (/copilotkit endpoint)
+  │
+  ▼
+LangGraph Server (port 2024)
+  │
+  │ createReactAgent
+  ├──────────────────────────────────────┐
+  │                                      │
+  ▼                                      ▼
+cau-ram (5 tools)               cau-context-surfaces (N tools)
+  → Cloud RAM API                 → Context Surfaces MCP Server
 ```
 
-#### How Auto-Generated Tools Would Look
+## Data Layer Separation
 
-From the model above, Context Surfaces would auto-generate tools like:
+| Concern     | Cloud RAM                            | Context Surfaces                                        |
+| ----------- | ------------------------------------ | ------------------------------------------------------- |
+| Data type   | Conversational (memories, events)    | Structured (records, facts)                             |
+| Source      | Extracted from transcripts by LLM    | Hand-authored JSON, loaded once                         |
+| Query style | Semantic search, session scoping     | TAG filters, text search, range queries                 |
+| Mutability  | Grows over time as meetings play     | Static per dataset load                                 |
+| Tool naming | `searchMemories`, `getMemoryContext` | `filter_<entity>_by_<field>`, `search_<entity>_by_text` |
 
-```
-search_client_by_text           → find clients by name/role
-filter_meeting_by_client_id     → all meetings for a client
-filter_meeting_by_type          → phone vs video meetings
-filter_meeting_by_sentiment     → positive/negative meetings
-search_meeting_by_text          → search meeting summaries
-filter_financial_goal_by_type   → retirement goals vs tax goals
-filter_holding_by_asset_class   → equities holdings
-filter_action_item_by_status    → pending action items
-filter_action_item_by_assignee  → what Sarah needs to do
-search_topic_by_text            → find topics by keyword
-get_client_by_client_id         → get full client profile
-```
+## Surface Setup Flow
 
-#### What This Gives the Agent
+### Create-Once, Reuse-Always
 
-Instead of the chatbot doing a single vector search and hoping the right LTMs come back, it could make precise structured queries:
+Surface ID and agent key are stored as env vars. The API server startup logic:
 
-- "What are James's pending action items?" → `filter_action_item_by_status({status: "pending"})` → exact results
-- "Show meetings about retirement" → `search_meeting_by_text({query: "retirement"})` + `filter_financial_goal_by_type({type: "retirement"})` → structured cross-referencing
-- "What's his current portfolio allocation?" → `filter_holding_by_client_id({client_id: "james-morrison"})` → typed numeric data
+1. If `CTX_SURFACE_ID` **and** `MCP_AGENT_KEY` are set in `.env` -> skip creation, log "reusing surface"
+2. If either is missing -> create surface from dataset config schema, load entity records from `client-data.json`, create agent key, log values for `.env`
 
-Compare to today: the chatbot calls `searchMemories({query: "pending action items"})` and gets back text blobs that may or may not contain the answer.
+This runs in `backend/src/services/context-surfaces-setup.service.ts`, called from `backend/src/index.ts` during app initialization.
 
-#### The Cost
+### LangGraph Server Connection
 
-| Concern | Detail |
-|---|---|
-| **Extraction pipeline needed** | We'd need to build LLM-based extraction to parse transcripts into these entities. Not trivial — the transcripts are conversational, not structured documents. |
-| **Data duplication** | Same information lives in Cloud RAM (as LTMs) and in Context Surfaces (as structured entities). Two truth sources. |
-| **Timing issues** | Entities would need to be extracted and imported before the agent can use them. Can't happen in real-time during playback (import API is batch, not streaming). |
-| **Maintenance burden** | Schema changes require re-creating the surface + re-importing all data. |
-| **Artificial feel** | Wealth advisor meetings naturally produce narrative data. Forcing it into rigid entities loses nuance (e.g., "client seemed hesitant about bonds" becomes `risk_profile: "moderate"`). |
-
----
-
-### Approach B: Surface the LTMs Directly (Light Touch)
-
-Instead of creating new structured entities, expose the existing Cloud RAM LTMs through Context Surfaces with a thin entity model.
-
-#### Proposed Entity Model (Minimal)
+The LangGraph process (`graph.ts`) reads env vars and creates a `ContextSurfaces` client instance. It does NOT create surfaces or load data -- it only connects and queries.
 
 ```
-Memory
-├── memory_id (TAG)
-├── text (TEXT, weight: 2.0)
-├── memory_type (TAG: episodic/semantic/message)
-├── owner_id (TAG)
-├── session_id (TAG)
-├── topics (TAG, separator: ",")
-├── created_at (NUMERIC, sortable: true)
-├── updated_at (NUMERIC, sortable: true)
-├── embedding (VECTOR, dim: 1536, metric: cosine)
-└── no relationships (flat)
-
-Session
-├── session_id (TAG)
-├── owner_id (TAG)
-├── event_count (NUMERIC)
-├── created_at (NUMERIC, sortable: true)
-└── relationships: memories[]
+API Server (index.ts)          LangGraph Server (graph.ts)
+  │                              │
+  │ Creates surface + loads      │ Reads CTX_SURFACE_ID,
+  │ data (first run only)        │ MCP_AGENT_KEY from env
+  │                              │
+  │ Stores surfaceId,            │ Creates ContextSurfaces
+  │ agentKey in .env             │ client instance
+  │                              │
+  ▼                              ▼
+Redis Cloud (Surface persists independently of both processes)
 ```
 
-#### Auto-Generated Tools
+Run order does not matter once env vars are set.
+
+## Tool Registration (`tools.ts`)
+
+### How MCP tools become LangGraph tools
+
+1. `ContextSurfaces.getInstance().listTools()` fetches available MCP tools for the surface
+2. Each MCP tool is wrapped in a `DynamicStructuredTool` via `wrapMcpTool()`
+3. The wrapper converts JSON Schema parameters to Zod schemas and delegates execution to `cs.callTool(name, args)`
+4. Results are extracted from JSON-RPC format to plain text via `extractMcpText()`
+
+### Tool categories
+
+**RAM tools (5):**
+
+- `searchMemories` -- semantic search across all long-term memories
+- `searchMemoriesBySession` -- search within a specific session
+- `getMemoryContext` -- hydrated memory prompt (session + long-term combined)
+- `listSessions` -- list available session IDs
+- `getSessionState` -- session metadata
+
+**Context Surfaces tools (auto-generated, count depends on entity schema):**
+
+- `filter_<entity>_by_<field>` -- TAG filter exact match
+- `search_<entity>_by_text` -- full-text search
+- `get_<entity>_by_id` -- primary key lookup
+- `find_<entity>_by_<field>_range` -- numeric range query
+
+Tool count depends on the entity schema in `dataset.config.json`.
+
+## Dynamic System Prompt (`system-prompt.ts`)
+
+The system prompt is built dynamically from the MCP tool definitions at startup. No hardcoded entity names or dataset-specific references.
+
+### What's dynamic (derived from `McpToolDef[]`):
+
+- Entity list (parsed from tool names: `filter_holding_by_*` -> "Holding")
+- Tool hints block (each tool name + description listed)
+
+### What's static:
+
+- RAM vs Context Surfaces routing guidance
+- Tool calling rules (anti-loop, multi-call encouragement)
+- Source attribution format
+- Session routing decision tree
+
+### Source attribution
+
+The LLM outputs a structured header parsed by the frontend:
 
 ```
-search_memory_by_text             → full-text search on LTM text
-filter_memory_by_memory_type      → episodic vs semantic
-filter_memory_by_session_id       → LTMs from a specific meeting
-filter_memory_by_owner_id         → user-scoped memories
-search_memory_by_embedding_similarity → vector search
-get_memory_by_memory_id           → retrieve a single LTM
-filter_session_by_owner_id        → list sessions for a user
+**Source: RAM Session + Long-Term Memory**
+<tools>getMemoryContext</tools>
+
+The answer body...
 ```
 
-#### Advantage
+Labels are chosen by the LLM based on which tools were called and what data was returned.
 
-- Minimal transformation needed — LTMs already have the fields listed above
-- Consistent with Cloud RAM as the source of truth
-- Context Surfaces adds the MCP tool interface on top
+## Frontend: Custom Message Rendering
 
-#### Problems
+### Custom `AssistantMessage` component
 
-| Problem | Detail |
-|---|---|
-| **Redundant with Cloud RAM** | Cloud RAM already provides `searchLongTermMemory` with vector search and filters. The auto-generated tools would be doing the same thing with extra hops (app → MCP → Context Surfaces → same Redis). |
-| **Sync challenge** | LTMs are continuously created/updated by Cloud RAM's async extraction. We'd need to keep the Context Surface in sync — either via periodic re-import or by hooking into Cloud RAM's creation events. Neither is clean. |
-| **Two search indexes** | Cloud RAM already maintains its own RediSearch indexes on the LTM data. Context Surfaces would create a second set of indexes on the same underlying data. Wasteful and confusing. |
-| **No new capability** | The chatbot already has `searchMemories`, `searchMemoriesBySession`, `getMemoryContext`. Context Surfaces would provide roughly the same tools but with MCP protocol overhead. |
+CopilotKit's `CopilotSidebar` accepts a custom `AssistantMessage` component (`frontend/src/components/core/assistant-message.component.tsx`).
 
----
+It parses the LLM output for:
 
-### Approach C: Don't Integrate Context Surfaces (Use What We Have)
+1. `**Source: ...**` line -> rendered as a styled badge (`<div class="assistant-message__source">`)
+2. `<tools>...</tools>` line -> rendered as a collapsible `<details>` showing tool names
+3. Remaining text -> passed to CopilotKit's `Markdown` renderer
 
-Recognize that Context Surfaces solves a different problem and that our demo already has the right tool for conversation-centric data.
+This cleanly separates attribution UI from markdown content rendering.
 
-#### Why Cloud RAM Is Already the Right Fit
+## Configuration
 
-| Feature | Cloud RAM (what we have) | Context Surfaces (what we'd add) |
-|---|---|---|
-| **Data ingestion** | Real-time event streaming (`addSessionEvent`) | Batch import (`POST .../data`) |
-| **Intelligence** | Auto-extracts LTMs from conversation, deduplicates, resolves contradictions | None — it indexes what you give it |
-| **Search** | Vector + metadata filter on LTMs | Vector + text + tag + numeric on entities |
-| **Schema** | Schema-less — LTMs are created dynamically | Requires pre-defined entity schema |
-| **Agent tools** | Custom tools (`searchMemories`, etc.) that map to our exact access patterns | Auto-generated generic tools (`search_*`, `filter_*`) |
-| **Context building** | `buildMemoryPrompt` with token budgeting and summarization | No context building — returns raw results |
-| **Memory prompt** | Session + LTM combined, formatted for LLM consumption | No equivalent |
+| Variable            | Required          | Purpose                                  |
+| ------------------- | ----------------- | ---------------------------------------- |
+| `CTX_ADMIN_KEY`     | Yes (for CS)      | Admin API key from Redis Cloud           |
+| `CTX_ADMIN_API_URL` | No (has default)  | Admin REST endpoint                      |
+| `CTX_MCP_URL`       | No (has default)  | MCP server endpoint                      |
+| `CTX_SURFACE_ID`    | No (auto-created) | Reuse existing surface                   |
+| `MCP_AGENT_KEY`     | No (auto-created) | Reuse existing agent key                 |
+| `REDIS_URL`         | Yes               | Redis connection for surface data source |
 
-Cloud RAM is purpose-built for conversational memory. Context Surfaces is purpose-built for structured operational data. Using Context Surfaces to query conversational data would be like using a SQL database to store chat logs — possible but not playing to its strengths.
+## Data Files
 
----
+| File                                      | Purpose                                                                     |
+| ----------------------------------------- | --------------------------------------------------------------------------- |
+| `data/wealth-advisor/client-data.json`    | Structured entity records (Client, Holding, FinancialGoal, ActionItem)      |
+| `data/wealth-advisor/dataset.config.json` | Contains `contextSurfaces` config: surface name, entity schema (data model) |
 
-## Recommendation
+## Data Flow
 
-**Short answer: Approach A (structured extraction) is the only approach where Context Surfaces adds genuine value, but it has significant cost. Approach B is redundant. Approach C is the pragmatic default.**
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant LangGraph as LangGraph ReAct Agent
+    participant RAM as Cloud RAM
+    participant CS as Context Surfaces MCP
 
-### Decision Matrix
-
-| Criterion | A: Structure the Data | B: Surface LTMs | C: Don't Integrate |
-|---|---|---|---|
-| New capabilities for the user | High (precise structured queries, cross-entity reasoning) | Low (same queries, different protocol) | None (keep current) |
-| Engineering effort | High (LLM extraction pipeline, schema design, sync, import) | Medium (sync pipeline, duplicate indexes) | None |
-| Demo impressiveness | High (shows CS + RAM together) | Low (feels redundant) | N/A |
-| Architectural fit | Moderate (two data systems for two purposes) | Poor (two systems for one purpose) | Good (one system for its purpose) |
-| Data freshness | Delayed (batch import after extraction) | Delayed (sync lag) | Real-time (events → LTMs) |
-| Risk | Medium (extraction quality, schema evolution) | Medium (sync reliability) | None |
-
-### If We Want to Showcase Context Surfaces (Recommended: Approach A, scoped)
-
-The strongest demo story would be: *"Cloud RAM handles conversational memory. Context Surfaces handles structured client data. The chatbot uses both."*
-
-Rather than trying to extract structure from the conversation transcripts, we could:
-
-1. **Pre-define structured client data** (client profile, portfolio holdings, financial goals) as static JSON — similar to how the demo already has `dataset.config.json` with participant details.
-2. **Load it into a Context Surface** during setup.
-3. **Give the chatbot agent both tool sets**: Cloud RAM tools for conversation/memory queries + Context Surfaces MCP tools for structured client data queries.
-4. **Show the contrast**: "What did James say about bonds?" → Cloud RAM. "What's James's current equity allocation percentage?" → Context Surfaces.
-
-This avoids the extraction pipeline entirely. The structured data is hand-authored (or generated) as part of the dataset, and it complements the conversational data rather than duplicating it.
-
-#### Minimal Implementation
-
-| Step | Description | Effort |
-|---|---|---|
-| 1. Author client data | JSON files with client profile, holdings, goals, action items alongside existing transcripts in `data/wealth-advisor/` | Low |
-| 2. Setup surface script | CLI or backend endpoint that creates a Context Surface + imports the client data. Runs once per dataset. | Low |
-| 3. MCP client wrapper | Thin TypeScript module that calls `POST /mcp` with agent key. Methods: `listTools()`, `callTool(name, args)`. ~50 lines. | Low |
-| 4. Chatbot integration | Add Context Surfaces tools to the LangGraph ReAct agent alongside existing Cloud RAM tools. Update system prompt to explain when to use which. | Medium |
-| 5. Suggestions integration | When generating suggestions, optionally call Context Surfaces tools for client-profile context (e.g., "client's risk profile is moderate" enriches suggestion quality). | Medium |
-| 6. Frontend (optional) | Add a "Client Profile" tab or card that displays structured data fetched via Context Surfaces tools. | Low |
-
-#### New Config Variables
-
-```env
-CTX_ADMIN_KEY=ak_...        # From Redis Cloud console
-CTX_API_URL=https://...     # Context Surfaces REST API (has default)
-CTX_MCP_URL=https://...     # MCP server (has default)
-CTX_SURFACE_ID=             # Auto-populated by setup
-MCP_AGENT_KEY=              # Auto-populated by setup
+    User->>Frontend: "What are James's pending action items and what did he say about bonds?"
+    Frontend->>LangGraph: user message + copilotkit readables
+    LangGraph->>CS: filter_actionitem_by_status(value: "pending")
+    LangGraph->>RAM: searchMemories(query: "bonds")
+    CS-->>LangGraph: structured results
+    RAM-->>LangGraph: memory results
+    LangGraph-->>Frontend: **Source: RAM + Context Surfaces**<br/><tools>filter_actionitem_by_status, searchMemories</tools><br/>answer body
+    Frontend->>User: source badge + tools disclosure + formatted answer
 ```
 
-#### Updated Architecture
+## Test Questions
 
-```
-Frontend (Next.js)                 Backend (Node.js)                   Cloud Services
-──────────────────                 ─────────────────                   ──────────────
+### Context Surfaces Only
 
-                                                                       Redis Agent Memory
-page.tsx                           index.ts                              (Cloud RAM)
- ├─ TranscriptPanel                 ├─ initializeApp()                  ├─ Session events
- │   └─ Playback → appendChunk     │   ├─ RedisAgentMemory.create      ├─ Auto LTM extraction
- │                                  │   ├─ ContextSurfaceMCP.create ◄── ├─ LTM search
- ├─ MemoryExplorerPanel             │   └─ RedisDb (local)              │
- │   ├─ Session Memory              │                                   │  Context Surfaces
- │   ├─ Long-Term Memory            ├─ chatbot-agent/                   │  (MCP Server)
- │   ├─ Client Profile (NEW)        │   ├─ RAM tools (5)                ├─ Structured tools
- │   ├─ Suggestions                 │   └─ CS tools (N) ────────────────┤  (search, filter, get)
- │   └─ Redis Metrics               │                                   │
- │                                  └─ suggestion-agent/                │
- └─ CopilotSidebar (chatbot)           └─ CS profile enrichment ───────┘
-```
+| #   | Question                                         | Expected Tool(s)                      |
+| --- | ------------------------------------------------ | ------------------------------------- |
+| 1   | "What is James Morrison's portfolio allocation?" | `filter_holding_by_client_id`         |
+| 2   | "What equities does James hold?"                 | `filter_holding_by_asset_class`       |
+| 3   | "What are James's financial goals?"              | `filter_financialgoal_by_client_id`   |
+| 4   | "Are there any pending action items?"            | `filter_actionitem_by_status`         |
+| 5   | "Search for goals related to retirement"         | `search_financialgoal_by_text`        |
+| 6   | "List all holdings worth more than $500K"        | `find_holding_by_current_value_range` |
 
-#### Example Chatbot Tool Routing (Updated System Prompt)
+### RAM Only
 
-```
-When to use which tools:
+| #   | Question                                      | Expected Tool(s)                    |
+| --- | --------------------------------------------- | ----------------------------------- |
+| 7   | "What happened in this meeting?"              | `getMemoryContext`                  |
+| 8   | "What did James say about REIT concerns?"     | `searchMemories`                    |
+| 9   | "What was discussed about Emily's education?" | `searchMemories`                    |
+| 10  | "Summarize the Feb 26 call"                   | `listSessions` + `getMemoryContext` |
 
-CONVERSATION & MEMORY QUERIES (Cloud RAM tools):
-- "What did James say about bonds?" → searchMemories
-- "Summary of last meeting" → getMemoryContext
-- "Any meetings about tax planning?" → searchMemories
+### Combined (RAM + Context Surfaces)
 
-STRUCTURED CLIENT DATA QUERIES (Context Surfaces tools):
-- "What's James's current equity allocation?" → filter_holding_by_client_id
-- "What's his retirement target?" → get_financial_goal_by_goal_id / filter_financial_goal_by_type
-- "Pending action items" → filter_action_item_by_status
-- "Client risk profile" → get_client_by_client_id
+| #   | Question                                                                    | Expected Tool(s)                                           |
+| --- | --------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 11  | "What is James's current allocation and what did he say about rebalancing?" | CS: `filter_holding_by_client_id`; RAM: `getMemoryContext` |
+| 12  | "What is the retirement goal target and what has been discussed about it?"  | CS: `filter_financialgoal_by_type`; RAM: `searchMemories`  |
+| 13  | "Show pending action items and what context was discussed for each"         | CS: `filter_actionitem_by_status`; RAM: `searchMemories`   |
 
-COMBINED QUERIES (use both):
-- "Should we adjust the portfolio given what he said last meeting?"
-  → get holdings (CS) + get last meeting context (RAM) + reason
-```
+### Edge Cases
 
----
-
-## What NOT to Do
-
-1. **Don't replace Cloud RAM with Context Surfaces** — they solve different problems. Cloud RAM handles the conversational memory lifecycle (ingest → extract → search → prompt). Context Surfaces handles structured data access for agents.
-
-2. **Don't try real-time sync between Cloud RAM LTMs and Context Surfaces** — the async extraction timing makes this fragile, and it creates two truth sources for the same data.
-
-3. **Don't build an LLM extraction pipeline to structure transcripts** — for a demo, this adds complexity without proportional value. Hand-authored structured data is more reliable and easier to maintain.
-
-4. **Don't use Context Surfaces for the suggestion agent's primary flow** — suggestions are driven by recent transcript chunks + memory context. The suggestion LLM prompt is already well-tuned for this. However, enriching the context with structured client data (e.g., risk profile, goals) could improve suggestion quality with minimal effort.
-
----
-
-## Summary
-
-| Aspect | Verdict |
-|---|---|
-| Is Context Surfaces suitable for raw conversations? | No — it's designed for structured entities, not free-text dialogue. |
-| Can we extract structure from conversations? | Yes, but the extraction pipeline is non-trivial and the demo doesn't need it. |
-| Where does Context Surfaces add real value? | Alongside Cloud RAM — structured client profile data (holdings, goals, action items) that the agent queries with precise filters and the LLM reasons over jointly with conversational context. |
-| Best integration strategy? | Pre-define structured client data, load into a Context Surface, give the chatbot both RAM tools and CS tools, and show the contrast. |
-| Effort for minimum viable integration | Low-to-medium: ~50-line MCP wrapper, client data JSON files, chatbot agent tool expansion, system prompt update. |
+| #   | Question                                         | Expected Behavior                                              |
+| --- | ------------------------------------------------ | -------------------------------------------------------------- |
+| 14  | "Tell me about this meeting" (no active session) | Responds that no active session exists, falls back to all data |
+| 15  | "What is the weather today?"                     | Responds that it cannot answer -- no relevant tools            |
+| 16  | "List everything you know about James"           | Calls BOTH RAM search + multiple CS tools                      |
