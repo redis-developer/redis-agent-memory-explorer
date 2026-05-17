@@ -9,7 +9,7 @@ import type {
 } from "../../types";
 
 import { randomUUID } from "node:crypto";
-import { AgentMemory } from "@redis-ai/agent-memory";
+import { AgentMemory } from "@redis-iris/agent-memory";
 
 import { DEFAULT_LTM_SEARCH_LIMIT } from "../../constants";
 import { buildLongTermMemoryFilter, mapFilterOp } from "./build-filters.util";
@@ -22,8 +22,8 @@ const mapSdkRecordToMemoryRecord = (sdkRecord: {
   ownerId?: string;
   namespace?: string;
   topics?: string[];
-  createdAt: number;
-  updatedAt: number;
+  createdAt: Date;
+  updatedAt: Date;
 }): MemoryRecord => {
   return {
     id: sdkRecord.id,
@@ -33,8 +33,8 @@ const mapSdkRecordToMemoryRecord = (sdkRecord: {
     ownerId: sdkRecord.ownerId,
     namespace: sdkRecord.namespace,
     topics: sdkRecord.topics,
-    createdAt: sdkRecord.createdAt,
-    updatedAt: sdkRecord.updatedAt,
+    createdAt: sdkRecord.createdAt.getTime(),
+    updatedAt: sdkRecord.updatedAt.getTime(),
   };
 };
 
@@ -84,7 +84,7 @@ const searchLongTermMemory = async (
   });
 
   return {
-    memories: response.memories.map(mapSdkRecordToMemoryRecord),
+    memories: response.items.map(mapSdkRecordToMemoryRecord),
     nextPageToken: response.nextPageToken,
   };
 };

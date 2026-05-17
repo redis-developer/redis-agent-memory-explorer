@@ -6,9 +6,9 @@ import type {
   SessionListResult,
 } from "../../types";
 
-import { AgentMemory } from "@redis-ai/agent-memory";
+import { AgentMemory } from "@redis-iris/agent-memory";
 
-import { DEFAULT_LIST_LIMIT, DEFAULT_LIST_OFFSET } from "../../constants";
+import { DEFAULT_LIST_LIMIT } from "../../constants";
 
 //#region  map functions
 const mapContentToSdkFormat = (content: string): Array<{ text: string }> => {
@@ -25,7 +25,7 @@ const mapSdkEventToSessionEvent = (sdkEvent: {
   actorId: string;
   role: string;
   content: Array<{ text: string }>;
-  createdAt: number;
+  createdAt: Date;
   metadata?: unknown;
 }): SessionEvent => {
   return {
@@ -34,7 +34,7 @@ const mapSdkEventToSessionEvent = (sdkEvent: {
     actorId: sdkEvent.actorId,
     role: sdkEvent.role as SessionEvent["role"],
     content: mapSdkContentToString(sdkEvent.content),
-    createdAt: sdkEvent.createdAt,
+    createdAt: sdkEvent.createdAt.getTime(),
     metadata: sdkEvent.metadata as Record<string, unknown> | undefined,
   };
 };
@@ -45,7 +45,7 @@ const addSessionEvent = async (
   client: AgentMemory,
   input: SessionEventInput,
 ): Promise<SessionEvent> => {
-  const createdAt = input.createdAt ?? Date.now();
+  const createdAt = input.createdAt ? new Date(input.createdAt) : new Date();
   const response = await client.addSessionEvent({
     sessionId: input.sessionId,
     actorId: input.actorId,
@@ -116,13 +116,14 @@ const listSessions = async (
   options?: SessionListOptions,
 ): Promise<SessionListResult> => {
   const limit = options?.limit ?? DEFAULT_LIST_LIMIT;
-  const offset = options?.offset ?? DEFAULT_LIST_OFFSET;
+  const pageToken = options?.pageToken;
 
-  const response = await client.listSessions(limit, offset);
+  const response = await client.listSessions(limit, pageToken);
 
   return {
-    sessions: response.sessions,
+    sessions: response.items,
     total: response.total,
+    nextPageToken: response.nextPageToken,
   };
 };
 

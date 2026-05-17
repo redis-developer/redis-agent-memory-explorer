@@ -29,12 +29,13 @@ type SessionMemory = {
 
 type SessionListOptions = {
   limit?: number;
-  offset?: number;
+  pageToken?: string;
 };
 
 type SessionListResult = {
   sessions: string[];
   total: number;
+  nextPageToken?: string;
 };
 
 // ── Long-Term Memory ──

@@ -19,7 +19,7 @@ import type {
   HealthResult,
 } from "./types";
 
-import { AgentMemory } from "@redis-ai/agent-memory";
+import { AgentMemory } from "@redis-iris/agent-memory";
 
 import { loadConfig } from "./config";
 import {

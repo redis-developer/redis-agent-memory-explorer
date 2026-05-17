@@ -1,6 +1,6 @@
 import type { ForgetOptions, ForgetResult } from "../../types";
 
-import { AgentMemory } from "@redis-ai/agent-memory";
+import { AgentMemory } from "@redis-iris/agent-memory";
 
 import { deleteSessionMemory } from "../session-memory";
 import {

@@ -9,12 +9,12 @@ type TagFilter = {
   all?: string[];
 };
 
-type NumericFilter = {
-  gt?: number;
-  lt?: number;
-  gte?: number;
-  lte?: number;
-  eq?: number;
+type DateFilter = {
+  gt?: Date;
+  lt?: Date;
+  gte?: Date;
+  lte?: Date;
+  eq?: Date;
 };
 
 type CloudLongTermMemoryFilter = {
@@ -23,7 +23,7 @@ type CloudLongTermMemoryFilter = {
   namespace?: TagFilter;
   topics?: TagFilter;
   memoryType?: TagFilter;
-  createdAt?: NumericFilter;
+  createdAt?: DateFilter;
 };
 
 type CloudFilterConjunction = "all" | "any";
@@ -51,10 +51,13 @@ const buildLongTermMemoryFilter = (filter?: MemoryFilter): CloudLongTermMemoryFi
     cloudFilter.memoryType = { eq: filter.memoryType };
   }
   if (filter.createdAfter) {
-    cloudFilter.createdAt = { gt: filter.createdAfter };
+    cloudFilter.createdAt = { gt: new Date(filter.createdAfter) };
   }
   if (filter.createdBefore) {
-    cloudFilter.createdAt = { lt: filter.createdBefore };
+    cloudFilter.createdAt = {
+      ...cloudFilter.createdAt,
+      lt: new Date(filter.createdBefore),
+    };
   }
 
   const hasAnyFilter = Object.keys(cloudFilter).length > 0;

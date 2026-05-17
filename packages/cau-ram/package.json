@@ -27,7 +27,7 @@
   "dependencies": {
     "@langchain/core": "^1.1.45",
     "@langchain/openai": "^1.4.5",
-    "@redis-ai/agent-memory": "*",
+    "@redis-iris/agent-memory": "^0.0.5",
     "dotenv": "^16.4.5",
     "js-tiktoken": "^1.0.21"
   },

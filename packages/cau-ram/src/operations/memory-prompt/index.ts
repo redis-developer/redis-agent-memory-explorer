@@ -8,7 +8,7 @@ import type {
   LlmConfig,
 } from "../../types";
 
-import { AgentMemory } from "@redis-ai/agent-memory";
+import { AgentMemory } from "@redis-iris/agent-memory";
 
 import {
   FORMATTING_OVERHEAD_TOKENS,
