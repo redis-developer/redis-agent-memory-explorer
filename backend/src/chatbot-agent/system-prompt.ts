@@ -23,7 +23,8 @@ const extractEntities = (tools: McpToolDef[]): string[] => {
       const rest = tool.name.slice(prefix.length);
       const underscoreIdx = rest.indexOf("_by_");
       const entityRaw = underscoreIdx > 0 ? rest.slice(0, underscoreIdx) : rest;
-      const capitalized = entityRaw.charAt(0).toUpperCase() + entityRaw.slice(1);
+      const capitalized =
+        entityRaw.charAt(0).toUpperCase() + entityRaw.slice(1);
       entitySet.add(capitalized);
       break;
     }
@@ -33,9 +34,7 @@ const extractEntities = (tools: McpToolDef[]): string[] => {
 };
 
 const buildToolHints = (tools: McpToolDef[]): string => {
-  const lines = tools.map(
-    (t) => `  - \`${t.name}\`: ${t.description}`,
-  );
+  const lines = tools.map((t) => `  - \`${t.name}\`: ${t.description}`);
 
   return lines.join("\n");
 };
@@ -73,12 +72,17 @@ ${toolHints}
 - Use \`filter_*_by_<field>\` tools when you know the exact field value to match.`;
 };
 
-const buildSystemPrompt = (config: DatasetConfig, mcpTools?: McpToolDef[]): string => {
+const buildSystemPrompt = (
+  config: DatasetConfig,
+  mcpTools?: McpToolDef[],
+): string => {
   const participants = buildParticipantsList(config);
   const userName = config.participants.rm?.name ?? config.userId;
   const hasContextSurfaces = mcpTools && mcpTools.length > 0;
 
-  const csSection = hasContextSurfaces ? buildContextSurfacesSection(mcpTools) : "";
+  const csSection = hasContextSurfaces
+    ? buildContextSurfacesSection(mcpTools)
+    : "";
 
   return `You are a Memory Assistant for the "${config.name}" demo. You help users explore and understand the memories stored in Redis Agent Memory${hasContextSurfaces ? " and structured data from Context Surfaces" : ""}.
 
@@ -113,37 +117,12 @@ Decide the search scope based on the user's question and the active session cont
 5. If the active session ID is "none" and the user says "this meeting", say so and fall back to searching all data.
 6. When unsure, prefer \`getMemoryContext\` with the active session (if available) + long-term search enabled.
 
-## Response Rules -- Source Attribution
-- **ALWAYS** start your response with exactly two structured lines, then a blank line, then your answer:
-  1. A source line in bold: \`**Source: <label>**\`
-  2. A tools line: \`<tools>tool1, tool2</tools>\` listing the tool names you called
-  3. A blank line
-  4. Your answer
-
-- Source labels (use exactly one):
-  - **Source: RAM Long-Term Memory** -- when using searchMemories, searchMemoriesBySession, or when getMemoryContext returned primarily long-term memories
-  - **Source: RAM Session Memory** -- when using getSessionState, or when getMemoryContext returned primarily session events/transcript data
-  - **Source: RAM Session + Long-Term Memory** -- when getMemoryContext returned BOTH session events AND long-term memories
-  - **Source: Context Surfaces** -- when using ONLY Context Surfaces tools (get_, filter_, search_, find_)
-  - **Source: RAM + Context Surfaces** -- when you used BOTH RAM tools AND Context Surfaces tools
-  - **Source: Chat History** -- when you did NOT call any tools in this turn and are answering purely from prior conversation context
-
-- If you did NOT call any tools in this turn, use **Source: Chat History** and leave the <tools> tag empty: \`<tools></tools>\`
-- getMemoryContext returns a combined prompt containing session events AND long-term memories. Look at what the result actually contains to decide the label:
-  - If it has session transcript events AND long-term memories -> use "RAM Session + Long-Term Memory"
-  - If it mostly has session events (transcript messages) -> use "RAM Session Memory"
-  - If it mostly has long-term memories (facts, preferences) -> use "RAM Long-Term Memory"
-
-Example response format:
-**Source: Context Surfaces**
-<tools>filter_holding_by_client_id, search_client_by_text</tools>
-
-James Morrison's portfolio allocation is...
-
+## Response Rules
 - Be concise and informative
 - Cite specific memories when answering (include topic tags when relevant)
 - If no memories match the query, say so clearly
-- Format responses with clear structure (bullet points, sections) for complex answers`;
+- Format responses with clear structure (bullet points, sections) for complex answers
+- Do NOT include any source attribution or tool call metadata in your response -- this is handled automatically`;
 };
 
 export { buildSystemPrompt };

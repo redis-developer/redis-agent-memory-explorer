@@ -7,6 +7,21 @@ import { Markdown } from "@copilotkit/react-ui";
 import "./assistant-message.component.css";
 
 const SOURCE_PATTERN = /^\*\*Source:\s*(.+?)\*\*\s*$/;
+
+const parseSourceLabel = (raw: string): string => {
+  const trimmed = raw.trim();
+  const isJsonArray = trimmed.startsWith("[");
+  if (!isJsonArray) {
+    return trimmed;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed) as string[];
+    return parsed.join(", ");
+  } catch {
+    return trimmed.replace(/[\[\]"]/g, "");
+  }
+};
 const TOOLS_PATTERN = /^<tools>(.*?)<\/tools>\s*$/;
 
 type ParsedMessage = {
@@ -76,7 +91,7 @@ const AssistantMessage = (props: AssistantMessageProps) => {
   }
 
   const { source, tools, body } = parseMessage(content);
-  const displaySource = source?.replace(/Context Surfaces/g, "Context Retriever") ?? null;
+  const displaySource = source ? parseSourceLabel(source) : null;
 
   return (
     <div className="assistant-message">

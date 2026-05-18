@@ -20,6 +20,7 @@ import { join } from "node:path";
 
 import { createAllTools } from "./tools";
 import { buildSystemPrompt } from "./system-prompt";
+import { postProcessMessages } from "./source-attribution";
 import { DatasetLoaderService } from "../services/dataset-loader.service";
 import { ENV } from "../config";
 import { setAppState } from "../app-state";
@@ -48,8 +49,9 @@ const ensureLoggerInitialized = (): void => {
 
 let _logger: ReturnType<typeof Logger.getInstance> | null = null;
 const getLogger = () => {
-  if (!_logger)
+  if (!_logger) {
     _logger = Logger.getInstance().child({ component: "ChatbotGraph" });
+  }
   return _logger;
 };
 
@@ -168,13 +170,14 @@ const invokeReactNode = async (
   );
 
   const newMessages = result.messages.slice(inputCount);
+  const processedMessages = postProcessMessages(newMessages);
 
   logger.info("ReAct agent completed", {
-    responseMessageCount: newMessages.length,
+    responseMessageCount: processedMessages.length,
     latencyMs: Date.now() - startMs,
   });
 
-  return { messages: newMessages };
+  return { messages: processedMessages };
 };
 
 const createCompiledGraph = async () => {
