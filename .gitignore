@@ -157,4 +157,6 @@ tests/
 **/*.mov
 
 **/agent-memory-ts-sdk
-**/context-surfaces-ts-sdk
+packages/context-surfaces-ts-sdk/dist/
+packages/context-surfaces-ts-sdk/node_modules/
+packages/context-surfaces-ts-sdk/coverage/
