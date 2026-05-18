@@ -44,6 +44,17 @@ const logger = Logger.create({
   ],
 });
 
+const redactUrl = (url: string): string => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.password) parsed.password = "***";
+    if (parsed.username) parsed.username = "***";
+    return parsed.toString();
+  } catch {
+    return "<invalid url>";
+  }
+};
+
 const initializeApp = async (): Promise<void> => {
   const datasetConfig = DatasetLoaderService.loadDatasetConfig(
     ENV.ACTIVE_DATASET,
@@ -72,7 +83,7 @@ const initializeApp = async (): Promise<void> => {
 
   const redis = RedisDb.create({ url: ENV.REDIS_URL, logger });
   await redis.connect();
-  logger.info("Redis connected for copilot stores", { url: ENV.REDIS_URL });
+  logger.info("Redis connected for copilot stores", { url: redactUrl(ENV.REDIS_URL) });
 
   let ctxSurfaceId = "";
   let mcpAgentKey = "";
