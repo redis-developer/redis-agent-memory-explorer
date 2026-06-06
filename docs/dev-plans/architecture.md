@@ -106,7 +106,8 @@ In Docker, these are two containers (`demo-app` and `demo-langgraph`) communicat
 | `RAM_API_KEY`                       | Yes      | Cloud RAM API key                                                  |
 | `RAM_STORE_ID`                      | Yes      | Cloud RAM store ID (tenant identifier)                             |
 | `REDIS_URL`                         | Yes      | Redis connection URL for local copilot stores                      |
-| `LLM_MODEL`                         | No       | LLM model name (default: `gpt-4o-mini`)                            |
+| `MEETING_MEMORY_CHATBOT_MODEL`      | No       | Chatbot agent + LangCache query normalizer model (default: `gpt-4o-mini`) |
+| `MEETING_MEMORY_BACKGROUND_MODEL`   | No       | Suggestions, query extraction, and summarization model (default: `gpt-4o-mini`) |
 | `MEETING_MEMORY_PORT`               | No       | Server port (default: `3001`)                                      |
 | `MEETING_MEMORY_ACTIVE_DATASET`     | No       | Active dataset ID (default: `wealth-advisor`)                      |
 | `MEETING_MEMORY_CONTEXT_WINDOW_MAX` | No       | Max context window tokens (default: `1500`)                        |

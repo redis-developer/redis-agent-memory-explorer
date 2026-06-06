@@ -6,6 +6,7 @@ COPY packages/cau-logger/package.json packages/cau-logger/
 COPY packages/cau-redis/package.json packages/cau-redis/
 COPY packages/cau-api-server/package.json packages/cau-api-server/
 COPY packages/cau-ram/package.json packages/cau-ram/
+COPY packages/cau-langcache/package.json packages/cau-langcache/
 COPY packages/context-surfaces-ts-sdk/package.json packages/context-surfaces-ts-sdk/
 COPY packages/cau-context-surfaces/package.json packages/cau-context-surfaces/
 COPY backend/package.json backend/
@@ -35,6 +36,7 @@ COPY packages/cau-logger/package.json packages/cau-logger/
 COPY packages/cau-redis/package.json packages/cau-redis/
 COPY packages/cau-api-server/package.json packages/cau-api-server/
 COPY packages/cau-ram/package.json packages/cau-ram/
+COPY packages/cau-langcache/package.json packages/cau-langcache/
 COPY packages/context-surfaces-ts-sdk/package.json packages/context-surfaces-ts-sdk/
 COPY packages/cau-context-surfaces/package.json packages/cau-context-surfaces/
 COPY backend/package.json backend/

@@ -161,7 +161,7 @@ demo-langgraph:
     - RAM_ENDPOINT
     - RAM_API_KEY
     - RAM_STORE_ID
-    - LLM_MODEL
+    - MEETING_MEMORY_CHATBOT_MODEL
     - LANGSMITH_API_KEY
     - MEETING_MEMORY_ACTIVE_DATASET
 ```
@@ -185,7 +185,7 @@ The CLI version is pinned to `1.1.17` to avoid breaking changes in newer version
 | Variable | Used For |
 |----------|----------|
 | `OPENAI_API_KEY` | ChatOpenAI LLM in ReAct agent |
-| `LLM_MODEL` | Model selection (default: `gpt-4o-mini`) |
+| `MEETING_MEMORY_CHATBOT_MODEL` | Chatbot agent + LangCache query normalizer model (default: `gpt-4o-mini`) |
 | `RAM_ENDPOINT` / `RAM_API_KEY` / `RAM_STORE_ID` | Cloud RAM access (tools) |
 | `LANGGRAPH_DEPLOYMENT_URL` | Backend proxy target (default: `http://localhost:2024`) |
 | `LANGSMITH_API_KEY` | Optional tracing for debugging |

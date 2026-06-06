@@ -14,6 +14,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { SystemMessage } from "@langchain/core/messages";
 import { RedisAgentMemory } from "cau-ram";
 import { ContextSurfaces } from "cau-context-surfaces";
+import { LangCache } from "cau-langcache";
 
 import { Logger } from "cau-logger";
 import { join } from "node:path";
@@ -21,6 +22,7 @@ import { join } from "node:path";
 import { createAllTools } from "./tools";
 import { buildSystemPrompt } from "./system-prompt";
 import { postProcessMessages } from "./source-attribution";
+import { ChatbotCacheStrategy } from "./cache-strategy";
 import { DatasetLoaderService } from "../services/dataset-loader.service";
 import { ENV } from "../config";
 import { setAppState } from "../app-state";
@@ -78,7 +80,7 @@ const ensureInitialized = (datasetConfig: DatasetConfig): void => {
         storeId: ENV.RAM_STORE_ID,
       },
       llm: {
-        model: ENV.LLM_MODEL,
+        model: ENV.BACKGROUND_MODEL,
         apiKey: ENV.OPENAI_API_KEY,
       },
     });
@@ -107,6 +109,26 @@ const ensureInitialized = (datasetConfig: DatasetConfig): void => {
       mcpAgentKey = ENV.MCP_AGENT_KEY;
       logger.info("ContextSurfaces initialized in LangGraph process", {
         surfaceId: ctxSurfaceId,
+      });
+    }
+  }
+
+  const hasLangCacheConfig =
+    ENV.LANGCACHE_ENABLED &&
+    ENV.LANGCACHE_SERVER_URL &&
+    ENV.LANGCACHE_CACHE_ID &&
+    ENV.LANGCACHE_API_KEY;
+  if (hasLangCacheConfig) {
+    try {
+      LangCache.getInstance();
+    } catch {
+      LangCache.create({
+        serverURL: ENV.LANGCACHE_SERVER_URL,
+        cacheId: ENV.LANGCACHE_CACHE_ID,
+        apiKey: ENV.LANGCACHE_API_KEY,
+      });
+      logger.info("LangCache initialized in LangGraph process", {
+        serverURL: ENV.LANGCACHE_SERVER_URL,
       });
     }
   }
@@ -140,12 +162,12 @@ const buildReadableMessages = (
   );
 };
 
-const invokeReactNode = async (
+const runAgent = async (
   state: typeof StateAnnotation.State,
   reactAgent: ReturnType<typeof createReactAgent>,
   datasetConfig: DatasetConfig,
   mcpToolDefs: McpToolDef[],
-): Promise<{ messages: BaseMessage[] }> => {
+): Promise<BaseMessage[]> => {
   const logger = getLogger();
   const systemPrompt = buildSystemPrompt(datasetConfig, mcpToolDefs);
   const readableMessages = buildReadableMessages(state.copilotkit);
@@ -177,7 +199,37 @@ const invokeReactNode = async (
     latencyMs: Date.now() - startMs,
   });
 
-  return { messages: processedMessages };
+  return processedMessages;
+};
+
+const runAgentWithCache = async (
+  state: typeof StateAnnotation.State,
+  reactAgent: ReturnType<typeof createReactAgent>,
+  datasetConfig: DatasetConfig,
+  mcpToolDefs: McpToolDef[],
+): Promise<{ messages: BaseMessage[] }> => {
+  let result: { messages: BaseMessage[] };
+
+  const turn = await ChatbotCacheStrategy.lookup(
+    state.copilotkit,
+    state.messages,
+    datasetConfig,
+  );
+
+  if (turn.hit) {
+    result = { messages: [turn.hit] };
+  } else {
+    const messages = await runAgent(
+      state,
+      reactAgent,
+      datasetConfig,
+      mcpToolDefs,
+    );
+    await ChatbotCacheStrategy.store(turn, messages);
+    result = { messages };
+  }
+
+  return result;
 };
 
 const createCompiledGraph = async () => {
@@ -190,7 +242,7 @@ const createCompiledGraph = async () => {
   ensureInitialized(datasetConfig);
 
   const llm = new ChatOpenAI({
-    model: ENV.LLM_MODEL,
+    model: ENV.CHATBOT_MODEL,
     temperature: 0,
     apiKey: ENV.OPENAI_API_KEY,
   });
@@ -200,7 +252,7 @@ const createCompiledGraph = async () => {
 
   const graph = new StateGraph(StateAnnotation)
     .addNode("reactNode", (state) =>
-      invokeReactNode(state, reactAgent, datasetConfig, mcpToolDefs),
+      runAgentWithCache(state, reactAgent, datasetConfig, mcpToolDefs),
     )
     .addEdge(START, "reactNode")
     .addEdge("reactNode", END);

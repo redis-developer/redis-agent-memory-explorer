@@ -7,6 +7,7 @@ import { getAppState } from "../app-state";
 import { SuggestionStore } from "../services/suggestion-store";
 import { TopicStore } from "../services/topic-store";
 import { TranscriptChunkStore } from "../services/transcript-chunk-store";
+import { ChatbotCacheService } from "../services/chatbot-cache.service";
 
 const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   const { userId } = getAppState();
@@ -25,7 +26,7 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
       sessionsDeleted += 1;
     }
   } while (sessionBatch.sessions.length >= DEFAULT_LIST_LIMIT);
-  logger.info("Step 1/3: Sessions deleted", {
+  logger.info("Step 1/4: Sessions deleted", {
     sessionsDeleted,
     latencyMs: Date.now() - sessionsStartMs,
   });
@@ -43,7 +44,7 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
       memoriesDeleted += batchIds.length;
     }
   } while (ltBatch.memories.length > 0);
-  logger.info("Step 2/3: Long-term memories deleted", {
+  logger.info("Step 2/4: Long-term memories deleted", {
     memoriesDeleted,
     latencyMs: Date.now() - ltStartMs,
   });
@@ -52,8 +53,14 @@ const resetLifecycleHandler: RouteHandler = async (_input, { logger }) => {
   await SuggestionStore.clearAll();
   await TopicStore.clearAll();
   await TranscriptChunkStore.clearAll();
-  logger.info("Step 3/3: Copilot stores cleared", {
+  logger.info("Step 3/4: Copilot stores cleared", {
     latencyMs: Date.now() - storesStartMs,
+  });
+
+  const cacheStartMs = Date.now();
+  await ChatbotCacheService.clearForUser(userId);
+  logger.info("Step 4/4: Chatbot semantic cache cleared", {
+    latencyMs: Date.now() - cacheStartMs,
   });
 
   logger.info("Lifecycle reset complete", {

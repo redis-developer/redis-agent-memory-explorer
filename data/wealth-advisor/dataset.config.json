@@ -5,7 +5,7 @@
   "userId": "sarah-chen",
   "branding": {
     "title": "Wealth advisor agent",
-    "subtitle": "Powered by Redis Agent Memory and Redis Context Retriever",
+    "subtitle": "Powered by Redis Iris",
     "footerText": "",
     "accentColor": "#dc382c"
   },

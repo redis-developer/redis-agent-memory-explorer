@@ -17,7 +17,7 @@ const getLogger = () => {
 const extractSearchQuery = async (recentChunks: TranscriptChunk[]): Promise<string> => {
   const logger = getLogger();
   const llm = new ChatOpenAI({
-    model: ENV.LLM_MODEL,
+    model: ENV.BACKGROUND_MODEL,
     temperature: 0,
     maxTokens: QUERY_EXTRACTION_MAX_TOKENS,
     apiKey: ENV.OPENAI_API_KEY,
@@ -28,7 +28,7 @@ const extractSearchQuery = async (recentChunks: TranscriptChunk[]): Promise<stri
     .join("\n");
 
   logger.debug("Extracting search query from chunks", {
-    model: ENV.LLM_MODEL,
+    model: ENV.BACKGROUND_MODEL,
     chunkCount: recentChunks.length,
     inputLength: chunksText.length,
   });

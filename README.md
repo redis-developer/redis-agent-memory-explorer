@@ -112,8 +112,8 @@ Edit `backend/.env` and fill in your credentials:
 | `MCP_AGENT_KEY`                 | Reuse existing agent key (auto-created if blank)                     | --                                                 |
 | `MEETING_MEMORY_PORT`           | Backend API port                                                     | `3001`                                             |
 | `MEETING_MEMORY_ACTIVE_DATASET` | Active dataset folder name                                           | `wealth-advisor`                                   |
-| `MEETING_MEMORY_MODEL_NAME`     | OpenAI model for suggestions and summarization                       | `gpt-4o-mini`                                      |
-| `MEETING_MEMORY_CHATBOT_MODEL`  | OpenAI model for the chatbot agent                                   | `gpt-4o-mini`                                      |
+| `MEETING_MEMORY_CHATBOT_MODEL`  | OpenAI model for the chatbot agent + LangCache query normalizer      | `gpt-4o-mini`                                      |
+| `MEETING_MEMORY_BACKGROUND_MODEL` | OpenAI model for suggestions, query extraction, and summarization  | `gpt-4o-mini`                                      |
 | `LANGGRAPH_DEPLOYMENT_URL`      | LangGraph local dev server URL                                       | `http://localhost:2024`                             |
 | `LANGSMITH_API_KEY`             | LangSmith API key (optional)                                         | --                                                 |
 

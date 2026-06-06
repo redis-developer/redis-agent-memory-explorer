@@ -7,6 +7,7 @@ const JSON_EXT = ".json";
 const LOGGER_CONTEXT = "MeetingMemory";
 
 const SESSION_ID_PREFIX = "playback";
+const SESSION_ID_PATTERN = /^playback-(.+)-(\d{13,})$/; //also in frontend
 
 const DEFAULT_PORT = 3001;
 const DEFAULT_LLM_MODEL = "gpt-4o-mini";
@@ -41,7 +42,6 @@ const DEFAULT_RATE_LIMIT_MAX = 8000;
 
 const DEFAULT_REDIS_URL = "";
 
-
 const DEFAULT_STATIC_DIR = "../public";
 
 const DEFAULT_LOG_DIR = "../../logs";
@@ -65,6 +65,18 @@ const DetectedTopicSource = {
 type DetectedTopicSource =
   (typeof DetectedTopicSource)[keyof typeof DetectedTopicSource];
 
+const MessageType = {
+  HUMAN: "human",
+  AI: "ai",
+} as const;
+type MessageType = (typeof MessageType)[keyof typeof MessageType];
+
+const RoleLabel = {
+  USER: "User",
+  ASSISTANT: "Assistant",
+} as const;
+type RoleLabel = (typeof RoleLabel)[keyof typeof RoleLabel];
+
 const SURFACE_SETUP_POLL_INTERVAL_MS = 3000;
 const SURFACE_SETUP_POLL_TIMEOUT_MS = 90000;
 
@@ -74,6 +86,12 @@ const DEFAULT_REDIS_USERNAME = "default";
 
 const CTX_DATA_SOURCE_TYPE = "redis";
 const CTX_DATA_SOURCE_NAME = "demo-redis";
+
+// ── LangCache (semantic cache for the chatbot) ──
+const LANGCACHE_FEATURE = "chatbot";
+const DEFAULT_LANGCACHE_SIMILARITY_THRESHOLD = 0.9;
+const DEFAULT_LANGCACHE_TTL_MILLIS = 600_000;
+const DEFAULT_LANGCACHE_NORMALIZE_MAX_TOKENS = 128;
 
 export {
   CONFIG_FILENAME,
@@ -89,6 +107,11 @@ export {
   JSON_EXT,
   LOGGER_CONTEXT,
   SESSION_ID_PREFIX,
+  SESSION_ID_PATTERN,
+  LANGCACHE_FEATURE,
+  DEFAULT_LANGCACHE_SIMILARITY_THRESHOLD,
+  DEFAULT_LANGCACHE_TTL_MILLIS,
+  DEFAULT_LANGCACHE_NORMALIZE_MAX_TOKENS,
   DEFAULT_PORT,
   DEFAULT_LLM_MODEL,
   DEFAULT_DATA_DIR,
@@ -120,4 +143,6 @@ export {
   DEFAULT_ERROR_LOG_FILE,
   DetectedTopicStatus,
   DetectedTopicSource,
+  MessageType,
+  RoleLabel,
 };

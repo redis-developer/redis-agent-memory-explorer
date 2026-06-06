@@ -143,19 +143,19 @@ Both processes initialize a `LangCache` singleton (mirroring how each process in
 - **Prompt** (what gets embedded): the **fully-normalized standalone form** of the user's question (see [Query normalization](#query-normalization-standalone-question-rewrite--always-on)) — applied to every turn, never the raw text.
 - **Filter attributes** (exact-match filters that partition the cache; passed to **both** `search` and `set`):
 
-| Attribute   | Value                                       | Source                                  | Why                                                                                 |
-| ----------- | ------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------- |
-| `feature`   | `"chatbot"`                                 | constant `LANGCACHE_FEATURE`            | Tags all entries as chatbot-produced (hygiene/guard within one cache id)             |
-| `userId`    | e.g. `sarah-chen`                           | "User ID for memory scoping" readable   | Answers are personalized to a user's memories — never serve across users            |
-| `namespace` | active dataset id (e.g. `wealth-advisor`)   | **`ENV.ACTIVE_DATASET`** (process env)  | Different dataset = different world of data                                         |
+| Attribute   | Value                                     | Source                                 | Why                                                                      |
+| ----------- | ----------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------ |
+| `feature`   | `"chatbot"`                               | constant `LANGCACHE_FEATURE`           | Tags all entries as chatbot-produced (hygiene/guard within one cache id) |
+| `userId`    | e.g. `sarah-chen`                         | "User ID for memory scoping" readable  | Answers are personalized to a user's memories — never serve across users |
+| `namespace` | active dataset id (e.g. `wealth-advisor`) | **`ENV.ACTIVE_DATASET`** (process env) | Different dataset = different world of data                              |
 
 > **`namespace` is read from `ENV.ACTIVE_DATASET`, not from a readable.** The frontend (`page.tsx`) only sends two readables — session ID and user ID. There is no namespace readable; the LangGraph process already knows the active dataset from its environment.
 
 - **Metadata-only attributes** (stored on `set`, **never** passed to `search`):
 
-| Attribute     | Value                            | Source            | Why                                                                                          |
-| ------------- | -------------------------------- | ----------------- | -------------------------------------------------------------------------------------------- |
-| `rawQuestion` | the user's original text         | last user message | Debugging/observability — inspect the raw → normalized mapping directly in the cache data     |
+| Attribute     | Value                    | Source            | Why                                                                                       |
+| ------------- | ------------------------ | ----------------- | ----------------------------------------------------------------------------------------- |
+| `rawQuestion` | the user's original text | last user message | Debugging/observability — inspect the raw → normalized mapping directly in the cache data |
 
 > **Why `attributes` and not a separate "metadata" field:** LangCache (SDK `0.11.1`) has **no dedicated metadata field**. An entry is `{ id, prompt, response, attributes, similarity, searchStrategy }` and `set` accepts only `{ prompt, response, attributes?, ttlMillis? }`. The `attributes` map (`string → string`) is the only place for arbitrary key/values, so `rawQuestion` lives there.
 
@@ -165,11 +165,11 @@ Both processes initialize a `LangCache` singleton (mirroring how each process in
 
 This was a real design decision, settled by looking at where the chatbot's answers actually come from (`chatbot.md`, `context-surfaces-integration.md`). The chatbot answers from **three** sources, and only one is session-bound:
 
-| Source                                                    | Session-bound? | Representative questions                          |
-| --------------------------------------------------------- | -------------- | ------------------------------------------------- |
-| Context Surfaces MCP (static structured data)             | **No**         | "What is James's portfolio allocation?" (Q1–6)    |
-| RAM long-term memory (`searchMemories`, scoped by userId) | **No** (cross-session) | "What did James say about REIT concerns?" (Q8–9) |
-| RAM session memory (`getMemoryContext`, `searchMemoriesBySession`) | **Yes** | "What happened in this meeting?" (Q7, Q10)        |
+| Source                                                             | Session-bound?         | Representative questions                         |
+| ------------------------------------------------------------------ | ---------------------- | ------------------------------------------------ |
+| Context Surfaces MCP (static structured data)                      | **No**                 | "What is James's portfolio allocation?" (Q1–6)   |
+| RAM long-term memory (`searchMemories`, scoped by userId)          | **No** (cross-session) | "What did James say about REIT concerns?" (Q8–9) |
+| RAM session memory (`getMemoryContext`, `searchMemoriesBySession`) | **Yes**                | "What happened in this meeting?" (Q7, Q10)       |
 
 Two of the three categories — the **majority** of the chatbot's question space, and the most cacheable (deterministic CS lookups) — are **not** session-bound. Their answers are identical regardless of the active session. Adding `sessionId` as an attribute would partition the cache so that **every session switch cold-starts** even these session-independent questions, gutting the hit rate exactly where caching is most valuable.
 
@@ -181,17 +181,17 @@ Session-scoped questions instead get their uniqueness from the **normalized ques
 
 **The attribute showcase** (a nice demo moment in its own right):
 
-| Attribute      | What it isolates                                        | Demo moment                                              |
-| -------------- | ------------------------------------------------------- | -------------------------------------------------------- |
-| `userId`       | User personalization — User B never gets Sarah's answers | Same question, different user → miss                     |
-| `namespace`    | Dataset boundary — another persona/dataset never bleeds  | Same question, different dataset → miss                  |
+| Attribute        | What it isolates                                          | Demo moment                                                                  |
+| ---------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `userId`         | User personalization — User B never gets Sarah's answers  | Same question, different user → miss                                         |
+| `namespace`      | Dataset boundary — another persona/dataset never bleeds   | Same question, different dataset → miss                                      |
 | _(no sessionId)_ | Not needed — normalized question carries meeting identity | Cross-session CS question hits; session question misses on different meeting |
 
 > **Residual risk + mitigation (be honest about it):** two different sessions whose normalized questions differ **only by date** ("…the Feb 26 2026 meeting…" vs "…the Mar 05 2026 meeting…") could, in principle, exceed the similarity threshold and produce a wrong cross-session hit. Mitigations: (1) tune the threshold up for this demo (0.92–0.95) since session-scoped questions are near-identical apart from the meeting identity; (2) make the normalizer front-load the full meeting identity (date + type + participants) to maximize embedding divergence; (3) TTL + reset-clear bound staleness. This is an accepted demo-grade tradeoff — the alternative (`sessionId` attribute) trades a rare wrong-hit for a guaranteed low hit rate on the majority of questions.
 
 ### Query normalization (standalone-question rewrite) — always on
 
-This is what makes the cache **production-grade** rather than a demo trick. **Every** user question — the first one _and_ every follow-up — is normalized into a fully self-contained, unambiguous standalone question **before** the cache is searched, and the _same_ normalized string is used to save on a miss. Reads and writes therefore always live in the same canonical embedding space, which drives reliable hit rates. It is also what makes the "no `sessionId` attribute" design correct — the standalone question is the *only* thing carrying session identity.
+This is what makes the cache **production-grade** rather than a demo trick. **Every** user question — the first one _and_ every follow-up — is normalized into a fully self-contained, unambiguous standalone question **before** the cache is searched, and the _same_ normalized string is used to save on a miss. Reads and writes therefore always live in the same canonical embedding space, which drives reliable hit rates. It is also what makes the "no `sessionId` attribute" design correct — the standalone question is the _only_ thing carrying session identity.
 
 We do **not** short-circuit the first turn with raw text. An "initial" question is often still context-bound ("What happened in **this** meeting?", "What did **he** decide?"), so it must be resolved too.
 
@@ -203,12 +203,12 @@ We do **not** short-circuit the first turn with raw text. An "initial" question 
 
 **Examples (active session = "Feb 26 2026 client review with James Morrison"):**
 
-| Turn               | Raw user text                              | Normalized standalone question                                                   |
-| ------------------ | ------------------------------------------ | -------------------------------------------------------------------------------- |
-| initial            | "What happened in this meeting?"           | "What happened in the Feb 26 2026 client review meeting with James Morrison?"    |
-| follow-up          | "what about bonds?"                        | "What was discussed about bonds in the Feb 26 2026 meeting with James Morrison?" |
-| follow-up          | "and what did he decide?"                  | "What did James Morrison decide in the Feb 26 2026 client review meeting?"       |
-| already standalone | "What are James Morrison's long-term goals?" | returned semantically unchanged                                                |
+| Turn               | Raw user text                                | Normalized standalone question                                                   |
+| ------------------ | -------------------------------------------- | -------------------------------------------------------------------------------- |
+| initial            | "What happened in this meeting?"             | "What happened in the Feb 26 2026 client review meeting with James Morrison?"    |
+| follow-up          | "what about bonds?"                          | "What was discussed about bonds in the Feb 26 2026 meeting with James Morrison?" |
+| follow-up          | "and what did he decide?"                    | "What did James Morrison decide in the Feb 26 2026 client review meeting?"       |
+| already standalone | "What are James Morrison's long-term goals?" | returned semantically unchanged                                                  |
 
 **The normalizer needs real meeting metadata — derived server-side, no new readable (verified against the loader services):** to resolve "this meeting" → "the 2025-09-14 phone call with James Morrison", the normalizer must know the active meeting's **date + type + participants**. That metadata lives in each transcript JSON's `meeting` object:
 
@@ -236,7 +236,7 @@ So `graph.ts` builds the meeting context **server-side**: parse `transcriptId` f
 >
 > **Existing readables are preserved — nothing is removed.** The two current readables stay exactly as-is: `"Active session ID for the current meeting playback"` and `"User ID for memory scoping"`. This feature only **adds** `"Bypass semantic cache"`. In fact the `"Active session ID"` readable becomes more important, since the server-side meeting-context lookup parses `transcriptId` from it.
 
-**Quality bar / model:** correctness-critical, so it runs on a capable model at `temperature: 0` (configurable via `LANGCACHE_NORMALIZE_MODEL`, defaulting to the chatbot model, **not** a deliberately "cheap" model), with a dedicated strict prompt:
+**Quality bar / model:** correctness-critical, so it runs on a capable model at `temperature: 0` — it shares the chatbot model (`CHATBOT_MODEL`, from `MEETING_MEMORY_CHATBOT_MODEL`), **not** a deliberately "cheap" model — with a dedicated strict prompt:
 
 - Output **only** the rewritten standalone question — no preamble, no answer.
 - Preserve the user's original intent exactly; never add or invent constraints not implied by the conversation.
@@ -258,7 +258,7 @@ Cloud RAM keeps extracting LTMs in the background (~5–7 min) and `resetLifecyc
 
 - Controlled by `LANGCACHE_ENABLED`. When `false` or config is incomplete, the cache layer is a **no-op** and the chatbot behaves exactly as today.
 - Every cache call is wrapped in `try/catch`; a cache error logs a warning and falls through to the agent. **The cache must never break the chatbot.**
-- **Normalizer failure ⇒ cache-disabled turn (correctness safeguard).** If the normalizer LLM call fails, we fall back to the raw last-message text for the *agent* (so the chatbot still answers), but we **skip both the cache read and the cache write** for that turn. Rationale: with no `sessionId` attribute, an unresolved raw question like "What happened in this meeting?" is identical across sessions — reading it could serve another session's answer, and writing it could poison the cache for a later session. Skipping read+write on normalizer failure makes the "no sessionId" design fully safe (the only cost is losing caching on that rare turn).
+- **Normalizer failure ⇒ cache-disabled turn (correctness safeguard).** If the normalizer LLM call fails, we fall back to the raw last-message text for the _agent_ (so the chatbot still answers), but we **skip both the cache read and the cache write** for that turn. Rationale: with no `sessionId` attribute, an unresolved raw question like "What happened in this meeting?" is identical across sessions — reading it could serve another session's answer, and writing it could poison the cache for a later session. Skipping read+write on normalizer failure makes the "no sessionId" design fully safe (the only cost is losing caching on that rare turn).
 
 ### Source attribution for cache hits (cache-hit badge — in scope v1)
 
@@ -295,17 +295,32 @@ packages/cau-langcache/
 Public surface (generic — consumer types only):
 
 ```typescript
-type LangCacheConfig    = { serverURL: string; cacheId?: string; apiKey?: string };
-type CacheSetParams     = { prompt: string; response: string; attributes?: Record<string,string>; ttlMillis?: number };
-type CacheSearchParams  = { prompt: string; similarityThreshold?: number; attributes?: Record<string,string> };
-type CacheHit           = { id: string; prompt: string; response: string; attributes: Record<string,string>; similarity: number };
+type LangCacheConfig = { serverURL: string; cacheId?: string; apiKey?: string };
+type CacheSetParams = {
+  prompt: string;
+  response: string;
+  attributes?: Record<string, string>;
+  ttlMillis?: number;
+};
+type CacheSearchParams = {
+  prompt: string;
+  similarityThreshold?: number;
+  attributes?: Record<string, string>;
+};
+type CacheHit = {
+  id: string;
+  prompt: string;
+  response: string;
+  attributes: Record<string, string>;
+  similarity: number;
+};
 
 class LangCache {
   static create(config: LangCacheConfig): LangCache; // creates SDK, stores singleton
-  static getInstance(): LangCache;                    // throws if not created
+  static getInstance(): LangCache; // throws if not created
 
-  search(params: CacheSearchParams): Promise<CacheHit | null>;       // best match above threshold, or null
-  set(params: CacheSetParams): Promise<string>;                       // returns entryId
+  search(params: CacheSearchParams): Promise<CacheHit | null>; // best match above threshold, or null
+  set(params: CacheSetParams): Promise<string>; // returns entryId
   deleteByAttributes(attributes: Record<string, string>): Promise<number>; // returns deletedEntriesCount
   flush(): Promise<void>;
   health(): Promise<boolean>;
@@ -341,10 +356,10 @@ const toStandaloneQuestion = (
 ): Promise<string>;
 ```
 
-- **Always** invokes the normalizer LLM (`LANGCACHE_NORMALIZE_MODEL` || `LLM_MODEL`, temp 0, `LANGCACHE_NORMALIZE_MAX_TOKENS`) — no first-turn shortcut.
+- **Always** invokes the normalizer LLM (`CHATBOT_MODEL`, temp 0, `LANGCACHE_NORMALIZE_MAX_TOKENS`) — no first-turn shortcut.
 - Input: recent conversation turns + raw last message + the session/meeting context block.
 - Enforces the rules in [Query normalization](#query-normalization-standalone-question-rewrite--always-on).
-- **On failure: throws / signals failure to the caller** so `graph.ts` can run the agent on the raw text *and* disable caching for that turn (see safety note). It logs `{ model, sessionId, raw, standalone, latencyMs }`.
+- **On failure: throws / signals failure to the caller** so `graph.ts` can run the agent on the raw text _and_ disable caching for that turn (see safety note). It logs `{ model, sessionId, raw, standalone, latencyMs }`.
 
 ### 3. New backend service: `backend/src/services/chatbot-cache.service.ts`
 
@@ -367,7 +382,7 @@ const clearForUser    = (userId: string): Promise<void>;
 ### 4. Chatbot graph: `backend/src/chatbot-agent/graph.ts`
 
 - In `ensureInitialized`, initialize the `LangCache` singleton if `LANGCACHE_ENABLED` and `LANGCACHE_SERVER_URL !== ""` (same try/`getInstance`/`create` pattern used for `RedisAgentMemory`).
-- In `invokeReactNode`:
+- In `runAgentWithCache`:
   1. Extract readables from `state.copilotkit.context`:
      - `"Active session ID"` → `sessionId` (normalizer context only)
      - `"User ID for memory scoping"` → `userId`
@@ -404,7 +419,6 @@ LANGCACHE_SIMILARITY_THRESHOLD:
   Number(process.env.LANGCACHE_SIMILARITY_THRESHOLD) || DEFAULT_LANGCACHE_SIMILARITY_THRESHOLD, // 0.9
 LANGCACHE_TTL_MILLIS:
   Number(process.env.LANGCACHE_TTL_MILLIS) || DEFAULT_LANGCACHE_TTL_MILLIS, // 600000
-LANGCACHE_NORMALIZE_MODEL: process.env.LANGCACHE_NORMALIZE_MODEL ?? "", // falls back to LLM_MODEL at use site
 LANGCACHE_NORMALIZE_MAX_TOKENS:
   Number(process.env.LANGCACHE_NORMALIZE_MAX_TOKENS) || DEFAULT_LANGCACHE_NORMALIZE_MAX_TOKENS, // 128
 ```
@@ -421,12 +435,12 @@ LANGCACHE_CACHE_ID=your-cache-id
 LANGCACHE_API_KEY=your-langcache-api-key
 LANGCACHE_SIMILARITY_THRESHOLD=0.9
 LANGCACHE_TTL_MILLIS=600000
-# Standalone-question normalizer (applied to every turn). Defaults to LLM_MODEL if empty.
-LANGCACHE_NORMALIZE_MODEL=
 LANGCACHE_NORMALIZE_MAX_TOKENS=128
 ```
 
-`docker-compose.yml` loads both services via `env_file: .env`. Explicitly list `LANGCACHE_*` under `demo-langgraph` `environment:` (the LangGraph CLI needs app vars enumerated there) so the chatbot process sees them; `demo-app` needs them for reset.
+The normalizer reuses the chatbot model (`MEETING_MEMORY_CHATBOT_MODEL`); there is no separate normalizer-model env var.
+
+`docker-compose.yml` loads both services via `env_file: .env`, which passes every `.env` var into each container; the LangGraph graph process inherits them, so no per-var `environment:` enumeration is needed (`config.ts` supplies the same defaults in code). The `demo-app` `environment:` block is only for container-specific **overrides** (e.g. `MEETING_MEMORY_DATA_DIR`, the cross-container `LANGGRAPH_DEPLOYMENT_URL`).
 
 ### 8. Root build wiring
 
@@ -458,11 +472,16 @@ Rather than customizing the `CopilotSidebar` header (limited/brittle surface), a
 
 - Hold the settings object as state in `DemoPageContent` and render `<ChatbotSettings settings={...} onChange={...} />` inside the `CopilotSidebar` subtree (the overlay positions itself):
   ```typescript
-  const [chatbotSettings, setChatbotSettings] = useState<ChatbotSettings>({ bypassCache: false });
+  const [chatbotSettings, setChatbotSettings] = useState<ChatbotSettings>({
+    bypassCache: false,
+  });
   ```
 - Expose each functional setting as a CopilotKit readable (the readable is the only thing `graph.ts` consumes; the menu is purely the control surface):
   ```typescript
-  useCopilotReadable({ description: "Bypass semantic cache to get fresh data", value: String(chatbotSettings.bypassCache) });
+  useCopilotReadable({
+    description: "Bypass semantic cache to get fresh data",
+    value: String(chatbotSettings.bypassCache),
+  });
   ```
 
 > **No meeting-context readable is needed.** Meeting metadata (date/type/participants) is derived **server-side** in `graph.ts` from the existing `"Active session ID"` readable (`sessionId` → `transcriptId` → `TranscriptLoaderService`). So the only **new** readable this whole feature adds is `"Bypass semantic cache"`; the cross-process contract otherwise stays `sessionId` + `userId`.
@@ -485,8 +504,9 @@ Rather than customizing the `CopilotSidebar` header (limited/brittle surface), a
 | `LANGCACHE_API_KEY`              | If enabled (cloud) | `""`              | LangCache API key                                 |
 | `LANGCACHE_SIMILARITY_THRESHOLD` | No                 | `0.9`             | Min cosine similarity for a hit (higher=strict)   |
 | `LANGCACHE_TTL_MILLIS`           | No                 | `600000` (10 min) | Entry TTL                                         |
-| `LANGCACHE_NORMALIZE_MODEL`      | No                 | `LLM_MODEL`       | Model for the standalone-question normalizer      |
 | `LANGCACHE_NORMALIZE_MAX_TOKENS` | No                 | `128`             | Max tokens for the normalized standalone question |
+
+The standalone-question normalizer reuses the chatbot model (`MEETING_MEMORY_CHATBOT_MODEL`), so it has no dedicated model env var.
 
 Threshold guidance (per `semantic-cache-best-practices`): start at `0.9`; for this demo consider `0.92–0.95` because session-scoped questions differ mainly by the embedded meeting date. Raise if you see wrong-answer hits; lower toward `0.8` for a higher hit rate. Use attributes (not separate caches) to partition within one cache id.
 
@@ -543,7 +563,7 @@ sequenceDiagram
 4. Add `query-normalizer-prompt.ts` + `query-normalizer.ts` — always-on standalone-question normalization; throws/signals on failure.
 5. Add `chatbot-cache.service.ts` (scope = `{ userId, namespace }`; returns `CachedAnswer | null`).
 6. Init `LangCache` singleton in `graph.ts` (`ensureInitialized`) and `backend/src/index.ts`.
-7. Add normalize → (read unless bypass/failure) → agent → write logic in `graph.ts` `invokeReactNode`, plus readable extraction (sessionId, userId, bypassCache), server-side meeting-context derivation (parse `transcriptId` from `sessionId` via the new backend `SESSION_ID_PATTERN` → `TranscriptLoaderService`, memoized), and the hit-badge prepend.
+7. Add normalize → (read unless bypass/failure) → agent → write logic in `graph.ts` `runAgentWithCache` (delegating to `cache-strategy.ts` `ChatbotCacheStrategy.lookup`/`store`), plus readable extraction (sessionId, userId, bypassCache), server-side meeting-context derivation (parse `transcriptId` from `sessionId` via the new backend `SESSION_ID_PATTERN` → `TranscriptLoaderService`, memoized), and the hit-badge prepend.
 8. Add cache clear (Step 4/4) to `resetLifecycleHandler`.
 9. Frontend: new `ChatbotSettings` gear-menu component (v1: bypass toggle, extensible); `page.tsx` settings state + bypass readable (the only new readable — meeting context is derived server-side, no frontend change for it); `assistant-message.component.tsx` cache-badge parse + render.
 10. Test (below); tune `LANGCACHE_SIMILARITY_THRESHOLD` and validate normalization quality on a representative question set.
@@ -553,32 +573,32 @@ sequenceDiagram
 
 **Package unit tests (`cau-langcache`)** — zero-mock, real execution (per `js-testing`) against a local/dev LangCache:
 
-| # | Test | Expected |
-|---|---|---|
-| 1 | `set` then `search` same prompt | hit, `similarity >= threshold` |
-| 2 | `search` unrelated prompt at high threshold | `null` |
-| 3 | entry stored `userId: A`, searched `userId: B` | `null` (attribute isolation) |
-| 4 | `deleteByAttributes({ userId })` then `search` | `null` |
-| 5 | TTL: entry with small `ttlMillis` | expires |
-| 6 | `health()` | `true` for a working cache |
+| #   | Test                                           | Expected                       |
+| --- | ---------------------------------------------- | ------------------------------ |
+| 1   | `set` then `search` same prompt                | hit, `similarity >= threshold` |
+| 2   | `search` unrelated prompt at high threshold    | `null`                         |
+| 3   | entry stored `userId: A`, searched `userId: B` | `null` (attribute isolation)   |
+| 4   | `deleteByAttributes({ userId })` then `search` | `null`                         |
+| 5   | TTL: entry with small `ttlMillis`              | expires                        |
+| 6   | `health()`                                     | `true` for a working cache     |
 
 **Backend / manual (chatbot)** — with `LANGCACHE_ENABLED=true`:
 
-| #   | Action                                                                                          | Expected                                                                                   |
-| --- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| 1   | Ask "What happened in this meeting?" twice (same session)                                       | 1st = miss; 2nd = hit, `**Cache: …**` badge shown                                          |
-| 2   | Ask a paraphrase ("Give me a summary of this meeting")                                          | hit at threshold (tune if not), badge shown                                                |
-| 3   | Ask "What are James's goals?" in session A, switch to session B, ask again                      | **HIT** across sessions (CS static data — correct, no `sessionId` attribute)               |
-| 4   | Ask "What happened in this meeting?" in session A (Feb 26), switch to B (Mar 05), ask again     | **MISS** — different meetings normalize to different standalone questions                   |
-| 5   | Run "Reset (delete all memories)"                                                               | subsequent identical question = miss (cache cleared for user)                              |
-| 6   | Ask "what about bonds?" follow-up, then later the standalone "what was discussed about bonds…"  | both normalize to the same standalone question → second is a hit                            |
-| 7   | Check "Bypass cache", ask a previously cached question                                          | agent runs fresh, **no badge**; a new entry is written alongside the old                    |
-| 8   | Uncheck bypass, ask the same question                                                           | **HIT**, badge shown                                                                        |
-| 9   | Same question, different `userId` / different `namespace` (dataset)                             | miss (attribute isolation)                                                                  |
-| 10  | First turn "What happened in this meeting?"                                                     | normalized (not raw) — logged `standalone` shows the meeting-specific question              |
-| 11  | `LANGCACHE_ENABLED=false`                                                                        | no cache/normalize calls, no badge, toggle has no effect                                    |
-| 12  | Unreachable LangCache URL                                                                        | warning logged, chatbot still answers (graceful fallback)                                   |
-| 13  | Force normalizer LLM to fail                                                                     | agent answers on raw text; **no cache read or write** that turn (no cross-session leak)     |
+| #   | Action                                                                                         | Expected                                                                                |
+| --- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 1   | Ask "What happened in this meeting?" twice (same session)                                      | 1st = miss; 2nd = hit, `**Cache: …**` badge shown                                       |
+| 2   | Ask a paraphrase ("Give me a summary of this meeting")                                         | hit at threshold (tune if not), badge shown                                             |
+| 3   | Ask "What are James's goals?" in session A, switch to session B, ask again                     | **HIT** across sessions (CS static data — correct, no `sessionId` attribute)            |
+| 4   | Ask "What happened in this meeting?" in session A (Feb 26), switch to B (Mar 05), ask again    | **MISS** — different meetings normalize to different standalone questions               |
+| 5   | Run "Reset (delete all memories)"                                                              | subsequent identical question = miss (cache cleared for user)                           |
+| 6   | Ask "what about bonds?" follow-up, then later the standalone "what was discussed about bonds…" | both normalize to the same standalone question → second is a hit                        |
+| 7   | Check "Bypass cache", ask a previously cached question                                         | agent runs fresh, **no badge**; a new entry is written alongside the old                |
+| 8   | Uncheck bypass, ask the same question                                                          | **HIT**, badge shown                                                                    |
+| 9   | Same question, different `userId` / different `namespace` (dataset)                            | miss (attribute isolation)                                                              |
+| 10  | First turn "What happened in this meeting?"                                                    | normalized (not raw) — logged `standalone` shows the meeting-specific question          |
+| 11  | `LANGCACHE_ENABLED=false`                                                                      | no cache/normalize calls, no badge, toggle has no effect                                |
+| 12  | Unreachable LangCache URL                                                                      | warning logged, chatbot still answers (graceful fallback)                               |
+| 13  | Force normalizer LLM to fail                                                                   | agent answers on raw text; **no cache read or write** that turn (no cross-session leak) |
 
 Reuse the chatbot questions in `context-surfaces-integration.md` (§Test Questions) as the corpus for hit-rate + normalization tuning.
 
@@ -599,3 +619,25 @@ Also add a `query-normalizer` unit/eval test: fixtures of (history + session/mee
 - **Metrics:** expose hit rate / tokens + latency saved (net of the normalization-call cost) in the "Redis Metrics" tab.
 - **Bypass writes a replacement:** when bypass is active, delete the existing matching entry before writing the fresh one (`search` → `deleteById` → `set`) — adds latency; deferred until LangCache supports upsert natively.
 - **Condense reuse:** feed the standalone question to the ReAct agent on misses to improve tool retrieval — measure before adopting.
+
+## Questions
+
+1. Paraphrase hit (pure semantic similarity)
+   "What are James's financial goals?" → miss, agent runs, answer cached
+   "What are James Morrison's financial objectives?" → hit
+   "Tell me about James's money goals" → hit
+
+2. Summarize the meeting (paraphrase + deixis)
+   "What happened in this meeting?" → normalizer rewrites to "What happened in the Feb 26 2026 client review meeting with James Morrison?" → miss, cached
+   "Summarize the Feb 26 call" → hit (normalizes to the same standalone question)
+   "Give me a recap of the meeting" → hit
+
+3. Follow-up / ellipsis resolution
+   "What did James say about REIT concerns?" → miss, cached
+   "and what about REITs?" (as a follow-up) → normalizer expands to "What did James Morrison say about REIT concerns…" → hit
+   "his thoughts on REITs?" → hit
+
+4. Portfolio allocation (paraphrase, CS static data — hits across sessions)
+   "What is James Morrison's portfolio allocation?" → miss, cached
+   "What's James's current asset allocation?" → hit
+   "How is James's portfolio split up?" → hit

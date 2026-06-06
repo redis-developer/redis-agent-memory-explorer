@@ -10,6 +10,9 @@ import {
   DEFAULT_LANGGRAPH_DEPLOYMENT_URL,
   DEFAULT_REDIS_URL,
   DEFAULT_LOG_DIR,
+  DEFAULT_LANGCACHE_SIMILARITY_THRESHOLD,
+  DEFAULT_LANGCACHE_TTL_MILLIS,
+  DEFAULT_LANGCACHE_NORMALIZE_MAX_TOKENS,
 } from "./constants";
 
 const parseAllowedOrigins = (raw: string | undefined): string[] => {
@@ -21,12 +24,20 @@ const parseAllowedOrigins = (raw: string | undefined): string[] => {
   return result;
 };
 
+// Interactive, user-facing path: chatbot ReAct agent + LangCache query normalizer.
+const CHATBOT_MODEL =
+  process.env.MEETING_MEMORY_CHATBOT_MODEL ?? DEFAULT_LLM_MODEL;
+// Background path: suggestions, query extraction, and memory summarization.
+const BACKGROUND_MODEL =
+  process.env.MEETING_MEMORY_BACKGROUND_MODEL ?? DEFAULT_LLM_MODEL;
+
 const ENV = {
   PORT: Number(process.env.MEETING_MEMORY_PORT) || DEFAULT_PORT,
   RAM_ENDPOINT: process.env.RAM_ENDPOINT ?? "",
   RAM_API_KEY: process.env.RAM_API_KEY ?? "",
   RAM_STORE_ID: process.env.RAM_STORE_ID ?? "",
-  LLM_MODEL: process.env.LLM_MODEL ?? DEFAULT_LLM_MODEL,
+  CHATBOT_MODEL,
+  BACKGROUND_MODEL,
   DATA_DIR: resolve(
     __dirname,
     process.env.MEETING_MEMORY_DATA_DIR ?? DEFAULT_DATA_DIR,
@@ -53,6 +64,18 @@ const ENV = {
     __dirname,
     process.env.MEETING_MEMORY_LOG_DIR ?? DEFAULT_LOG_DIR,
   ),
+  LANGCACHE_ENABLED: (process.env.LANGCACHE_ENABLED ?? "false") === "true",
+  LANGCACHE_SERVER_URL: process.env.LANGCACHE_SERVER_URL ?? "",
+  LANGCACHE_CACHE_ID: process.env.LANGCACHE_CACHE_ID ?? "",
+  LANGCACHE_API_KEY: process.env.LANGCACHE_API_KEY ?? "",
+  LANGCACHE_SIMILARITY_THRESHOLD:
+    Number(process.env.LANGCACHE_SIMILARITY_THRESHOLD) ||
+    DEFAULT_LANGCACHE_SIMILARITY_THRESHOLD,
+  LANGCACHE_TTL_MILLIS:
+    Number(process.env.LANGCACHE_TTL_MILLIS) || DEFAULT_LANGCACHE_TTL_MILLIS,
+  LANGCACHE_NORMALIZE_MAX_TOKENS:
+    Number(process.env.LANGCACHE_NORMALIZE_MAX_TOKENS) ||
+    DEFAULT_LANGCACHE_NORMALIZE_MAX_TOKENS,
 } as const;
 
 export { ENV };

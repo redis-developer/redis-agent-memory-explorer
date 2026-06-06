@@ -4,6 +4,7 @@ import { ApiServer } from "cau-api-server";
 import { Logger } from "cau-logger";
 import { RedisDb } from "cau-redis";
 import { RedisAgentMemory } from "cau-ram";
+import { LangCache } from "cau-langcache";
 
 import {
   LOGGER_CONTEXT,
@@ -68,7 +69,7 @@ const initializeApp = async (): Promise<void> => {
       storeId: ENV.RAM_STORE_ID,
     },
     llm: {
-      model: ENV.LLM_MODEL,
+      model: ENV.BACKGROUND_MODEL,
       apiKey: ENV.OPENAI_API_KEY,
     },
   });
@@ -83,7 +84,27 @@ const initializeApp = async (): Promise<void> => {
 
   const redis = RedisDb.create({ url: ENV.REDIS_URL, logger });
   await redis.connect();
-  logger.info("Redis connected for copilot stores", { url: redactUrl(ENV.REDIS_URL) });
+  logger.info("Redis connected for copilot stores", {
+    url: redactUrl(ENV.REDIS_URL),
+  });
+
+  const hasLangCacheConfig =
+    ENV.LANGCACHE_ENABLED &&
+    ENV.LANGCACHE_SERVER_URL &&
+    ENV.LANGCACHE_CACHE_ID &&
+    ENV.LANGCACHE_API_KEY;
+  if (hasLangCacheConfig) {
+    LangCache.create({
+      serverURL: ENV.LANGCACHE_SERVER_URL,
+      cacheId: ENV.LANGCACHE_CACHE_ID,
+      apiKey: ENV.LANGCACHE_API_KEY,
+    });
+    const langCacheHealthy = await LangCache.getInstance().health();
+    logger.info("LangCache initialized", {
+      serverURL: ENV.LANGCACHE_SERVER_URL,
+      healthy: langCacheHealthy,
+    });
+  }
 
   let ctxSurfaceId = "";
   let mcpAgentKey = "";
@@ -110,7 +131,8 @@ const initializeApp = async (): Promise<void> => {
   logger.info("Backend ready", {
     dataset: ENV.ACTIVE_DATASET,
     userId,
-    llmModel: ENV.LLM_MODEL,
+    chatbotModel: ENV.CHATBOT_MODEL,
+    backgroundModel: ENV.BACKGROUND_MODEL,
     contextWindowMax: ENV.CONTEXT_WINDOW_MAX,
     ctxSurfaceId: ctxSurfaceId || "(not configured)",
   });

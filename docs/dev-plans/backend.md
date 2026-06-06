@@ -39,7 +39,8 @@ The `ENV` object parses all environment variables with fallback defaults:
 | `RAM_ENDPOINT` | `RAM_ENDPOINT` | `""` |
 | `RAM_API_KEY` | `RAM_API_KEY` | `""` |
 | `RAM_STORE_ID` | `RAM_STORE_ID` | `""` |
-| `LLM_MODEL` | `LLM_MODEL` | `gpt-4o-mini` |
+| `CHATBOT_MODEL` | `MEETING_MEMORY_CHATBOT_MODEL` | `gpt-4o-mini` |
+| `BACKGROUND_MODEL` | `MEETING_MEMORY_BACKGROUND_MODEL` | `gpt-4o-mini` |
 | `DATA_DIR` | `MEETING_MEMORY_DATA_DIR` | `../../data` |
 | `ACTIVE_DATASET` | `MEETING_MEMORY_ACTIVE_DATASET` | `wealth-advisor` |
 | `CONTEXT_WINDOW_MAX` | `MEETING_MEMORY_CONTEXT_WINDOW_MAX` | `1500` |
