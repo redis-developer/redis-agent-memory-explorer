@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
+import type { DatasetConfig } from "@/types/dataset-config.types";
 
 import { useState, useCallback } from "react";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -9,6 +10,7 @@ import { CopilotSidebar } from "@copilotkit/react-ui";
 import { useCopilotReadable } from "@copilotkit/react-core";
 
 import { useDatasetConfig } from "@/hooks/use-dataset-config";
+import { CopilotKitProvider } from "./copilotkit-provider";
 import { TranscriptPanel } from "@/components/business/transcript-panel";
 import { MemoryExplorerPanel } from "@/components/business/memory-explorer-panel";
 import { AssistantMessage } from "@/components/core/assistant-message.component";
@@ -23,8 +25,11 @@ import "@copilotkit/react-ui/styles.css";
 import "./page.css";
 import "@/styles/copilotkit-theme.css";
 
-const DemoPage = () => {
-  const { config, isLoading, error, retry } = useDatasetConfig();
+type DemoPageContentProps = {
+  config: DatasetConfig;
+};
+
+const DemoPageContent = ({ config }: DemoPageContentProps) => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -37,7 +42,7 @@ const DemoPage = () => {
 
   useCopilotReadable({
     description: "User ID for memory scoping",
-    value: config?.userId ?? "",
+    value: config.userId,
   });
 
   const handleSessionCreated = useCallback((id: string) => {
@@ -59,34 +64,6 @@ const DemoPage = () => {
     },
     [],
   );
-
-  if (isLoading) {
-    return (
-      <div className="demo-page demo-page--loading">
-        <CircularProgress size={48} sx={{ color: "var(--sky-blue)" }} />
-        <p className="demo-page__loading-text">Loading dataset configuration...</p>
-      </div>
-    );
-  }
-
-  if (error || !config) {
-    return (
-      <div className="demo-page demo-page--error">
-        <h2 className="demo-page__error-title">Failed to load configuration</h2>
-        <p className="demo-page__error-message">{error}</p>
-        <Button
-          variant="contained"
-          onClick={retry}
-          sx={{
-            backgroundColor: "var(--dusk)",
-            "&:hover": { backgroundColor: "var(--dusk-90)" },
-          }}
-        >
-          Retry
-        </Button>
-      </div>
-    );
-  }
 
   const sidebarProps: ComponentProps<typeof CopilotSidebar> = {
     defaultOpen: false,
@@ -131,6 +108,44 @@ const DemoPage = () => {
         </footer>
       </main>
     </CopilotSidebar>
+  );
+};
+
+const DemoPage = () => {
+  const { config, isLoading, error, retry } = useDatasetConfig();
+
+  if (isLoading) {
+    return (
+      <div className="demo-page demo-page--loading">
+        <CircularProgress size={48} sx={{ color: "var(--sky-blue)" }} />
+        <p className="demo-page__loading-text">Loading dataset configuration...</p>
+      </div>
+    );
+  }
+
+  if (error || !config) {
+    return (
+      <div className="demo-page demo-page--error">
+        <h2 className="demo-page__error-title">Failed to load configuration</h2>
+        <p className="demo-page__error-message">{error}</p>
+        <Button
+          variant="contained"
+          onClick={retry}
+          sx={{
+            backgroundColor: "var(--dusk)",
+            "&:hover": { backgroundColor: "var(--dusk-90)" },
+          }}
+        >
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <CopilotKitProvider>
+      <DemoPageContent config={config} />
+    </CopilotKitProvider>
   );
 };
 

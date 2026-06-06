@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { Space_Grotesk, Space_Mono } from "next/font/google";
 
 import "./globals.css";
-import { CopilotKitProvider } from "./copilotkit-provider";
 import { ToastProvider } from "@/components/core";
 
 const spaceGrotesk = Space_Grotesk({
@@ -29,9 +28,7 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${spaceMono.variable}`}>
       <body>
-        <CopilotKitProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </CopilotKitProvider>
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );
