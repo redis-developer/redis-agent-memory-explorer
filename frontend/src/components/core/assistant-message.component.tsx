@@ -78,6 +78,7 @@ const parseMessage = (text: string): ParsedMessage => {
 };
 
 const SIMILARITY_PATTERN = /similarity:\s*(\d+)%/i;
+const MATCHED_PATTERN = /matched:\s*(.+?)\s*$/i;
 
 const formatCacheBadge = (raw: string): string => {
   const match = raw.match(SIMILARITY_PATTERN);
@@ -85,6 +86,11 @@ const formatCacheBadge = (raw: string): string => {
     return `LangCache · ${match[1]}% match`;
   }
   return "LangCache";
+};
+
+const parseMatchedPrompt = (raw: string): string | null => {
+  const match = raw.match(MATCHED_PATTERN);
+  return match ? match[1].trim() : null;
 };
 
 const AssistantMessage = (props: AssistantMessageProps) => {
@@ -113,11 +119,19 @@ const AssistantMessage = (props: AssistantMessageProps) => {
   const { cache, source, tools, body } = parseMessage(content);
   const displaySource = source ? parseSourceLabel(source) : null;
   const displayCache = cache ? formatCacheBadge(cache) : null;
+  const matchedPrompt = cache ? parseMatchedPrompt(cache) : null;
 
   return (
     <div className="assistant-message">
       {displayCache && (
-        <div className="assistant-message__cache">{displayCache}</div>
+        <div className="assistant-message__cache">
+          <span className="assistant-message__cache-badge">{displayCache}</span>
+          {matchedPrompt && (
+            <span className="assistant-message__cache-matched">
+              matched: “{matchedPrompt}”
+            </span>
+          )}
+        </div>
       )}
       {displaySource && (
         <div className="assistant-message__source">Source: {displaySource}</div>

@@ -5,7 +5,7 @@ import { ENV } from "../config";
 import { LANGCACHE_FEATURE } from "../constants";
 
 type CacheScope = { userId: string; namespace: string };
-type CachedAnswer = { text: string; similarity: number };
+type CachedAnswer = { text: string; similarity: number; matchedPrompt: string };
 
 let _logger: ReturnType<typeof Logger.getInstance> | null = null;
 const getLogger = () => {
@@ -52,7 +52,11 @@ const getCachedAnswer = async (
       });
 
       if (hit !== null) {
-        result = { text: hit.response, similarity: hit.similarity };
+        result = {
+          text: hit.response,
+          similarity: hit.similarity,
+          matchedPrompt: hit.prompt,
+        };
       }
     } catch (error) {
       logger.warn("Cache lookup failed -- falling through to agent", {

@@ -226,10 +226,18 @@ const lookup = async (
       );
       if (cached) {
         const similarity = Math.round(cached.similarity * 100);
-        const badged = `**Cache: LangCache | similarity: ${similarity}%**\n${cached.text}`;
+        // Keep the badge a single parseable line: strip `**`/newlines from the
+        // matched prompt so it can't break the frontend's `**Cache: ...**` regex.
+        const matched = cached.matchedPrompt
+          .replace(/\*\*/g, "")
+          .replace(/[\r\n]+/g, " ")
+          .trim();
+        const matchedSegment = matched ? ` | matched: ${matched}` : "";
+        const badged = `**Cache: LangCache | similarity: ${similarity}%${matchedSegment}**\n${cached.text}`;
         logger.info("Serving response from LangCache", {
           similarity,
           standalone,
+          matchedPrompt: cached.matchedPrompt,
         });
         hit = new AIMessage(badged);
       }
