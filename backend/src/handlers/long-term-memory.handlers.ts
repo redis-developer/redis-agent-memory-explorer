@@ -9,15 +9,9 @@ import { RedisAgentMemory } from "cau-ram";
 
 import { getAppState } from "../app-state";
 
-const searchLongTermMemoryHandler: RouteHandler = async (
-  input,
-  { logger },
-) => {
-  const {
-    text,
-    memoryType,
-    topics,
-  } = (input as SearchLongTermMemoryInput) ?? {};
+const searchLongTermMemoryHandler: RouteHandler = async (input, { logger }) => {
+  const { text, memoryType, topics } =
+    (input as SearchLongTermMemoryInput) ?? {};
   const { userId } = getAppState();
 
   logger.info("Searching long-term memory", { text, memoryType, topics });
@@ -32,8 +26,7 @@ const searchLongTermMemoryHandler: RouteHandler = async (
     filter.topics = topics;
   }
 
-  const hasText = !!text;
-  const searchText = hasText ? text : "*";
+  const searchText = text ?? ""; //* in OSS
 
   const startMs = Date.now();
   const result = await RedisAgentMemory.getInstance().searchAllLongTermMemory({
@@ -78,7 +71,4 @@ const searchLongTermMemoryBySessionHandler: RouteHandler = async (
   return { memories: result.memories, total };
 };
 
-export {
-  searchLongTermMemoryHandler,
-  searchLongTermMemoryBySessionHandler,
-};
+export { searchLongTermMemoryHandler, searchLongTermMemoryBySessionHandler };
