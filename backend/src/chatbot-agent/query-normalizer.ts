@@ -2,6 +2,7 @@ import type { BaseMessage } from "@langchain/core/messages";
 
 import { ChatOpenAI } from "@langchain/openai";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
+import { z } from "zod";
 import { Logger } from "cau-logger";
 
 import { ENV } from "../config";
@@ -15,6 +16,24 @@ type SessionContext = {
   meetingContext: string;
   participants: string;
 };
+
+type NormalizedQuery = {
+  standalone: string;
+  cacheable: boolean;
+  reason: string;
+};
+
+const normalizedQuerySchema = z.object({
+  standalone: z
+    .string()
+    .describe("The fully self-contained, canonical standalone question."),
+  cacheable: z
+    .boolean()
+    .describe("Whether this question's answer is worth caching."),
+  reason: z
+    .string()
+    .describe("One short sentence explaining the cacheable decision."),
+});
 
 let _logger: ReturnType<typeof Logger.getInstance> | null = null;
 const getLogger = () => {
@@ -107,14 +126,14 @@ const buildUserInput = (
 
 /*
  * Rewrites the latest user question into a fully self-contained standalone
- * question used as the semantic-cache key. Always invoked (no first-turn
- * shortcut). Throws on failure so the caller can run the agent on raw text and
- * disable caching for that turn.
+ * question used as the semantic-cache key, and judges whether the question is
+ * worth caching. Always invoked (no first-turn shortcut). Throws on failure so
+ * the caller can run the agent on raw text and disable caching for that turn.
  */
 const toStandaloneQuestion = async (
   messages: BaseMessage[],
   sessionContext: SessionContext,
-): Promise<string> => {
+): Promise<NormalizedQuery> => {
   const logger = getLogger();
   const model = ENV.CHATBOT_MODEL;
   const rawQuestion = getLastHumanText(messages);
@@ -124,7 +143,7 @@ const toStandaloneQuestion = async (
     temperature: 0,
     maxTokens: ENV.LANGCACHE_NORMALIZE_MAX_TOKENS,
     apiKey: ENV.OPENAI_API_KEY,
-  });
+  }).withStructuredOutput(normalizedQuerySchema);
 
   const userInput = buildUserInput(messages, sessionContext);
 
@@ -134,7 +153,7 @@ const toStandaloneQuestion = async (
     new HumanMessage(userInput),
   ]);
 
-  const standalone = messageText(result).trim();
+  const standalone = result.standalone.trim();
 
   if (!standalone) {
     throw new Error("Normalizer returned an empty standalone question");
@@ -146,12 +165,18 @@ const toStandaloneQuestion = async (
     meetingContext: sessionContext.meetingContext,
     raw: rawQuestion,
     standalone,
+    cacheable: result.cacheable,
+    reason: result.reason,
     latencyMs: Date.now() - startMs,
   });
 
-  return standalone;
+  return {
+    standalone,
+    cacheable: result.cacheable,
+    reason: result.reason,
+  };
 };
 
 export { toStandaloneQuestion };
 
-export type { SessionContext };
+export type { SessionContext, NormalizedQuery };

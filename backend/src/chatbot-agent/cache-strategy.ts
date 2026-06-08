@@ -207,8 +207,16 @@ const lookup = async (
     let cacheUsable = false;
     let standalone = "";
     try {
-      standalone = await toStandaloneQuestion(messages, sessionContext);
-      cacheUsable = true;
+      const normalized = await toStandaloneQuestion(messages, sessionContext);
+      standalone = normalized.standalone;
+      // The LLM judged whether this question is worth caching.
+      cacheUsable = normalized.cacheable;
+      if (!normalized.cacheable) {
+        logger.info("Skipping cache for this turn (not cacheable)", {
+          standalone,
+          reason: normalized.reason,
+        });
+      }
     } catch (error) {
       logger.warn(
         "Query normalization failed -- running agent on raw text, caching disabled this turn",
