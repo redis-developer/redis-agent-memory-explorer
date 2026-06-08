@@ -7,6 +7,7 @@ import { Markdown } from "@copilotkit/react-ui";
 import "./assistant-message.component.css";
 
 const SOURCE_PATTERN = /^\*\*Source:\s*(.+?)\*\*\s*$/;
+const CACHE_PATTERN = /^\*\*Cache:\s*(.+?)\*\*\s*$/;
 
 const parseSourceLabel = (raw: string): string => {
   const trimmed = raw.trim();
@@ -25,6 +26,7 @@ const parseSourceLabel = (raw: string): string => {
 const TOOLS_PATTERN = /^<tools>(.*?)<\/tools>\s*$/;
 
 type ParsedMessage = {
+  cache: string | null;
   source: string | null;
   tools: string[];
   body: string;
@@ -32,6 +34,7 @@ type ParsedMessage = {
 
 const parseMessage = (text: string): ParsedMessage => {
   const lines = text.split("\n");
+  let cache: string | null = null;
   let source: string | null = null;
   let tools: string[] = [];
   let bodyStartIdx = 0;
@@ -40,6 +43,13 @@ const parseMessage = (text: string): ParsedMessage => {
     const trimmed = lines[i].trim();
 
     if (trimmed === "") {
+      bodyStartIdx = i + 1;
+      continue;
+    }
+
+    const cacheMatch = trimmed.match(CACHE_PATTERN);
+    if (cacheMatch) {
+      cache = cacheMatch[1];
       bodyStartIdx = i + 1;
       continue;
     }
@@ -64,7 +74,17 @@ const parseMessage = (text: string): ParsedMessage => {
   const rawBody = lines.slice(bodyStartIdx).join("\n").trimStart();
   const body = rawBody.replace(/<\/?tools>/g, "");
 
-  return { source, tools, body };
+  return { cache, source, tools, body };
+};
+
+const SIMILARITY_PATTERN = /similarity:\s*(\d+)%/i;
+
+const formatCacheBadge = (raw: string): string => {
+  const match = raw.match(SIMILARITY_PATTERN);
+  if (match) {
+    return `LangCache · ${match[1]}% match`;
+  }
+  return "LangCache";
 };
 
 const AssistantMessage = (props: AssistantMessageProps) => {
@@ -90,11 +110,15 @@ const AssistantMessage = (props: AssistantMessageProps) => {
     return null;
   }
 
-  const { source, tools, body } = parseMessage(content);
+  const { cache, source, tools, body } = parseMessage(content);
   const displaySource = source ? parseSourceLabel(source) : null;
+  const displayCache = cache ? formatCacheBadge(cache) : null;
 
   return (
     <div className="assistant-message">
+      {displayCache && (
+        <div className="assistant-message__cache">{displayCache}</div>
+      )}
       {displaySource && (
         <div className="assistant-message__source">Source: {displaySource}</div>
       )}

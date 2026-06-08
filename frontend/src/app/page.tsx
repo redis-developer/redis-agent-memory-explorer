@@ -2,6 +2,7 @@
 
 import type { ComponentProps } from "react";
 import type { DatasetConfig } from "@/types/dataset-config.types";
+import type { ChatbotSettings } from "@/components/business/chatbot-settings";
 
 import { useState, useCallback } from "react";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -13,6 +14,7 @@ import { useDatasetConfig } from "@/hooks/use-dataset-config";
 import { CopilotKitProvider } from "./copilotkit-provider";
 import { TranscriptPanel } from "@/components/business/transcript-panel";
 import { MemoryExplorerPanel } from "@/components/business/memory-explorer-panel";
+import { ChatbotSettingsMenu } from "@/components/business/chatbot-settings";
 import { AssistantMessage } from "@/components/core/assistant-message.component";
 import {
   DEFAULT_CHATBOT_TITLE,
@@ -34,6 +36,9 @@ const DemoPageContent = ({ config }: DemoPageContentProps) => {
   const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPlaybackComplete, setIsPlaybackComplete] = useState(false);
+  const [chatbotSettings, setChatbotSettings] = useState<ChatbotSettings>({
+    bypassCache: false,
+  });
 
   useCopilotReadable({
     description: "Active session ID for the current meeting playback",
@@ -43,6 +48,11 @@ const DemoPageContent = ({ config }: DemoPageContentProps) => {
   useCopilotReadable({
     description: "User ID for memory scoping",
     value: config.userId,
+  });
+
+  useCopilotReadable({
+    description: "Bypass semantic cache to get fresh data",
+    value: String(chatbotSettings.bypassCache),
   });
 
   const handleSessionCreated = useCallback((id: string) => {
@@ -78,6 +88,10 @@ const DemoPageContent = ({ config }: DemoPageContentProps) => {
 
   return (
     <CopilotSidebar {...sidebarProps}>
+      <ChatbotSettingsMenu
+        settings={chatbotSettings}
+        onChange={setChatbotSettings}
+      />
       <main className="demo-page">
         <header className="demo-page__header">
           <h1 className="demo-page__title">{config.branding.title}</h1>

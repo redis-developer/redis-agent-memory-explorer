@@ -41,6 +41,22 @@
   }
 }
 
+.assistant-message__cache {
+  --cache-badge-color: #1fd6a4;
+
+  display: inline-block;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: var(--border-radius-sm, 4px);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background-color: color-mix(in srgb, var(--cache-badge-color) 16%, transparent);
+  color: var(--cache-badge-color);
+  border: 1px solid color-mix(in srgb, var(--cache-badge-color) 40%, transparent);
+}
+
 .assistant-message__source {
   display: inline-block;
   align-self: flex-start;
