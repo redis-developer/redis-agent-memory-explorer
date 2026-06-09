@@ -13,9 +13,11 @@ The chatbot is the target call site. Semantic caching is well suited to it becau
 **Scope of this plan (v1):**
 
 - The **chatbot only**. LangCache is scoped exclusively to the chatbot; the real-time suggestion agent is intentionally **out of scope permanently** (suggestions are inherently fresh/streaming and are never cached).
-- **Always-on query normalization** — every turn is rewritten to a standalone question before any cache op (this is what makes the cache production-grade, not a demo trick).
+- **Always-on query normalization** — every turn is rewritten to a standalone question before any cache op (this is what makes the cache production-grade, not a demo trick). The same LLM call also returns an **LLM-judged cacheability decision** (see [Cacheability decision](#cacheability-decision-llm-judged)).
 - **Chatbot settings menu** (gear icon → popover) in the chatbot UI, holding a **bypass-cache toggle** in v1 (skips the cache read for subsequent turns; agent runs fresh and the fresh answer is still written) and designed to hold more settings later.
-- **Cache-hit badge** in the `AssistantMessage` component — "Served from LangCache · X%".
+- **Cache-hit badge** in the `AssistantMessage` component — "LangCache · X% match", with an inline second line showing the matched cached question ("matched: …").
+
+> **Note on code organization:** the cache orchestration (readable extraction, server-side meeting-context derivation, normalize, cache read, hit-badge build, cache write) lives in [backend/src/chatbot-agent/cache-strategy.ts](../../backend/src/chatbot-agent/cache-strategy.ts) as `ChatbotCacheStrategy.lookup` / `ChatbotCacheStrategy.store`. `graph.ts` `runAgentWithCache` is a thin wrapper that calls `lookup`, serves `turn.hit` if present, otherwise runs the agent and calls `store`.
 
 > **Note:** LangCache is in preview on Redis Cloud; the SDK is in beta and may have breaking changes between minor versions, so we pin the version.
 
@@ -119,21 +121,27 @@ if (data.length === 0) {
 Following the project's `cau-*` facade convention (`cau-ram` wraps the agent-memory SDK, `cau-redis` wraps `redis`), LangCache is wrapped by a new package **`cau-langcache`**. Consumers never import the SDK directly, so we can swap/upgrade the SDK without touching call sites.
 
 ```
-LangGraph Server (graph.ts, port 2024)        API Server (index.ts, port 3001)
-  │  chatbot ReAct agent                         │  resetLifecycle handler
-  ▼                                              ▼
-backend/src/chatbot-agent/query-normalizer.ts   backend/src/services/chatbot-cache.service.ts
-  │  (standalone-question rewrite)                 │  clearForUser(userId) on reset
-  ▼                                                │
-backend/src/services/chatbot-cache.service.ts ◄───┘
-  │  (chatbot-specific scope + get/set logic)
+LangGraph Server (graph.ts, port 2024)             API Server (index.ts, port 3001)
+  │  chatbot ReAct agent                             │  resetLifecycle handler
+  │  runAgentWithCache (thin wrapper)                ▼
+  ▼                                                  │
+backend/src/chatbot-agent/cache-strategy.ts         │
+  │  ChatbotCacheStrategy.lookup / .store            │
+  │  (readables, meeting-context, normalize,         │
+  │   cacheable gate, read, hit-badge, write)        │
+  ├──────────────► query-normalizer.ts               │
+  │                  (standalone rewrite +           │
+  │                   cacheable decision)            │
+  ▼                                                  │
+backend/src/services/chatbot-cache.service.ts ◄──────┘
+  │  (chatbot-specific scope + get/set/clear logic)    clearForUser(userId) on reset
   ▼
 cau-langcache  ── LangCache facade (singleton) ──►  LangCache service (Redis Cloud / self-hosted)
 ```
 
 Both processes initialize a `LangCache` singleton (mirroring how each process independently initializes `RedisAgentMemory`):
 
-- **LangGraph process** normalizes → reads cache (before agent) → writes cache (after agent).
+- **LangGraph process**: `ChatbotCacheStrategy.lookup` normalizes + judges cacheability → reads cache (before agent); `ChatbotCacheStrategy.store` writes cache (after agent).
 - **API server process** clears cache on `resetLifecycle`.
 
 ## Caching Strategy for the Chatbot
@@ -236,16 +244,33 @@ So `graph.ts` builds the meeting context **server-side**: parse `transcriptId` f
 >
 > **Existing readables are preserved — nothing is removed.** The two current readables stay exactly as-is: `"Active session ID for the current meeting playback"` and `"User ID for memory scoping"`. This feature only **adds** `"Bypass semantic cache"`. In fact the `"Active session ID"` readable becomes more important, since the server-side meeting-context lookup parses `transcriptId` from it.
 
-**Quality bar / model:** correctness-critical, so it runs on a capable model at `temperature: 0` — it shares the chatbot model (`CHATBOT_MODEL`, from `MEETING_MEMORY_CHATBOT_MODEL`), **not** a deliberately "cheap" model — with a dedicated strict prompt:
+**Quality bar / model:** correctness-critical, so it runs on a capable model at `temperature: 0` — it shares the chatbot model (`CHATBOT_MODEL`, from `MEETING_MEMORY_CHATBOT_MODEL`), **not** a deliberately "cheap" model — with a dedicated strict prompt and **structured output** (`withStructuredOutput`, zod schema `{ standalone, cacheable, reason }`):
 
-- Output **only** the rewritten standalone question — no preamble, no answer.
 - Preserve the user's original intent exactly; never add or invent constraints not implied by the conversation.
 - Resolve every pronoun/deictic reference using the provided history + session + meeting context.
 - If the question is already fully standalone, return it semantically unchanged.
+- Also judge `cacheable` for the question (see [Cacheability decision](#cacheability-decision-llm-judged)).
 
-The normalized question is logged for tuning.
+The normalized question, `cacheable`, and `reason` are logged for tuning.
 
 > Note: LangCache already handles **paraphrase/lexical** variation via embeddings ("summarize this meeting" ≈ "give me a summary"). Normalization here is the harder, higher-value job: **contextual resolution** into a question that carries its full meaning standalone.
+
+### Cacheability decision (LLM-judged)
+
+Not every question is worth caching. The **same** normalizer LLM call that produces the standalone question also returns a `cacheable` boolean + a one-sentence `reason` (so there is **no extra latency or cost** — it reuses the history + meeting context it already has). `toStandaloneQuestion` therefore returns `{ standalone, cacheable, reason }` (see [query-normalizer.ts](../../backend/src/chatbot-agent/query-normalizer.ts)).
+
+The policy (enforced in [query-normalizer-prompt.ts](../../backend/src/chatbot-agent/query-normalizer-prompt.ts)):
+
+| `cacheable` | When | Examples |
+| ----------- | ---- | -------- |
+| `false` | Time-sensitive / volatile (answer changes over time) | "what's the market doing right now?", "latest price", "as of today" |
+| `false` | Chit-chat / meta / control | "thanks", "repeat that", "say it again", "louder", "ok" |
+| `false` | Still ambiguous / under-specified after rewriting | a question that can't be resolved to a single clear intent |
+| `true` | Stable factual Q&A about the client/meetings/goals/portfolio | "What are James's financial goals?", "What was discussed in the Feb 26 meeting?" |
+
+**How the decision is applied** ([cache-strategy.ts](../../backend/src/chatbot-agent/cache-strategy.ts) `lookup`): `cacheUsable = normalized.cacheable`. Because `cacheUsable` gates **both** the cache read (`canRead = cacheUsable && !isBypass`) and the cache write (`store` checks `turn.cacheUsable`), a non-cacheable turn skips **both** — so a volatile question never serves a stale hit and never pollutes the cache. A skipped turn is logged as `"Skipping cache for this turn (not cacheable)"` with the `reason`.
+
+> **Fail-safe:** if the normalizer call throws (parse/API error), the existing `try/catch` leaves `cacheUsable = false` — the agent runs on the raw text and nothing is read or written that turn. Same safe behavior as a normalization failure.
 
 ### Freshness & invalidation
 
@@ -264,7 +289,12 @@ Cloud RAM keeps extracting LTMs in the background (~5–7 min) and `resetLifecyc
 
 The chatbot uses a `**Source: ...**` + `<tools>...</tools>` header parsed by the frontend (see `chatbot.md` / `context-surfaces-integration.md`). We store the **full post-processed response text** (the exact string returned to CopilotKit, including that header), so a cache hit renders identically.
 
-On a **hit**, `graph.ts` prepends one extra line — `**Cache: LangCache | similarity: 94%**` — above the stored text. This badge line is **prepended at hit time only; it is never stored**, so the cached entry stays clean. The `AssistantMessage` component is extended to parse this `**Cache: ...**` line (mirroring the existing Source/tools parsing) and render it as a small badge: "Served from LangCache · 94%". See [§10](#10-frontend-bypass-toggle--cache-hit-badge).
+On a **hit**, `cache-strategy.ts` (`lookup`) prepends one extra line — `**Cache: LangCache | similarity: 94% | matched: <cached question>**` — above the stored text. This badge line is **prepended at hit time only; it is never stored**, so the cached entry stays clean. The `matched: …` segment is the cached entry's prompt (`CacheHit.prompt`, i.e. the normalized standalone question that first populated the entry), sanitized (strip `**`/newlines) so it stays a single parseable line. The `AssistantMessage` component parses this `**Cache: ...**` line (mirroring the existing Source/tools parsing) and renders:
+
+- a small badge: **"LangCache · 94% match"**, and
+- an inline second line: _matched: "&lt;cached question&gt;"_ — the demo "different wording, same cached answer" moment (the user's own phrasing is already visible in the message bubble above).
+
+See [§10](#10-frontend-bypass-toggle--cache-hit-badge).
 
 Each stored entry also carries the `rawQuestion` attribute (the user's original phrasing). This is **not** surfaced in the UI — it's there purely so the raw → normalized mapping can be inspected directly in the cache data when tuning.
 
@@ -350,16 +380,23 @@ type SessionContext = {
   participants: string;   // formatted from datasetConfig.participants
 };
 
+type NormalizedQuery = {
+  standalone: string;  // canonical standalone question (the cache key)
+  cacheable: boolean;  // LLM-judged: is this answer worth caching?
+  reason: string;      // one-sentence rationale for the cacheable decision
+};
+
 const toStandaloneQuestion = (
   messages: BaseMessage[],
   sessionContext: SessionContext,
-): Promise<string>;
+): Promise<NormalizedQuery>;
 ```
 
 - **Always** invokes the normalizer LLM (`CHATBOT_MODEL`, temp 0, `LANGCACHE_NORMALIZE_MAX_TOKENS`) — no first-turn shortcut.
+- Uses **`withStructuredOutput`** (zod schema) so the `{ standalone, cacheable, reason }` shape is enforced (no manual JSON parsing).
 - Input: recent conversation turns + raw last message + the session/meeting context block.
-- Enforces the rules in [Query normalization](#query-normalization-standalone-question-rewrite--always-on).
-- **On failure: throws / signals failure to the caller** so `graph.ts` can run the agent on the raw text _and_ disable caching for that turn (see safety note). It logs `{ model, sessionId, raw, standalone, latencyMs }`.
+- Enforces the rules in [Query normalization](#query-normalization-standalone-question-rewrite--always-on) and the [Cacheability decision](#cacheability-decision-llm-judged) policy.
+- Throws if `standalone` is blank. **On any failure it throws** so `cache-strategy.ts` can run the agent on the raw text _and_ disable caching for that turn (see safety note). It logs `{ model, sessionId, raw, standalone, cacheable, reason, latencyMs }`.
 
 ### 3. New backend service: `backend/src/services/chatbot-cache.service.ts`
 
@@ -367,39 +404,64 @@ Chatbot-specific layer over `cau-langcache` (mirrors how handlers/tools sit over
 
 ```typescript
 type CacheScope    = { userId: string; namespace: string }; // NO sessionId — see Cache Key Design
-type CachedAnswer  = { text: string; similarity: number };
+type CachedAnswer  = { text: string; similarity: number; matchedPrompt: string };
 
 const getCachedAnswer = (standalone: string, scope: CacheScope): Promise<CachedAnswer | null>;
 const cacheAnswer     = (standalone: string, answer: string, scope: CacheScope, rawQuestion: string): Promise<void>;
 const clearForUser    = (userId: string): Promise<void>;
 ```
 
-- `getCachedAnswer`: `search(...)` with **filter attributes only** `{ feature: LANGCACHE_FEATURE, userId, namespace }` at `LANGCACHE_SIMILARITY_THRESHOLD` (never includes `rawQuestion`). Returns `{ text: hit.response, similarity: hit.similarity }` on hit, `null` on miss/error. The `similarity` lets `graph.ts` render the badge. Logs `cacheHit`, `similarity`, `standalone`, `latencyMs`.
+- `getCachedAnswer`: `search(...)` with **filter attributes only** `{ feature: LANGCACHE_FEATURE, userId, namespace }` at `LANGCACHE_SIMILARITY_THRESHOLD` (never includes `rawQuestion`). Returns `{ text: hit.response, similarity: hit.similarity, matchedPrompt: hit.prompt }` on hit, `null` on miss/error. The `similarity` lets `cache-strategy.ts` render the badge; `matchedPrompt` (the cached entry's normalized question) feeds the badge's "matched: …" line. Logs `cacheHit`, `similarity`, `standalone`, `latencyMs`.
 - `cacheAnswer`: `set(...)` with attributes `{ feature, userId, namespace, rawQuestion }` and `ttlMillis: LANGCACHE_TTL_MILLIS`. `rawQuestion` is the user's original last-message text, written as metadata only (for direct cache inspection — not returned or shown). Always writes a new entry (LangCache is append-only — old entry coexists, both expire via TTL). No-op if disabled, answer empty, or on error.
 - `clearForUser`: `deleteByAttributes({ feature: LANGCACHE_FEATURE, userId })`. No-op if disabled or on error.
 - Honors `LANGCACHE_ENABLED`; wraps all calls in `try/catch` + structured logging (`cau-logger`). Receives an **already-normalized** question — normalization lives in the normalizer (§2) so search and set always agree.
 
-### 4. Chatbot graph: `backend/src/chatbot-agent/graph.ts`
+### 4. Cache orchestration: `backend/src/chatbot-agent/cache-strategy.ts` (+ thin `graph.ts` wrapper)
 
-- In `ensureInitialized`, initialize the `LangCache` singleton if `LANGCACHE_ENABLED` and `LANGCACHE_SERVER_URL !== ""` (same try/`getInstance`/`create` pattern used for `RedisAgentMemory`).
-- In `runAgentWithCache`:
-  1. Extract readables from `state.copilotkit.context`:
+All the cache orchestration lives in `cache-strategy.ts` as `ChatbotCacheStrategy.lookup` / `ChatbotCacheStrategy.store` (extracted from `graph.ts` during cleanup). It owns a `CacheTurn` handle that `lookup` produces and `store` consumes:
+
+```typescript
+type CacheTurn = {
+  hit: AIMessage | null;   // ready-to-serve cached answer (with badge), or null
+  cacheUsable: boolean;    // normalization succeeded AND question is cacheable
+  standalone: string;      // normalized cache key
+  scope: CacheScope;       // { userId, namespace }
+  rawQuestion: string;     // user's original text (stored as metadata on write)
+};
+```
+
+`graph.ts` `runAgentWithCache` is a thin wrapper:
+
+```typescript
+const turn = await ChatbotCacheStrategy.lookup(state.copilotkit, state.messages, datasetConfig);
+if (turn.hit) {
+  result = { messages: [turn.hit] };          // serve cached answer, skip agent
+} else {
+  const messages = await runAgent(...);        // ReAct agent + postProcessMessages
+  await ChatbotCacheStrategy.store(turn, messages);
+  result = { messages };
+}
+```
+
+- In `ensureInitialized` (`graph.ts`), initialize the `LangCache` singleton if `LANGCACHE_ENABLED` and `LANGCACHE_SERVER_URL !== ""` (same try/`getInstance`/`create` pattern used for `RedisAgentMemory`).
+- `ChatbotCacheStrategy.lookup`:
+  1. Extract readables from `copilotkit.context`:
      - `"Active session ID"` → `sessionId` (normalizer context only)
      - `"User ID for memory scoping"` → `userId`
      - `"Bypass semantic cache"` → `bypassCache` (`"true"`/`"false"`)
   2. Derive `meetingContext` **server-side** (no readable): if `sessionId !== "none"`, parse `transcriptId` via `SESSION_ID_PATTERN`, then `TranscriptLoaderService.loadTranscript(ENV.ACTIVE_DATASET, transcriptId).meeting` (memoized per `transcriptId`) → compose `date + type + participants`. Empty string if no active session or load fails.
-  3. Build `sessionContext` (sessionId, userId, `namespace = ENV.ACTIVE_DATASET`, meetingContext, participants from `datasetConfig.participants`), capture `rawQuestion` = the last human message text, and `scope: CacheScope = { userId, namespace }`.
+  3. Build `sessionContext` and `scope: CacheScope = { userId, namespace = ENV.ACTIVE_DATASET }`; capture `rawQuestion` = last human message text.
   4. If `LANGCACHE_ENABLED`:
-     - Try `standalone = await toStandaloneQuestion(state.messages, sessionContext)`.
-       - **On normalizer failure:** log warning, set `cacheUsable = false`, fall through to the agent on raw text (no cache read/write this turn).
-     - If `cacheUsable` **and** `bypassCache !== "true"`: `cached = await getCachedAnswer(standalone, scope)`. On hit, prepend the badge and **skip** `reactAgent.invoke`:
+     - Try `const normalized = await toStandaloneQuestion(messages, sessionContext)`; set `standalone = normalized.standalone` and `cacheUsable = normalized.cacheable` (see [Cacheability decision](#cacheability-decision-llm-judged)). On a non-cacheable turn, log `"Skipping cache for this turn (not cacheable)"` with the `reason`.
+       - **On normalizer failure (throw):** log warning, leave `cacheUsable = false` (no cache read/write this turn).
+     - `canRead = cacheUsable && bypassCache !== "true"`. If `canRead`: `cached = await getCachedAnswer(standalone, scope)`. On hit, build the badge (with the `matched: …` segment from `cached.matchedPrompt`) and set `turn.hit`:
        ```typescript
        const similarity = Math.round(cached.similarity * 100);
-       const badged = `**Cache: LangCache | similarity: ${similarity}%**\n${cached.text}`;
-       return { messages: [new AIMessage(badged)] };
+       const matchedSegment = matched ? ` | matched: ${matched}` : "";
+       const badged = `**Cache: LangCache | similarity: ${similarity}%${matchedSegment}**\n${cached.text}`;
+       turn.hit = new AIMessage(badged);
        ```
-  5. Miss / bypass / normalizer-failure → run the agent as today (`reactAgent.invoke` + `postProcessMessages`).
-  6. If `LANGCACHE_ENABLED` **and** `cacheUsable` **and** the response is non-empty and the agent didn't error → `await cacheAnswer(standalone, finalText, scope, rawQuestion)` (stores `rawQuestion` as metadata). This runs even when bypass was active (a fresh answer becomes a new cache entry); it does **not** run on normalizer failure.
+- `ChatbotCacheStrategy.store(turn, messages)`: if `turn.cacheUsable`, extract the final agent text and `await cacheAnswer(standalone, finalText, scope, rawQuestion)`. Because `store` is only called on a miss, and `cacheUsable` already encodes "cacheable", this naturally skips writes for non-cacheable/normalizer-failure turns. (Note: with the current wrapper, a cache hit returns early and `store` is not called; bypass-with-write is a possible future refinement.)
 
 ### 5. Reset: `backend/src/handlers/lifecycle.handlers.ts`
 
@@ -420,7 +482,7 @@ LANGCACHE_SIMILARITY_THRESHOLD:
 LANGCACHE_TTL_MILLIS:
   Number(process.env.LANGCACHE_TTL_MILLIS) || DEFAULT_LANGCACHE_TTL_MILLIS, // 600000
 LANGCACHE_NORMALIZE_MAX_TOKENS:
-  Number(process.env.LANGCACHE_NORMALIZE_MAX_TOKENS) || DEFAULT_LANGCACHE_NORMALIZE_MAX_TOKENS, // 128
+  Number(process.env.LANGCACHE_NORMALIZE_MAX_TOKENS) || DEFAULT_LANGCACHE_NORMALIZE_MAX_TOKENS, // 256
 ```
 
 Add defaults to `constants.ts` (`DEFAULT_LANGCACHE_SIMILARITY_THRESHOLD`, `DEFAULT_LANGCACHE_TTL_MILLIS`, `DEFAULT_LANGCACHE_NORMALIZE_MAX_TOKENS`, `LANGCACHE_FEATURE = "chatbot"`). Also add a backend **`SESSION_ID_PATTERN = /^playback-(.+)-(\d{13,})$/`** (mirroring the frontend constant) so `graph.ts` can parse `transcriptId` from the `sessionId` readable for the server-side meeting-context lookup — backend currently exports only `SESSION_ID_PREFIX`.
@@ -435,10 +497,10 @@ LANGCACHE_CACHE_ID=your-cache-id
 LANGCACHE_API_KEY=your-langcache-api-key
 LANGCACHE_SIMILARITY_THRESHOLD=0.9
 LANGCACHE_TTL_MILLIS=600000
-LANGCACHE_NORMALIZE_MAX_TOKENS=128
+LANGCACHE_NORMALIZE_MAX_TOKENS=256
 ```
 
-The normalizer reuses the chatbot model (`MEETING_MEMORY_CHATBOT_MODEL`); there is no separate normalizer-model env var.
+The normalizer reuses the chatbot model (`MEETING_MEMORY_CHATBOT_MODEL`); there is no separate normalizer-model env var. `LANGCACHE_NORMALIZE_MAX_TOKENS` defaults to `256` (raised from `128`) to leave headroom for the structured output — the standalone question plus the `cacheable` flag and short `reason`.
 
 `docker-compose.yml` loads both services via `env_file: .env`, which passes every `.env` var into each container; the LangGraph graph process inherits them, so no per-var `environment:` enumeration is needed (`config.ts` supplies the same defaults in code). The `demo-app` `environment:` block is only for container-specific **overrides** (e.g. `MEETING_MEMORY_DATA_DIR`, the cross-container `LANGGRAPH_DEPLOYMENT_URL`).
 
@@ -491,8 +553,9 @@ Rather than customizing the `CopilotSidebar` header (limited/brittle surface), a
 **`frontend/src/components/core/assistant-message.component.tsx` — cache-hit badge**
 
 - Add a `CACHE_PATTERN = /^\*\*Cache:\s*(.+?)\*\*\s*$/` and parse it in the same leading-line loop that already handles `SOURCE_PATTERN` and `TOOLS_PATTERN` (continue on match, strip from body).
-- Render the parsed value as a styled badge above the Source badge — e.g. a teal/green chip "Served from LangCache · 94%".
-- Because parsing already scans/strips leading meta lines before passing the body to `Markdown`, the only change is adding the new pattern + a `<div className="assistant-message__cache">` render branch.
+- From the captured value, derive two things: the badge via `SIMILARITY_PATTERN` (`/similarity:\s*(\d+)%/i`) → **"LangCache · 94% match"**, and the matched question via `MATCHED_PATTERN` (`/matched:\s*(.+?)\s*$/i`).
+- Render a teal/green chip (`assistant-message__cache-badge`) for the badge, plus an inline italic second line (`assistant-message__cache-matched`) — _matched: "&lt;cached question&gt;"_ — when present.
+- Because parsing already scans/strips leading meta lines before passing the body to `Markdown`, the only change is adding the new patterns + the `<div className="assistant-message__cache">` render branch.
 
 ## Configuration Reference
 
@@ -504,7 +567,7 @@ Rather than customizing the `CopilotSidebar` header (limited/brittle surface), a
 | `LANGCACHE_API_KEY`              | If enabled (cloud) | `""`              | LangCache API key                                 |
 | `LANGCACHE_SIMILARITY_THRESHOLD` | No                 | `0.9`             | Min cosine similarity for a hit (higher=strict)   |
 | `LANGCACHE_TTL_MILLIS`           | No                 | `600000` (10 min) | Entry TTL                                         |
-| `LANGCACHE_NORMALIZE_MAX_TOKENS` | No                 | `128`             | Max tokens for the normalized standalone question |
+| `LANGCACHE_NORMALIZE_MAX_TOKENS` | No                 | `256`             | Max tokens for the structured normalizer output (standalone + cacheable + reason) |
 
 The standalone-question normalizer reuses the chatbot model (`MEETING_MEMORY_CHATBOT_MODEL`), so it has no dedicated model env var.
 
@@ -522,33 +585,40 @@ sequenceDiagram
     participant Agent as ReAct Agent
 
     User->>LG: "what about bonds?" (+ readables: sessionId, userId, bypassCache)
-    Note over LG: derive meetingContext server-side: sessionId → transcriptId → TranscriptLoaderService.meeting
+    Note over LG: cache-strategy.lookup: derive meetingContext server-side (sessionId → transcriptId → TranscriptLoaderService.meeting)
     LG->>Norm: toStandaloneQuestion(messages, sessionContext)
     alt normalize ok
-        Norm-->>LG: "What was discussed about bonds in the Feb 26 2026 meeting with James Morrison?"
-        alt bypassCache != "true"
-            LG->>Svc: getCachedAnswer(standalone, {userId, namespace})
-            Svc->>LC: search(standalone, {feature,userId,namespace}, threshold)
-            alt cache hit
-                LC-->>Svc: { response, similarity }
-                Svc-->>LG: { text, similarity }
-                LG-->>User: "**Cache: LangCache | similarity: 94%**" + cached text (no agent)
-            else cache miss
-                LC-->>Svc: [] (null)
-                Svc-->>LG: null
-                LG->>Agent: invoke (LLM + tools)
+        Norm-->>LG: { standalone, cacheable, reason }
+        alt cacheable
+            alt bypassCache != "true"
+                LG->>Svc: getCachedAnswer(standalone, {userId, namespace})
+                Svc->>LC: search(standalone, {feature,userId,namespace}, threshold)
+                alt cache hit
+                    LC-->>Svc: { response, similarity, prompt }
+                    Svc-->>LG: { text, similarity, matchedPrompt }
+                    LG-->>User: "**Cache: LangCache | similarity: 94% | matched: …**" + cached text (no agent)
+                else cache miss
+                    LC-->>Svc: [] (null)
+                    Svc-->>LG: null
+                    LG->>Agent: invoke (LLM + tools)
+                    Agent-->>LG: fresh answer
+                    LG->>Svc: cacheAnswer(standalone, answer, scope)
+                    LG-->>User: fresh answer
+                end
+            else bypass active
+                LG->>Agent: invoke (skip read)
                 Agent-->>LG: fresh answer
-                LG->>Svc: cacheAnswer(standalone, answer, scope)
-                LG-->>User: fresh answer
+                LG->>Svc: cacheAnswer(standalone, answer, scope)  %% still writes
+                LG-->>User: fresh answer (no badge)
             end
-        else bypass active
-            LG->>Agent: invoke (skip read)
+        else not cacheable
+            Note over LG: cacheUsable=false → skip read AND write (log reason)
+            LG->>Agent: invoke (no cache read/write)
             Agent-->>LG: fresh answer
-            LG->>Svc: cacheAnswer(standalone, answer, scope)  %% still writes
             LG-->>User: fresh answer (no badge)
         end
     else normalize failed
-        Norm-->>LG: (failure) → cacheUsable=false
+        Norm-->>LG: (throws) → cacheUsable=false
         LG->>Agent: invoke on raw text (no cache read/write)
         Agent-->>LG: fresh answer
         LG-->>User: fresh answer (no badge)
@@ -560,10 +630,10 @@ sequenceDiagram
 1. Scaffold `packages/cau-langcache` (facade + types + config + tests) per `js-package-scaffold`; add `@redis-ai/langcache@^0.11.1`.
 2. Register in `PACKAGE_INDEX.md`; wire root workspace build order, `backend/package.json` dep, and Dockerfile `packages` stage.
 3. Add `LANGCACHE_*` to `constants.ts`, `config.ts`, `.env.example`, `backend/.env.example`, and `docker-compose.yml`.
-4. Add `query-normalizer-prompt.ts` + `query-normalizer.ts` — always-on standalone-question normalization; throws/signals on failure.
-5. Add `chatbot-cache.service.ts` (scope = `{ userId, namespace }`; returns `CachedAnswer | null`).
+4. Add `query-normalizer-prompt.ts` + `query-normalizer.ts` — always-on standalone-question normalization **plus the LLM-judged `cacheable` decision** via `withStructuredOutput` (`{ standalone, cacheable, reason }`); throws on failure.
+5. Add `chatbot-cache.service.ts` (scope = `{ userId, namespace }`; returns `CachedAnswer | null` including `matchedPrompt`).
 6. Init `LangCache` singleton in `graph.ts` (`ensureInitialized`) and `backend/src/index.ts`.
-7. Add normalize → (read unless bypass/failure) → agent → write logic in `graph.ts` `runAgentWithCache` (delegating to `cache-strategy.ts` `ChatbotCacheStrategy.lookup`/`store`), plus readable extraction (sessionId, userId, bypassCache), server-side meeting-context derivation (parse `transcriptId` from `sessionId` via the new backend `SESSION_ID_PATTERN` → `TranscriptLoaderService`, memoized), and the hit-badge prepend.
+7. Implement orchestration in `cache-strategy.ts` (`ChatbotCacheStrategy.lookup`/`store`): readable extraction (sessionId, userId, bypassCache), server-side meeting-context derivation (parse `transcriptId` from `sessionId` via the backend `SESSION_ID_PATTERN` → `TranscriptLoaderService`, memoized), normalize + cacheable gate (`cacheUsable = cacheable`), read (unless bypass/non-cacheable/failure), hit-badge prepend (with `matched: …`), and write. `graph.ts` `runAgentWithCache` is a thin wrapper over it.
 8. Add cache clear (Step 4/4) to `resetLifecycleHandler`.
 9. Frontend: new `ChatbotSettings` gear-menu component (v1: bypass toggle, extensible); `page.tsx` settings state + bypass readable (the only new readable — meeting context is derived server-side, no frontend change for it); `assistant-message.component.tsx` cache-badge parse + render.
 10. Test (below); tune `LANGCACHE_SIMILARITY_THRESHOLD` and validate normalization quality on a representative question set.
@@ -599,6 +669,8 @@ sequenceDiagram
 | 11  | `LANGCACHE_ENABLED=false`                                                                      | no cache/normalize calls, no badge, toggle has no effect                                |
 | 12  | Unreachable LangCache URL                                                                      | warning logged, chatbot still answers (graceful fallback)                               |
 | 13  | Force normalizer LLM to fail                                                                   | agent answers on raw text; **no cache read or write** that turn (no cross-session leak) |
+| 14  | Ask a non-cacheable question ("thanks!" or "what's the market doing right now?")               | agent answers; log shows `"Skipping cache for this turn (not cacheable)"` + `reason`; **no read or write** |
+| 15  | Ask a cacheable question, then reword it                                                       | 2nd = hit; badge shows `… match` + `matched: "<cached question>"` second line            |
 
 Reuse the chatbot questions in `context-surfaces-integration.md` (§Test Questions) as the corpus for hit-rate + normalization tuning.
 
