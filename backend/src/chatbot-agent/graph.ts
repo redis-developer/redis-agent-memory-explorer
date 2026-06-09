@@ -1,3 +1,5 @@
+import "../load-env";
+
 import type { BaseMessage } from "@langchain/core/messages";
 import type { CopilotKitState, DatasetConfig } from "../types";
 import type { McpToolDef } from "../types";

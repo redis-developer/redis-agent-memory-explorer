@@ -1,3 +1,5 @@
+import "./load-env";
+
 import { resolve, join } from "node:path";
 
 import { ApiServer } from "cau-api-server";
