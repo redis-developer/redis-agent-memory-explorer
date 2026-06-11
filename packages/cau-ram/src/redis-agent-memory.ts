@@ -23,6 +23,12 @@ import { AgentMemory } from "@redis-iris/agent-memory";
 
 import { loadConfig } from "./config";
 import {
+  RAM_RETRY_INITIAL_INTERVAL_MS,
+  RAM_RETRY_MAX_INTERVAL_MS,
+  RAM_RETRY_BACKOFF_EXPONENT,
+  RAM_RETRY_MAX_ELAPSED_MS,
+} from "./constants";
+import {
   addSessionEvent as addSessionEventOp,
   getSessionMemory as getSessionMemoryOp,
   getSessionEvent as getSessionEventOp,
@@ -53,10 +59,23 @@ class RedisAgentMemory {
       serverURL: config.ram.endpoint,
       apiKey: config.ram.apiKey,
       storeId: config.ram.storeId,
+
+      retryConfig: {
+        strategy: "backoff",
+        backoff: {
+          initialInterval: RAM_RETRY_INITIAL_INTERVAL_MS,
+          maxInterval: RAM_RETRY_MAX_INTERVAL_MS,
+          exponent: RAM_RETRY_BACKOFF_EXPONENT,
+          maxElapsedTime: RAM_RETRY_MAX_ELAPSED_MS,
+        },
+        retryConnectionErrors: true,
+      },
     });
   }
 
-  static create = (configOverride?: Partial<RedisAgentMemoryConfig>): RedisAgentMemory => {
+  static create = (
+    configOverride?: Partial<RedisAgentMemoryConfig>,
+  ): RedisAgentMemory => {
     const envConfig = loadConfig();
     const mergedConfig: RedisAgentMemoryConfig = {
       ram: { ...envConfig.ram, ...configOverride?.ram },
@@ -70,7 +89,9 @@ class RedisAgentMemory {
 
   static getInstance = (): RedisAgentMemory => {
     if (!instance) {
-      throw new Error("RedisAgentMemory not initialized. Call RedisAgentMemory.create() first.");
+      throw new Error(
+        "RedisAgentMemory not initialized. Call RedisAgentMemory.create() first.",
+      );
     }
 
     return instance;
@@ -94,15 +115,23 @@ class RedisAgentMemory {
     return addSessionEventOp(this.client, input);
   };
 
-  getSessionMemory = async (sessionId: string): Promise<SessionMemory | null> => {
+  getSessionMemory = async (
+    sessionId: string,
+  ): Promise<SessionMemory | null> => {
     return getSessionMemoryOp(this.client, sessionId);
   };
 
-  getSessionEvent = async (sessionId: string, eventId: string): Promise<SessionEvent> => {
+  getSessionEvent = async (
+    sessionId: string,
+    eventId: string,
+  ): Promise<SessionEvent> => {
     return getSessionEventOp(this.client, sessionId, eventId);
   };
 
-  deleteSessionEvent = async (sessionId: string, eventId: string): Promise<void> => {
+  deleteSessionEvent = async (
+    sessionId: string,
+    eventId: string,
+  ): Promise<void> => {
     return deleteSessionEventOp(this.client, sessionId, eventId);
   };
 
@@ -110,17 +139,23 @@ class RedisAgentMemory {
     return deleteSessionMemoryOp(this.client, sessionId);
   };
 
-  listSessions = async (options?: SessionListOptions): Promise<SessionListResult> => {
+  listSessions = async (
+    options?: SessionListOptions,
+  ): Promise<SessionListResult> => {
     return listSessionsOp(this.client, options);
   };
 
   // ── Long-Term Memory ──
 
-  createLongTermMemories = async (records: CreateMemoryInput[]): Promise<BulkCreateResult> => {
+  createLongTermMemories = async (
+    records: CreateMemoryInput[],
+  ): Promise<BulkCreateResult> => {
     return createLongTermMemoriesOp(this.client, records);
   };
 
-  searchLongTermMemory = async (options?: MemorySearchOptions): Promise<MemorySearchResult> => {
+  searchLongTermMemory = async (
+    options?: MemorySearchOptions,
+  ): Promise<MemorySearchResult> => {
     return searchLongTermMemoryOp(this.client, options);
   };
 
@@ -134,17 +169,24 @@ class RedisAgentMemory {
     return getLongTermMemoryOp(this.client, memoryId);
   };
 
-  updateLongTermMemory = async (memoryId: string, updates: MemoryUpdateInput): Promise<MemoryRecord> => {
+  updateLongTermMemory = async (
+    memoryId: string,
+    updates: MemoryUpdateInput,
+  ): Promise<MemoryRecord> => {
     return updateLongTermMemoryOp(this.client, memoryId, updates);
   };
 
-  deleteLongTermMemories = async (memoryIds: string[]): Promise<BulkDeleteResult> => {
+  deleteLongTermMemories = async (
+    memoryIds: string[],
+  ): Promise<BulkDeleteResult> => {
     return deleteLongTermMemoriesOp(this.client, memoryIds);
   };
 
   // ── Memory Prompt ──
 
-  buildMemoryPrompt = async (options: BuildMemoryPromptOptions): Promise<MemoryPromptResult> => {
+  buildMemoryPrompt = async (
+    options: BuildMemoryPromptOptions,
+  ): Promise<MemoryPromptResult> => {
     return buildMemoryPromptOp(this.client, this.config.llm, options);
   };
 

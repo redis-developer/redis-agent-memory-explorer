@@ -26,6 +26,12 @@ const FORMATTING_OVERHEAD_TOKENS = 200;
 const PER_MESSAGE_TOKEN_OVERHEAD = 4;
 const DEFAULT_CONTEXT_WINDOW = 128_000;
 
+// Retry/backoff for transient cloud errors (429 rate limits, 5xx, timeouts).
+const RAM_RETRY_INITIAL_INTERVAL_MS = 500;
+const RAM_RETRY_MAX_INTERVAL_MS = 30_000;
+const RAM_RETRY_BACKOFF_EXPONENT = 1.5;
+const RAM_RETRY_MAX_ELAPSED_MS = 30_000;
+
 const MODEL_CONTEXT_WINDOWS: Record<string, number> = {
   "gpt-4o": 128_000,
   "gpt-4o-mini": 128_000,
@@ -55,6 +61,10 @@ export {
   PER_MESSAGE_TOKEN_OVERHEAD,
   DEFAULT_CONTEXT_WINDOW,
   MODEL_CONTEXT_WINDOWS,
+  RAM_RETRY_INITIAL_INTERVAL_MS,
+  RAM_RETRY_MAX_INTERVAL_MS,
+  RAM_RETRY_BACKOFF_EXPONENT,
+  RAM_RETRY_MAX_ELAPSED_MS,
 };
 export type {
   MessageRole as MessageRoleType,
