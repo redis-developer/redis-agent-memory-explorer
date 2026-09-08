@@ -30,6 +30,9 @@ type SessionMemory = {
 type SessionListOptions = {
   limit?: number;
   pageToken?: string;
+  // The service requires either an owner filter or includeAll=true. When
+  // ownerId is omitted the listing falls back to includeAll.
+  ownerId?: string;
 };
 
 type SessionListResult = {
@@ -42,10 +45,11 @@ type SessionListResult = {
 
 type CreateMemoryInput = {
   text: string;
+  // Required by the service on explicit writes.
+  ownerId: string;
   id?: string;
   memoryType?: MemoryType;
   sessionId?: string;
-  ownerId?: string;
   namespace?: string;
   topics?: string[];
 };

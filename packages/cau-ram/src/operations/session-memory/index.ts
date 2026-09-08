@@ -111,14 +111,23 @@ const deleteSessionMemory = async (
   await client.deleteSessionMemory(sessionId);
 };
 
+// The service requires either an owner filter or includeAll=true, so an
+// unscoped listing must opt into includeAll explicitly.
 const listSessions = async (
   client: AgentMemory,
   options?: SessionListOptions,
 ): Promise<SessionListResult> => {
   const limit = options?.limit ?? DEFAULT_LIST_LIMIT;
   const pageToken = options?.pageToken;
+  const ownerId = options?.ownerId;
+  const includeAll = ownerId === undefined;
 
-  const response = await client.listSessions(limit, pageToken);
+  const response = await client.listSessions(
+    limit,
+    pageToken,
+    ownerId,
+    includeAll,
+  );
 
   return {
     sessions: response.items,

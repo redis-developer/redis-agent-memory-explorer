@@ -18,7 +18,8 @@
     "dev:frontend": "npm run dev -w frontend",
     "dev:api": "npm run dev -w backend",
     "dev:langgraph": "npm run dev:langgraph -w backend",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "rotate:agent-key": "npx tsx scripts/rotate-agent-key.ts"
   },
   "engines": {
     "node": ">=18.0.0"

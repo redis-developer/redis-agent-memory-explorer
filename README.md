@@ -30,6 +30,18 @@ Detailed developer documentation lives in [`docs/dev-plans/`](docs/dev-plans/):
   - `CTX_SURFACE_ID` -- Reuse an existing surface (auto-created on first run if blank)
   - `MCP_AGENT_KEY` -- Reuse an existing agent key (auto-created on first run if blank)
 
+Agent keys expire (90 days by default). Once expired, MCP calls fail with
+`MCP tools/list failed (401): Invalid API key`. Mint a replacement on the existing
+surface and update `.env` in place with:
+
+```bash
+npm run rotate:agent-key
+```
+
+Do not clear `MCP_AGENT_KEY` to force a refresh -- the backend only reuses a surface
+when both `CTX_SURFACE_ID` and `MCP_AGENT_KEY` are set, so a blank key provisions a
+brand new surface and re-imports the whole dataset.
+
 ## Quick start (Docker)
 
 The fastest way to get the backend + frontend and LangGraph running in a single command.
